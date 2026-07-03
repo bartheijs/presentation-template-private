@@ -484,28 +484,27 @@ button {
 .btn-prev .icon { width: 1.2rem; height: 1.2rem; }
 .btn-prev:hover { color: var(--text); transform: translateY(-2px); }
 
-/* ---------- Slide transition animation (button/keyboard nav only) ---------- */
-.slide-stage { transform-origin: center center; }
-.slide-stage.anim-out-left  { animation: spinOutLeft 260ms cubic-bezier(.55,0,.85,.4) forwards; }
-.slide-stage.anim-out-right { animation: spinOutRight 260ms cubic-bezier(.55,0,.85,.4) forwards; }
-.slide-stage.anim-in-right  { animation: spinInRight 420ms cubic-bezier(.2,1.4,.4,1) forwards; }
-.slide-stage.anim-in-left   { animation: spinInLeft 420ms cubic-bezier(.2,1.4,.4,1) forwards; }
+/* ---------- Slide transition animation (button/keyboard nav only) ----------
+ * Content slides up and out, notes slide down and out; both then slide back
+ * into place (content from above, notes from below) once the new slide has
+ * rendered — as if the old info is pushed apart and the new info settles
+ * back into the gap.
+ */
+.slide-content.content-anim-out { animation: contentSlideOut 280ms cubic-bezier(.4,0,.7,.3) forwards; }
+.slide-content.content-anim-in  { animation: contentSlideIn 420ms cubic-bezier(.2,1.1,.4,1) forwards; }
+.slide-notes.notes-anim-out { animation: notesSlideOut 280ms cubic-bezier(.4,0,.7,.3) forwards; }
+.slide-notes.notes-anim-in  { animation: notesSlideIn 420ms cubic-bezier(.2,1.1,.4,1) forwards; }
 
-@keyframes spinOutLeft  { to { transform: translateX(-120px) scale(0.4) rotate(-25deg); opacity: 0; } }
-@keyframes spinOutRight { to { transform: translateX(120px)  scale(0.4) rotate(25deg);  opacity: 0; } }
-@keyframes spinInRight  {
-  from { transform: translateX(160px) scale(0.35) rotate(30deg); opacity: 0; }
-  60%  { transform: translateX(-14px) scale(1.06) rotate(-4deg); opacity: 1; }
-  to   { transform: none; opacity: 1; }
-}
-@keyframes spinInLeft   {
-  from { transform: translateX(-160px) scale(0.35) rotate(-30deg); opacity: 0; }
-  60%  { transform: translateX(14px) scale(1.06) rotate(4deg); opacity: 1; }
-  to   { transform: none; opacity: 1; }
-}
+/* translateY(±100%) moves each panel by its own full height, so it clears
+   its box entirely — combined with overflow:hidden on .slide-column, it
+   genuinely leaves the visible area instead of just nudging. */
+@keyframes contentSlideOut { to { transform: translateY(-100%); opacity: 0; } }
+@keyframes contentSlideIn  { from { transform: translateY(-100%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes notesSlideOut { to { transform: translateY(100%); opacity: 0; } }
+@keyframes notesSlideIn  { from { transform: translateY(100%); opacity: 0; } to { transform: none; opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .slide-stage[class*="anim-"] { animation: none !important; }
+  .slide-content[class*="anim-"], .slide-notes[class*="anim-"] { animation: none !important; }
 }
 
 /* ---------- Skill template overlay ---------- */

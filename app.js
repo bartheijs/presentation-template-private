@@ -128,17 +128,30 @@ function goTo(index, { animate = false, direction = null } = {}) {
 }
 
 function animateTransition(dir, applyFn) {
-  const outClass = dir === 'next' ? 'anim-out-left' : 'anim-out-right';
-  const inClass = dir === 'next' ? 'anim-in-right' : 'anim-in-left';
-  slideStageEl.classList.add(outClass);
-  slideStageEl.addEventListener(
+  // Content slides up and out, notes slide down and out; once the new
+  // slide is rendered, both slide back into place from the opposite side.
+  // Listening for animationend only on slide-content (always visible) —
+  // slide-notes can be [hidden] on some slides, and hidden elements never
+  // fire animationend, which would otherwise stall the sequence.
+  slideContentEl.classList.add('content-anim-out');
+  if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
+  slideContentEl.addEventListener(
     'animationend',
     function onOut() {
-      slideStageEl.removeEventListener('animationend', onOut);
-      slideStageEl.classList.remove(outClass);
+      slideContentEl.removeEventListener('animationend', onOut);
+      slideContentEl.classList.remove('content-anim-out');
+      slideNotesEl.classList.remove('notes-anim-out');
       applyFn();
-      slideStageEl.classList.add(inClass);
-      slideStageEl.addEventListener('animationend', () => slideStageEl.classList.remove(inClass), { once: true });
+      slideContentEl.classList.add('content-anim-in');
+      if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+      slideContentEl.addEventListener(
+        'animationend',
+        () => {
+          slideContentEl.classList.remove('content-anim-in');
+          slideNotesEl.classList.remove('notes-anim-in');
+        },
+        { once: true }
+      );
     },
     { once: true }
   );
@@ -215,9 +228,10 @@ function timerPause() {
 
 function timerAddFive() {
   if (timer.running) {
-    timer.endAt += FIVE_MIN_MS;
+    const remaining = Math.max(0, timer.endAt - Date.now());
+    timer.endAt = Date.now() + Math.min(THIRTY_MIN_MS, remaining + FIVE_MIN_MS);
   } else {
-    timer.remainingMs += FIVE_MIN_MS;
+    timer.remainingMs = Math.min(THIRTY_MIN_MS, timer.remainingMs + FIVE_MIN_MS);
   }
   timer.firedZero = false;
   renderTimerDisplay();
