@@ -47,6 +47,18 @@
 <div class="app-shell">
 
   <aside class="toc-column">
+    <div class="toc-heading">Inhoud</div>
+    <nav class="toc-list" id="toc-list" aria-label="Slide-navigatie"></nav>
+  </aside>
+
+  <main class="slide-column">
+    <div class="slide-stage" id="slide-stage">
+      <section class="slide-content" id="slide-content"></section>
+      <section class="slide-notes" id="slide-notes"></section>
+    </div>
+  </main>
+
+  <aside class="next-column">
     <div class="toc-widgets">
       <button id="btn-template" class="btn-floating btn-template" type="button">
         <svg class="icon"><use href="#icon-template"></use></svg>
@@ -69,27 +81,17 @@
       </div>
     </div>
 
-    <div class="toc-heading">Inhoud</div>
-    <nav class="toc-list" id="toc-list" aria-label="Slide-navigatie"></nav>
-  </aside>
-
-  <main class="slide-column">
-    <div class="slide-stage" id="slide-stage">
-      <section class="slide-content" id="slide-content"></section>
-      <section class="slide-notes" id="slide-notes"></section>
+    <div class="next-actions">
+      <div class="slide-progress" id="slide-progress">1 / 31</div>
+      <button id="btn-next" class="btn-next" type="button">
+        <svg class="icon"><use href="#icon-arrow-right"></use></svg>
+        <span>Volgende</span>
+      </button>
+      <button id="btn-prev" class="btn-prev" type="button">
+        <svg class="icon"><use href="#icon-arrow-left"></use></svg>
+        <span>Vorige</span>
+      </button>
     </div>
-  </main>
-
-  <aside class="next-column">
-    <div class="slide-progress" id="slide-progress">1 / 31</div>
-    <button id="btn-next" class="btn-next" type="button">
-      <svg class="icon"><use href="#icon-arrow-right"></use></svg>
-      <span>Volgende</span>
-    </button>
-    <button id="btn-prev" class="btn-prev" type="button">
-      <svg class="icon"><use href="#icon-arrow-left"></use></svg>
-      <span>Vorige</span>
-    </button>
   </aside>
 
 </div>
@@ -104,6 +106,21 @@
       skill.md template
     </h2>
     <div class="overlay-body" id="overlay-body"></div>
+  </div>
+</div>
+
+<div class="finish-overlay" id="finish-overlay" hidden>
+  <button class="overlay-close" id="btn-finish-close" type="button" aria-label="Terug naar de presentatie">
+    <svg class="icon"><use href="#icon-close"></use></svg>
+  </button>
+  <div class="finish-content">
+    <svg class="icon finish-icon icon--fill"><use href="#icon-party"></use></svg>
+    <h2>Eindelijk kunnen we aan de slag!</h2>
+    <p>Tijd om je eigen <code>skill.md</code> te bouwen — schrijf het proces één keer goed op, en je hoeft het nooit meer opnieuw uit te leggen.</p>
+    <button class="btn-back-to-deck" id="btn-finish-back" type="button">
+      <svg class="icon"><use href="#icon-arrow-left"></use></svg>
+      <span>Terug naar de presentatie</span>
+    </button>
   </div>
 </div>
 

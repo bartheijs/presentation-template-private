@@ -56,28 +56,40 @@ const slideProgressEl = document.getElementById('slide-progress');
 const tocListEl = document.getElementById('toc-list');
 const overlayEl = document.getElementById('template-overlay');
 const overlayBodyEl = document.getElementById('overlay-body');
+const finishOverlayEl = document.getElementById('finish-overlay');
 
 /* ---------- Rendering ---------- */
 
 function buildSlideContentHTML(slide) {
+  const bulletsBlock = slide.bullets.length
+    ? `<ul class="slide-bullets">
+        ${slide.bullets
+          .map(
+            (b) => `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg><span>${inlineMarkdown(b)}</span></li>`
+          )
+          .join('')}
+      </ul>`
+    : '';
+  const templateBlock = slide.isTemplateAnchor
+    ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
+    : '';
   return `
     <div class="slide-heading">
       <svg class="icon"><use href="#icon-${slide.icon}"></use></svg>
       <h1>${escapeHtml(slide.title)}</h1>
     </div>
-    <ul class="slide-bullets">
-      ${slide.bullets
-        .map(
-          (b) => `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg><span>${inlineMarkdown(b)}</span></li>`
-        )
-        .join('')}
-    </ul>`;
+    ${bulletsBlock}
+    ${templateBlock}`;
 }
 
 function renderSlide() {
   const slide = SLIDES[state.currentIndex];
+  slideContentEl.className = 'slide-content' + (slide.isTemplateAnchor ? ' slide-content--compact' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
-  slideNotesEl.innerHTML = renderNotesHTML(slide.notes);
+  const hasNotes = Boolean(slide.notes && slide.notes.trim());
+  slideNotesEl.hidden = !hasNotes;
+  slideStageEl.classList.toggle('stage-no-notes', !hasNotes);
+  slideNotesEl.innerHTML = hasNotes ? renderNotesHTML(slide.notes) : '';
   slideProgressEl.textContent = `${state.currentIndex + 1} / ${SLIDES.length}`;
   slideContentEl.scrollTop = 0;
   slideNotesEl.scrollTop = 0;
@@ -140,6 +152,17 @@ document.getElementById('btn-prev').addEventListener('click', () =>
 );
 
 document.addEventListener('keydown', (e) => {
+  if (!finishOverlayEl.hidden) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (overlayEl.hidden) openTemplateOverlay();
+    return;
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!overlayEl.hidden) closeTemplateOverlay();
+    return;
+  }
   if (!overlayEl.hidden) return;
   if (e.key === 'ArrowRight') goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
   if (e.key === 'ArrowLeft') goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
@@ -216,91 +239,179 @@ function timerTick() {
 
 timerToggleBtn.addEventListener('click', () => (timer.running ? timerPause() : timerStart()));
 document.getElementById('btn-timer-add5').addEventListener('click', timerAddFive);
-document.getElementById('btn-timer-finish').addEventListener('click', () => launchConfetti());
 
 renderTimerDisplay();
 
-/* ---------- Confetti (dependency-free canvas particle system) ---------- */
+/* ---------- Confetti ----------
+ * Dependency-free canvas particle system. Confetti falls slowly and, instead
+ * of disappearing off the bottom, settles into a pile that keeps growing —
+ * spawning continues in the background until the pile fills the screen.
+ * Settled particles are baked onto an offscreen canvas so the "in flight"
+ * array stays small no matter how long it runs.
+ */
 
 const confettiCanvas = document.getElementById('confetti-canvas');
 const confettiCtx = confettiCanvas.getContext('2d');
 const CONFETTI_COLORS = ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'];
-const CONFETTI_DURATION_MS = 4000;
-let confettiParticles = [];
-let confettiRafId = null;
-let confettiStartedAt = null;
+const PILE_COLUMN_WIDTH = 4;
+const SPAWN_INTERVAL_MS = 200;
+const SPAWN_BATCH_SIZE = 10;
+const CONFETTI_GRAVITY = 0.025;
+const CONFETTI_MAX_VY = 2.2;
 
-function resizeConfettiCanvas() {
+let confettiActive = false;
+let confettiSpawnIntervalId = null;
+let confettiRafId = null;
+let fallingParticles = [];
+let pileHeights = null;
+let settledCanvas = null;
+let settledCtx = null;
+
+function ensureConfettiBuffers() {
   const dpr = window.devicePixelRatio || 1;
   confettiCanvas.width = window.innerWidth * dpr;
   confettiCanvas.height = window.innerHeight * dpr;
   confettiCanvas.style.width = window.innerWidth + 'px';
   confettiCanvas.style.height = window.innerHeight + 'px';
   confettiCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  if (!settledCanvas) {
+    settledCanvas = document.createElement('canvas');
+    settledCtx = settledCanvas.getContext('2d');
+  }
+  settledCanvas.width = window.innerWidth * dpr;
+  settledCanvas.height = window.innerHeight * dpr;
+  settledCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  pileHeights = new Float32Array(Math.ceil(window.innerWidth / PILE_COLUMN_WIDTH));
 }
-window.addEventListener('resize', resizeConfettiCanvas);
+window.addEventListener('resize', () => {
+  if (settledCanvas) ensureConfettiBuffers();
+});
 
 function makeConfettiParticle() {
   return {
     x: Math.random() * window.innerWidth,
-    y: -20 - Math.random() * window.innerHeight * 0.3,
-    vx: (Math.random() - 0.5) * 4,
-    vy: 2 + Math.random() * 3,
-    size: 6 + Math.random() * 6,
+    y: -20 - Math.random() * 200,
+    vx: (Math.random() - 0.5) * 1.2,
+    vy: 0.3 + Math.random() * 0.6,
+    size: 6 + Math.random() * 7,
     color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
     rotation: Math.random() * 360,
-    rotationSpeed: (Math.random() - 0.5) * 10,
+    rotationSpeed: (Math.random() - 0.5) * 6,
     shape: Math.random() < 0.5 ? 'rect' : 'circle',
   };
 }
 
-function launchConfetti(count = 180) {
-  resizeConfettiCanvas();
-  confettiParticles = Array.from({ length: count }, makeConfettiParticle);
-  confettiStartedAt = performance.now();
+function pileHeightAt(x) {
+  const col = Math.min(pileHeights.length - 1, Math.max(0, Math.floor(x / PILE_COLUMN_WIDTH)));
+  return pileHeights[col];
+}
+
+function raisePileAt(x, size) {
+  const spanCols = Math.max(1, Math.round(size / PILE_COLUMN_WIDTH));
+  const centerCol = Math.floor(x / PILE_COLUMN_WIDTH);
+  const bump = size * 0.45;
+  for (let c = centerCol - spanCols; c <= centerCol + spanCols; c++) {
+    if (c >= 0 && c < pileHeights.length) {
+      pileHeights[c] = Math.min(window.innerHeight, pileHeights[c] + bump / (spanCols * 2 + 1));
+    }
+  }
+}
+
+function drawParticle(ctx, p) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate((p.rotation * Math.PI) / 180);
+  ctx.fillStyle = p.color;
+  if (p.shape === 'rect') {
+    ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+  } else {
+    ctx.beginPath();
+    ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function isPileFull() {
+  let minHeight = Infinity;
+  for (let i = 0; i < pileHeights.length; i += 20) minHeight = Math.min(minHeight, pileHeights[i]);
+  return minHeight >= window.innerHeight * 0.92;
+}
+
+function spawnConfettiBatch(count) {
+  for (let i = 0; i < count; i++) fallingParticles.push(makeConfettiParticle());
+}
+
+function launchConfetti(burstCount = 60) {
+  if (!settledCanvas) ensureConfettiBuffers();
+  spawnConfettiBatch(burstCount);
+  if (!confettiActive) {
+    confettiActive = true;
+    confettiSpawnIntervalId = setInterval(() => {
+      if (isPileFull()) return;
+      spawnConfettiBatch(SPAWN_BATCH_SIZE);
+    }, SPAWN_INTERVAL_MS);
+  }
   if (!confettiRafId) confettiRafId = requestAnimationFrame(confettiLoop);
 }
 
-function confettiLoop(now) {
-  const elapsed = now - confettiStartedAt;
+function confettiLoop() {
   confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-  for (const p of confettiParticles) {
-    p.vy += 0.12;
+  confettiCtx.drawImage(settledCanvas, 0, 0, window.innerWidth, window.innerHeight);
+
+  for (let i = fallingParticles.length - 1; i >= 0; i--) {
+    const p = fallingParticles[i];
+    p.vy = Math.min(CONFETTI_MAX_VY, p.vy + CONFETTI_GRAVITY);
     p.x += p.vx;
     p.y += p.vy;
     p.rotation += p.rotationSpeed;
-    confettiCtx.save();
-    confettiCtx.translate(p.x, p.y);
-    confettiCtx.rotate((p.rotation * Math.PI) / 180);
-    confettiCtx.fillStyle = p.color;
-    if (p.shape === 'rect') {
-      confettiCtx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
-    } else {
-      confettiCtx.beginPath();
-      confettiCtx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
-      confettiCtx.fill();
+
+    if (p.x < -20) p.x = window.innerWidth + 20;
+    if (p.x > window.innerWidth + 20) p.x = -20;
+
+    const floor = window.innerHeight - pileHeightAt(p.x);
+    if (p.y + p.size / 2 >= floor) {
+      p.y = floor - p.size / 2;
+      drawParticle(settledCtx, p);
+      raisePileAt(p.x, p.size);
+      fallingParticles.splice(i, 1);
     }
-    confettiCtx.restore();
   }
-  confettiParticles = confettiParticles.filter((p) => p.y < window.innerHeight + 40);
-  if (elapsed < CONFETTI_DURATION_MS && confettiParticles.length) {
-    confettiRafId = requestAnimationFrame(confettiLoop);
-  } else {
-    confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  for (const p of fallingParticles) drawParticle(confettiCtx, p);
+
+  confettiRafId = confettiActive ? requestAnimationFrame(confettiLoop) : null;
+}
+
+function stopConfetti() {
+  confettiActive = false;
+  if (confettiSpawnIntervalId) {
+    clearInterval(confettiSpawnIntervalId);
+    confettiSpawnIntervalId = null;
+  }
+  if (confettiRafId) {
+    cancelAnimationFrame(confettiRafId);
     confettiRafId = null;
   }
+  fallingParticles = [];
+  if (pileHeights) pileHeights.fill(0);
+  if (settledCtx) settledCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 }
 
 /* ---------- Skill template overlay ---------- */
 
 function renderTemplateOverlay(highlightId) {
-  overlayBodyEl.innerHTML = SKILL_TEMPLATE_SECTIONS.map(
-    (s) => `
-      <div class="template-section ${s.id === highlightId ? 'is-highlighted' : ''}" data-section="${s.id}">
-        <h3><svg class="icon"><use href="#icon-${s.icon}"></use></svg>${escapeHtml(s.label)}</h3>
-        <pre><code>${escapeHtml(s.body)}</code></pre>
-      </div>`
-  ).join('');
+  const blocks = SKILL_TEMPLATE_SECTIONS.map((s) => {
+    const [headingLine, ...rest] = s.body.split('\n');
+    const highlightClass = s.id === highlightId ? ' is-highlighted' : '';
+    return `<span class="tpl-block tpl-block--${s.id}${highlightClass}"><span class="tpl-heading">${escapeHtml(headingLine)}</span>${
+      rest.length ? '\n' + escapeHtml(rest.join('\n')) : ''
+    }</span>`;
+  });
+  overlayBodyEl.innerHTML = `<pre class="template-code"><code>${blocks.join('\n\n')}</code></pre>`;
 }
 
 function openTemplateOverlay() {
@@ -320,8 +431,32 @@ document.getElementById('btn-overlay-close').addEventListener('click', closeTemp
 overlayEl.addEventListener('click', (e) => {
   if (e.target === overlayEl) closeTemplateOverlay();
 });
+
+/* ---------- Finish celebration overlay ---------- */
+
+function openFinishOverlay() {
+  finishOverlayEl.hidden = false;
+}
+
+function closeFinishOverlay() {
+  finishOverlayEl.hidden = true;
+  stopConfetti();
+}
+
+document.getElementById('btn-timer-finish').addEventListener('click', () => {
+  launchConfetti();
+  openFinishOverlay();
+});
+document.getElementById('btn-finish-close').addEventListener('click', closeFinishOverlay);
+document.getElementById('btn-finish-back').addEventListener('click', closeFinishOverlay);
+finishOverlayEl.addEventListener('click', (e) => {
+  if (e.target === finishOverlayEl) closeFinishOverlay();
+});
+
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !overlayEl.hidden) closeTemplateOverlay();
+  if (e.key !== 'Escape') return;
+  if (!finishOverlayEl.hidden) closeFinishOverlay();
+  else if (!overlayEl.hidden) closeTemplateOverlay();
 });
 
 /* ---------- Init ---------- */
