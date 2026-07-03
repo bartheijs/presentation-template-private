@@ -117,6 +117,7 @@ function updateTocActiveState() {
 
 function goTo(index, { animate = false, direction = null } = {}) {
   if (index < 0 || index >= SLIDES.length || index === state.currentIndex) return;
+  if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid-transition
   const dir = direction || (index > state.currentIndex ? 'next' : 'prev');
   state.currentIndex = index;
   if (animate) {
@@ -127,28 +128,53 @@ function goTo(index, { animate = false, direction = null } = {}) {
   updateTocActiveState();
 }
 
+/* Content up / notes down (out, 280ms) -> swap content while off-screen ->
+ * content down / notes up (in, 420ms). The disco-bg layer behind them is
+ * sequenced independently on its own explicit delays, deliberately timed
+ * so it (a) appears a beat after the panels start leaving, not instantly,
+ * and (b) is fully faded out well before the panels finish landing — with
+ * a comfortable buffer, not a race against the panels' own transition. */
+let isAnimatingSlide = false;
+const ANIM_OUT_MS = 280;
+const ANIM_IN_MS = 420;
+const DISCO_REVEAL_DELAY_MS = 90; // background starts fading in this long after "out" begins
+const DISCO_HIDE_LEAD_MS = 260; // start hiding the background this long before the panels land
+
 function animateTransition(dir, applyFn) {
-  // Content slides up and out, notes slide down and out; once the new
-  // slide is rendered, both slide back into place from the opposite side.
-  // Listening for animationend only on slide-content (always visible) —
-  // slide-notes can be [hidden] on some slides, and hidden elements never
-  // fire animationend, which would otherwise stall the sequence.
+  isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
+
+  const revealTimer = setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS);
+
   slideContentEl.addEventListener(
     'animationend',
     function onOut() {
       slideContentEl.removeEventListener('animationend', onOut);
+      clearTimeout(revealTimer);
+      // Swap in the new slide's content WHILE still hidden by the "out"
+      // classes (which hold the panel off-screen via animation-fill-mode:
+      // forwards). renderSlide() forces a synchronous reflow (scrollTop),
+      // so if we removed the "out" classes first, that reflow could catch
+      // the panel mid-snap-back to its normal (visible, in-place) resting
+      // style and paint a one-frame flash before the "in" class re-hides
+      // it. Doing the swap first, then flipping classes back-to-back with
+      // nothing forcing a reflow in between, avoids that flash entirely.
+      applyFn();
       slideContentEl.classList.remove('content-anim-out');
       slideNotesEl.classList.remove('notes-anim-out');
-      applyFn();
       slideContentEl.classList.add('content-anim-in');
       if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+
+      const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+      setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+
       slideContentEl.addEventListener(
         'animationend',
         () => {
           slideContentEl.classList.remove('content-anim-in');
           slideNotesEl.classList.remove('notes-anim-in');
+          isAnimatingSlide = false;
         },
         { once: true }
       );

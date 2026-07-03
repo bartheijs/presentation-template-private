@@ -260,6 +260,7 @@ button {
 }
 
 .slide-stage {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -267,7 +268,91 @@ button {
   gap: 1rem;
 }
 
+/* ---------- Disco reveal (behind content/notes, shown only mid-transition) ---------- */
+.disco-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #1B0F2E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  /* Fast hide: app.js removes is-transitioning well before the panels
+     finish landing (DISCO_HIDE_LEAD_MS), so this only needs to be quick
+     enough to comfortably finish inside that lead time — not racing the
+     panels' own animation. Kept short anyway since the gap between
+     content/notes is never covered by either panel, so any opacity
+     lingering there reads as a stray flash of color in that seam. */
+  transition: opacity 70ms ease;
+  pointer-events: none;
+}
+/* Slower, smoother reveal on the way in — asymmetric on purpose. */
+.slide-stage.is-transitioning .disco-bg { opacity: 1; transition: opacity 200ms ease-out; }
+
+.disco-rays {
+  position: absolute;
+  inset: -60%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    #FFD400 0deg 9deg,
+    #FF3D6E 9deg 18deg,
+    #8657FF 18deg 27deg,
+    #06D6A0 27deg 36deg,
+    #FF7A00 36deg 45deg
+  );
+  opacity: 0.85;
+  animation: discoSpin 14s linear infinite;
+}
+@keyframes discoSpin { to { transform: rotate(360deg); } }
+
+.disco-title {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  transform: rotate(-5deg);
+}
+.disco-title span {
+  font-size: clamp(2.6rem, 8vw, 6rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: #FFF7E0;
+  -webkit-text-stroke: 2px #1B0F2E;
+  text-shadow: 5px 5px 0 #FF3D6E, 9px 9px 0 #3AB0FF;
+  line-height: 1;
+}
+
+.disco-sparkle {
+  position: absolute;
+  z-index: 1;
+  width: 1.6rem;
+  height: 1.6rem;
+  color: #FFF7E0;
+  animation: discoTwinkle 1.4s ease-in-out infinite;
+}
+.disco-sparkle-1 { top: 14%; left: 12%; animation-delay: 0s; }
+.disco-sparkle-2 { top: 20%; right: 14%; animation-delay: 0.35s; }
+.disco-sparkle-3 { bottom: 16%; left: 18%; animation-delay: 0.7s; }
+.disco-sparkle-4 { bottom: 12%; right: 16%; animation-delay: 1.05s; }
+@keyframes discoTwinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disco-rays { animation: none; }
+  .disco-sparkle { animation: none; }
+}
+
 .slide-content {
+  position: relative;
+  z-index: 1;
   flex: 7 1 0;
   min-height: 0;
   overflow-y: auto;
