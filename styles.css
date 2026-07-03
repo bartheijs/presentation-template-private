@@ -276,9 +276,6 @@ button {
   overflow: hidden;
   border-radius: var(--radius-lg);
   background: #1B0F2E;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   opacity: 0;
   /* Fast hide: app.js removes is-transitioning well before the panels
      finish landing (DISCO_HIDE_LEAD_MS), so this only needs to be quick
@@ -292,9 +289,20 @@ button {
 /* Slower, smoother reveal on the way in — asymmetric on purpose. */
 .slide-stage.is-transitioning .disco-bg { opacity: 1; transition: opacity 200ms ease-out; }
 
+/* Both the rays' rotational center and the title are pinned to ~70% down
+   (the content/notes boundary, since content:notes is a 7:3 flex split)
+   instead of the stage's vertical middle. Content lifts away from that
+   seam immediately and notes drops away from it immediately too, so it's
+   the first area to open up as they separate and the last to be covered
+   again as they land — placing the reveal there keeps it on screen for
+   the longest stretch of the transition. */
 .disco-rays {
   position: absolute;
-  inset: -60%;
+  width: 220%;
+  height: 220%;
+  left: 50%;
+  top: 70%;
+  transform: translate(-50%, -50%);
   background: repeating-conic-gradient(
     from 0deg,
     #FFD400 0deg 9deg,
@@ -306,16 +314,18 @@ button {
   opacity: 0.85;
   animation: discoSpin 14s linear infinite;
 }
-@keyframes discoSpin { to { transform: rotate(360deg); } }
+@keyframes discoSpin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
 .disco-title {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 70%;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
-  transform: rotate(-5deg);
+  transform: translate(-50%, -50%) rotate(-5deg);
 }
 .disco-title span {
   font-size: clamp(2.6rem, 8vw, 6rem);
@@ -336,10 +346,18 @@ button {
   color: #FFF7E0;
   animation: discoTwinkle 1.4s ease-in-out infinite;
 }
-.disco-sparkle-1 { top: 14%; left: 12%; animation-delay: 0s; }
-.disco-sparkle-2 { top: 20%; right: 14%; animation-delay: 0.35s; }
-.disco-sparkle-3 { bottom: 16%; left: 18%; animation-delay: 0.7s; }
-.disco-sparkle-4 { bottom: 12%; right: 16%; animation-delay: 1.05s; }
+.disco-sparkle-1  { top: 10%; left: 8%;  width: 1.3rem; height: 1.3rem; animation-delay: 0s; }
+.disco-sparkle-2  { top: 8%;  right: 10%; width: 1.1rem; height: 1.1rem; animation-delay: 0.25s; }
+.disco-sparkle-3  { top: 26%; left: 6%;  width: 1.5rem; height: 1.5rem; animation-delay: 0.5s; }
+.disco-sparkle-4  { top: 24%; right: 7%; width: 1.2rem; height: 1.2rem; animation-delay: 0.75s; }
+.disco-sparkle-5  { top: 48%; left: 14%; animation-delay: 1s; }
+.disco-sparkle-6  { top: 52%; right: 16%; animation-delay: 0.15s; }
+.disco-sparkle-7  { top: 65%; left: 5%;  width: 1.3rem; height: 1.3rem; animation-delay: 0.4s; }
+.disco-sparkle-8  { top: 68%; right: 6%; width: 1.4rem; height: 1.4rem; animation-delay: 0.65s; }
+.disco-sparkle-9  { top: 88%; left: 20%; animation-delay: 0.9s; }
+.disco-sparkle-10 { top: 90%; right: 18%; animation-delay: 1.15s; }
+.disco-sparkle-11 { top: 38%; left: 30%; width: 1rem; height: 1rem; animation-delay: 0.3s; }
+.disco-sparkle-12 { top: 36%; right: 32%; width: 1.1rem; height: 1.1rem; animation-delay: 0.55s; }
 @keyframes discoTwinkle {
   0%, 100% { opacity: 0.3; transform: scale(0.8); }
   50% { opacity: 1; transform: scale(1.2); }
