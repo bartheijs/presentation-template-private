@@ -22,6 +22,21 @@
 
   --font-sans: "Avenir Next", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Disco background — deliberately theme-independent (not overridden in the
+     dark-mode block below), so it stays a fixed spectacle regardless of
+     light/dark mode. A new presentation restyles these, not the rules. */
+  --disco-backdrop: #1B0F2E;
+  --disco-ray-1: #FFD400;
+  --disco-ray-2: #FF3D6E;
+  --disco-ray-3: #8657FF;
+  --disco-ray-4: #06D6A0;
+  --disco-ray-5: #FF7A00;
+  --disco-title-fill: #FFF7E0;
+  --disco-title-stroke: #1B0F2E;
+  --disco-title-shadow-1: #FF3D6E;
+  --disco-title-shadow-2: #3AB0FF;
+  --disco-sparkle-color: #FFF7E0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -275,7 +290,7 @@ button {
   z-index: 0;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  background: #1B0F2E;
+  background: var(--disco-backdrop);
   opacity: 0;
   /* Fast hide: app.js removes is-transitioning well before the panels
      finish landing (DISCO_HIDE_LEAD_MS), so this only needs to be quick
@@ -305,11 +320,11 @@ button {
   transform: translate(-50%, -50%);
   background: repeating-conic-gradient(
     from 0deg,
-    #FFD400 0deg 9deg,
-    #FF3D6E 9deg 18deg,
-    #8657FF 18deg 27deg,
-    #06D6A0 27deg 36deg,
-    #FF7A00 36deg 45deg
+    var(--disco-ray-1) 0deg 9deg,
+    var(--disco-ray-2) 9deg 18deg,
+    var(--disco-ray-3) 18deg 27deg,
+    var(--disco-ray-4) 27deg 36deg,
+    var(--disco-ray-5) 36deg 45deg
   );
   opacity: 0.85;
   animation: discoSpin 14s linear infinite;
@@ -332,9 +347,9 @@ button {
   font-weight: 900;
   font-style: italic;
   letter-spacing: 0.04em;
-  color: #FFF7E0;
-  -webkit-text-stroke: 2px #1B0F2E;
-  text-shadow: 5px 5px 0 #FF3D6E, 9px 9px 0 #3AB0FF;
+  color: var(--disco-title-fill);
+  -webkit-text-stroke: 2px var(--disco-title-stroke);
+  text-shadow: 5px 5px 0 var(--disco-title-shadow-1), 9px 9px 0 var(--disco-title-shadow-2);
   line-height: 1;
 }
 
@@ -343,7 +358,7 @@ button {
   z-index: 1;
   width: 1.6rem;
   height: 1.6rem;
-  color: #FFF7E0;
+  color: var(--disco-sparkle-color);
   animation: discoTwinkle 1.4s ease-in-out infinite;
 }
 .disco-sparkle-1  { top: 10%; left: 8%;  width: 1.3rem; height: 1.3rem; animation-delay: 0s; }

@@ -5,6 +5,8 @@
  *
  * Edit a slide: find its object below and change title / bullets / notes.
  * Add a slide: copy an object, bump `id`, insert it at the right position.
+ * Optional `disco: true/false` on a slide overrides CONFIG.disco.enabled
+ * just for the transition that lands on that slide.
  */
 
 // Shared skill.md skeleton — shown inline in the slide itself for the two

@@ -47,7 +47,7 @@
 <div class="app-shell">
 
   <aside class="toc-column">
-    <div class="toc-heading">Inhoud</div>
+    <div class="toc-heading" id="toc-heading"></div>
     <nav class="toc-list" id="toc-list" aria-label="Slide-navigatie"></nav>
   </aside>
 
@@ -55,10 +55,7 @@
     <div class="slide-stage" id="slide-stage">
       <div class="disco-bg" aria-hidden="true">
         <div class="disco-rays"></div>
-        <div class="disco-title">
-          <span>SKILLS</span>
-          <span>THRILLS</span>
-        </div>
+        <div class="disco-title" id="disco-title"></div>
         <svg class="icon icon--fill disco-sparkle disco-sparkle-1"><use href="#icon-spark"></use></svg>
         <svg class="icon icon--fill disco-sparkle disco-sparkle-2"><use href="#icon-spark"></use></svg>
         <svg class="icon icon--fill disco-sparkle disco-sparkle-3"><use href="#icon-spark"></use></svg>
@@ -81,34 +78,34 @@
     <div class="toc-widgets">
       <button id="btn-template" class="btn-floating btn-template" type="button">
         <svg class="icon"><use href="#icon-template"></use></svg>
-        <span>Skill Template</span>
+        <span id="btn-template-label"></span>
       </button>
 
       <div class="timer-widget" id="timer-widget">
         <div class="timer-readout">
           <svg class="icon"><use href="#icon-clock"></use></svg>
-          <span id="timer-display">30:00</span>
+          <span id="timer-display"></span>
         </div>
         <div class="timer-controls">
-          <button id="btn-timer-toggle" class="btn-pill" type="button">Start</button>
-          <button id="btn-timer-add5" class="btn-pill" type="button">+5 min</button>
+          <button id="btn-timer-toggle" class="btn-pill" type="button"></button>
+          <button id="btn-timer-add5" class="btn-pill" type="button"><span id="timer-add5-label"></span></button>
         </div>
         <button id="btn-timer-finish" class="btn-finish" type="button">
           <svg class="icon icon--fill"><use href="#icon-party"></use></svg>
-          <span>Klaar!</span>
+          <span id="btn-timer-finish-label"></span>
         </button>
       </div>
     </div>
 
     <div class="next-actions">
-      <div class="slide-progress" id="slide-progress">1 / 31</div>
+      <div class="slide-progress" id="slide-progress"></div>
       <button id="btn-next" class="btn-next" type="button">
         <svg class="icon"><use href="#icon-arrow-right"></use></svg>
-        <span>Volgende</span>
+        <span id="btn-next-label"></span>
       </button>
       <button id="btn-prev" class="btn-prev" type="button">
         <svg class="icon"><use href="#icon-arrow-left"></use></svg>
-        <span>Vorige</span>
+        <span id="btn-prev-label"></span>
       </button>
     </div>
   </aside>
@@ -117,34 +114,35 @@
 
 <div class="overlay-backdrop" id="template-overlay" hidden>
   <div class="overlay-panel" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
-    <button class="overlay-close" id="btn-overlay-close" type="button" aria-label="Sluiten">
+    <button class="overlay-close" id="btn-overlay-close" type="button">
       <svg class="icon"><use href="#icon-close"></use></svg>
     </button>
     <h2 id="overlay-title">
       <svg class="icon"><use href="#icon-template"></use></svg>
-      skill.md template
+      <span id="overlay-title-text"></span>
     </h2>
     <div class="overlay-body" id="overlay-body"></div>
   </div>
 </div>
 
 <div class="finish-overlay" id="finish-overlay" hidden>
-  <button class="overlay-close" id="btn-finish-close" type="button" aria-label="Terug naar de presentatie">
+  <button class="overlay-close" id="btn-finish-close" type="button">
     <svg class="icon"><use href="#icon-close"></use></svg>
   </button>
   <div class="finish-content">
     <svg class="icon finish-icon icon--fill"><use href="#icon-party"></use></svg>
-    <h2>Eindelijk kunnen we aan de slag!</h2>
-    <p>Tijd om je eigen <code>skill.md</code> te bouwen — schrijf het proces één keer goed op, en je hoeft het nooit meer opnieuw uit te leggen.</p>
+    <h2 id="finish-title"></h2>
+    <p id="finish-body"></p>
     <button class="btn-back-to-deck" id="btn-finish-back" type="button">
       <svg class="icon"><use href="#icon-arrow-left"></use></svg>
-      <span>Terug naar de presentatie</span>
+      <span id="finish-back-label"></span>
     </button>
   </div>
 </div>
 
 <canvas id="confetti-canvas"></canvas>
 
+<script src="config.js"></script>
 <script src="slides-data.js"></script>
 <script src="app.js"></script>
 </body>

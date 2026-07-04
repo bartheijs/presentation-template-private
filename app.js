@@ -1,7 +1,8 @@
 /*
  * Presentation logic: rendering, navigation, timer, confetti, template overlay.
  * Classic script (not a module) so this keeps working when opened via file://.
- * Depends on SLIDES / SKILL_TEMPLATE_SECTIONS from slides-data.js, loaded first.
+ * Depends on CONFIG from config.js and SLIDES / SKILL_TEMPLATE_SECTIONS from
+ * slides-data.js, both loaded first.
  */
 
 /* ---------- Small helpers ---------- */
@@ -140,12 +141,22 @@ const ANIM_IN_MS = 420;
 const DISCO_REVEAL_DELAY_MS = 90; // background starts fading in this long after "out" begins
 const DISCO_HIDE_LEAD_MS = 260; // start hiding the background this long before the panels land
 
+// A slide's own `disco` boolean overrides CONFIG.disco.enabled. The
+// *destination* slide decides, since goTo() already advances
+// state.currentIndex before calling animateTransition().
+function isDiscoEnabledFor(slide) {
+  return typeof slide.disco === 'boolean' ? slide.disco : CONFIG.disco.enabled;
+}
+
 function animateTransition(dir, applyFn) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
 
-  const revealTimer = setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS);
+  const discoOn = isDiscoEnabledFor(SLIDES[state.currentIndex]);
+  const revealTimer = discoOn
+    ? setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS)
+    : null;
 
   slideContentEl.addEventListener(
     'animationend',
@@ -166,8 +177,10 @@ function animateTransition(dir, applyFn) {
       slideContentEl.classList.add('content-anim-in');
       if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
 
-      const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
-      setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+      if (discoOn) {
+        const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+        setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+      }
 
       slideContentEl.addEventListener(
         'animationend',
@@ -193,6 +206,7 @@ document.getElementById('btn-prev').addEventListener('click', () =>
 document.addEventListener('keydown', (e) => {
   if (!finishOverlayEl.hidden) return;
   if (e.key === 'ArrowDown') {
+    if (!CONFIG.templateOverlay.enabled) return;
     e.preventDefault();
     if (overlayEl.hidden) openTemplateOverlay();
     return;
@@ -215,8 +229,8 @@ tocListEl.addEventListener('click', (e) => {
 
 /* ---------- Timer ---------- */
 
-const THIRTY_MIN_MS = 30 * 60 * 1000;
-const FIVE_MIN_MS = 5 * 60 * 1000;
+const THIRTY_MIN_MS = CONFIG.timer.defaultMinutes * 60 * 1000;
+const FIVE_MIN_MS = CONFIG.timer.addMinutes * 60 * 1000;
 
 const timer = {
   remainingMs: THIRTY_MIN_MS,
@@ -241,7 +255,7 @@ function timerStart() {
   timer.running = true;
   timer.endAt = Date.now() + timer.remainingMs;
   timer.intervalId = setInterval(timerTick, 250);
-  timerToggleBtn.textContent = 'Pause';
+  timerToggleBtn.textContent = CONFIG.ui.timerPause;
 }
 
 function timerPause() {
@@ -249,7 +263,7 @@ function timerPause() {
   timer.running = false;
   clearInterval(timer.intervalId);
   timer.remainingMs = Math.max(0, timer.endAt - Date.now());
-  timerToggleBtn.textContent = 'Start';
+  timerToggleBtn.textContent = CONFIG.ui.timerStart;
 }
 
 function timerAddFive() {
@@ -269,7 +283,7 @@ function timerTick() {
   if (timer.remainingMs <= 0) {
     clearInterval(timer.intervalId);
     timer.running = false;
-    timerToggleBtn.textContent = 'Start';
+    timerToggleBtn.textContent = CONFIG.ui.timerStart;
     if (!timer.firedZero) {
       timer.firedZero = true;
       launchConfetti();
@@ -292,7 +306,7 @@ renderTimerDisplay();
 
 const confettiCanvas = document.getElementById('confetti-canvas');
 const confettiCtx = confettiCanvas.getContext('2d');
-const CONFETTI_COLORS = ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'];
+const CONFETTI_COLORS = CONFIG.confettiColors;
 const PILE_COLUMN_WIDTH = 4;
 const SPAWN_INTERVAL_MS = 200;
 const SPAWN_BATCH_SIZE = 10;
@@ -456,9 +470,7 @@ function renderTemplateOverlay(highlightId) {
 
 function openTemplateOverlay() {
   const slide = SLIDES[state.currentIndex];
-  const slideNum = state.currentIndex + 1;
-  const highlight = slideNum >= 17 && slideNum <= 28 ? slide.templateSection : null;
-  renderTemplateOverlay(highlight);
+  renderTemplateOverlay(slide.templateSection || null);
   overlayEl.hidden = false;
 }
 
@@ -499,8 +511,37 @@ document.addEventListener('keydown', (e) => {
   else if (!overlayEl.hidden) closeTemplateOverlay();
 });
 
+/* ---------- Apply config-driven strings/toggles ---------- */
+
+function applyConfigStrings() {
+  document.title = CONFIG.title;
+  document.documentElement.lang = CONFIG.lang;
+
+  document.getElementById('toc-heading').textContent = CONFIG.toc.heading;
+  document.getElementById('disco-title').innerHTML = CONFIG.disco.titleLines
+    .map((line) => `<span>${escapeHtml(line)}</span>`)
+    .join('');
+
+  document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
+  document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
+  timerToggleBtn.textContent = CONFIG.ui.timerStart;
+  document.getElementById('timer-add5-label').textContent = `+${CONFIG.timer.addMinutes} min`;
+  document.getElementById('btn-timer-finish-label').textContent = CONFIG.ui.timerFinish;
+  document.getElementById('btn-next-label').textContent = CONFIG.ui.navNext;
+  document.getElementById('btn-prev-label').textContent = CONFIG.ui.navPrev;
+
+  document.getElementById('btn-overlay-close').setAttribute('aria-label', CONFIG.ui.overlayCloseLabel);
+  document.getElementById('overlay-title-text').textContent = CONFIG.ui.overlayTitle;
+
+  document.getElementById('btn-finish-close').setAttribute('aria-label', CONFIG.ui.backToDeckLabel);
+  document.getElementById('finish-title').textContent = CONFIG.ui.finishTitle;
+  document.getElementById('finish-body').innerHTML = CONFIG.ui.finishBodyHtml;
+  document.getElementById('finish-back-label').textContent = CONFIG.ui.backToDeckLabel;
+}
+
 /* ---------- Init ---------- */
 
+applyConfigStrings();
 renderTocOnce();
 renderSlide();
 updateTocActiveState();
