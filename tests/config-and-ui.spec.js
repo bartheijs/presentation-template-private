@@ -25,7 +25,10 @@ test.describe('config-driven UI strings', () => {
     await expect(page.locator('#btn-finish-close')).toHaveAttribute('aria-label', 'Terug naar de presentatie');
     await expect(page.locator('#finish-title')).toHaveText('Eindelijk kunnen we aan de slag!');
     await expect(page.locator('#finish-back-label')).toHaveText('Terug naar de presentatie');
-    await expect(page.locator('#slide-progress')).toHaveText('1 / 31');
+    // Derived from SLIDES rather than hardcoded, so this test doesn't need
+    // updating every time a slide is added/removed from this deck.
+    const total = await page.evaluate(() => SLIDES.length);
+    await expect(page.locator('#slide-progress')).toHaveText(`1 / ${total}`);
   });
 
   test('templateOverlay.enabled true shows the button and ArrowDown opens it', async ({ page }) => {
@@ -48,5 +51,28 @@ test.describe('config-driven UI strings', () => {
     await expect(page.locator('#btn-template')).toBeHidden();
     await page.keyboard.press('ArrowDown');
     await expect(page.locator('#template-overlay')).toBeHidden();
+  });
+
+  test('an incomplete CONFIG still renders instead of crashing', async ({ page }) => {
+    // Simulates a presentation branch shipping a stripped-down config.js
+    // (e.g. missing the whole `ui` or `disco` section) — normalizeConfig()
+    // should backfill defaults so applyConfigStrings() and friends don't
+    // throw and blank the page.
+    await gotoPresentation(page);
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    await page.evaluate(() => {
+      delete CONFIG.ui;
+      delete CONFIG.disco;
+      delete CONFIG.layout;
+      normalizeConfig(CONFIG, CONFIG_DEFAULTS);
+      applyConfigStrings();
+      renderSlide();
+    });
+
+    expect(errors).toEqual([]);
+    await expect(page.locator('#btn-template-label')).toHaveText('Skill Template');
+    await expect(page.locator('.slide-heading')).toBeVisible();
   });
 });

@@ -79,12 +79,18 @@ sub-agents of code execution.
      of een gerichte update gaat, vraag dit expliciet aan de gebruiker
      voordat je iets overschrijft.
 4. Bevat het document frontmatter-velden, werk dan alléén de bijbehorende
-   sleutels in `config.js` bij (bijv. alleen `disco tekst` opgegeven →
-   alleen `CONFIG.disco.titleLines` aanpassen; alleen `disco modus`
-   opgegeven → alleen `CONFIG.disco.mode` aanpassen; alleen `uitlijning
-   standaard` opgegeven → alleen `CONFIG.layout.align` aanpassen; de rest
-   van `config.js` ongemoeid laten). Ontbreekt de frontmatter volledig, laat
-   `config.js` dan helemaal met rust.
+   sleutels in `config.js` bij, per veld:
+   - `titel` → `CONFIG.title`
+   - `taal` → `CONFIG.lang`
+   - `timer minuten` → `CONFIG.timer.defaultMinutes`
+   - `disco standaard` → `CONFIG.disco.enabled`
+   - `disco tekst` → `CONFIG.disco.titleLines`
+   - `disco modus` → `CONFIG.disco.mode`
+   - `uitlijning standaard` → `CONFIG.layout.align`
+
+   Pas alleen de sleutels aan die daadwerkelijk in de frontmatter voorkomen;
+   laat de rest van `config.js` ongemoeid. Ontbreekt de frontmatter volledig,
+   laat `config.js` dan helemaal met rust.
 5. Ontbreekt een passend icoon in de vaste lijst voor een nieuwe/gewijzigde
    slide, voeg dan één nieuwe `<symbol id="icon-...">` toe aan de sprite in
    `index.html` (regels 13-44) — enige toegestane wijziging buiten

@@ -5,6 +5,59 @@
  * slides-data.js, both loaded first.
  */
 
+/* ---------- Config normalization ---------- */
+
+// Fallback values for every CONFIG key this file reads. A presentation
+// branch with an incomplete config.js (a missing section, or the whole file
+// stripped down) must not crash — several reads below (the timer/confetti
+// constants) run at module-evaluation time, before anything is rendered, so
+// a thrown error here would blank the entire page with no visible cause.
+const CONFIG_DEFAULTS = {
+  lang: 'nl',
+  title: 'Presentatie',
+  toc: { heading: 'Inhoud' },
+  layout: { align: 'center' },
+  disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
+  timer: { defaultMinutes: 30, addMinutes: 5 },
+  confettiColors: ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'],
+  templateOverlay: { enabled: true },
+  ui: {
+    templateButton: 'Skill Template',
+    notesToggleHide: 'Notities verbergen',
+    notesToggleShow: 'Notities tonen',
+    timerStart: 'Start',
+    timerPause: 'Pause',
+    timerFinish: 'Klaar!',
+    navNext: 'Volgende',
+    navPrev: 'Vorige',
+    overlayCloseLabel: 'Sluiten',
+    overlayTitle: 'Template',
+    backToDeckLabel: 'Terug naar de presentatie',
+    finishTitle: 'Klaar!',
+    finishBodyHtml: '',
+  },
+};
+
+// Mutates `cfg` in place, filling in any key missing (or non-object, where a
+// nested section is expected) with the matching fallback from `defaults`.
+// CONFIG is declared `const` in config.js, so this fills gaps in the
+// existing object rather than replacing it.
+function normalizeConfig(cfg, defaults) {
+  for (const key of Object.keys(defaults)) {
+    const defaultVal = defaults[key];
+    const isSection = defaultVal && typeof defaultVal === 'object' && !Array.isArray(defaultVal);
+    if (isSection) {
+      if (!cfg[key] || typeof cfg[key] !== 'object') cfg[key] = {};
+      normalizeConfig(cfg[key], defaultVal);
+    } else if (cfg[key] === undefined) {
+      cfg[key] = defaultVal;
+    }
+  }
+  return cfg;
+}
+
+normalizeConfig(CONFIG, CONFIG_DEFAULTS);
+
 /* ---------- Small helpers ---------- */
 
 function escapeHtml(str) {
@@ -65,8 +118,12 @@ const finishOverlayEl = document.getElementById('finish-overlay');
 // muted line shown below the main bullet text.
 function renderBulletItem(b) {
   const isObj = typeof b === 'object' && b !== null;
-  const text = isObj ? b.text : b;
-  const subtext = isObj ? b.subtext : null;
+  // A malformed entry (null/undefined element, or an object missing `text`)
+  // must not crash inlineMarkdown()/escapeHtml(), which require a string —
+  // fall back to an empty string rather than throwing and blanking the
+  // whole slide.
+  const text = (isObj ? b.text : b) || '';
+  const subtext = isObj && typeof b.subtext === 'string' ? b.subtext : null;
   const body = subtext
     ? `<span class="slide-bullet-stack"><span>${inlineMarkdown(text)}</span><span class="slide-bullet-subtext">${inlineMarkdown(subtext)}</span></span>`
     : `<span>${inlineMarkdown(text)}</span>`;
@@ -125,7 +182,7 @@ function renderSlide() {
     (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
   const hasNotesText = Boolean(slide.notes && slide.notes.trim());
-  const showNotes = hasNotesText && !notesHiddenByUser;
+  const showNotes = shouldShowNotes(slide);
   slideNotesEl.hidden = !showNotes;
   slideStageEl.classList.toggle('stage-no-notes', !showNotes);
   // Populated whenever the slide actually has notes, regardless of the
@@ -182,6 +239,15 @@ function updateTocActiveState() {
 // advanced), this holds the pending destination so a matching second
 // click/arrow can finish it. Any non-matching navigation cancels it.
 let pendingPause = null; // { toIndex, dir } | null
+
+// Handles for the "out"-phase timer/listener currently in flight, so
+// resetAnimationState() can reach and tear them down if a TOC click
+// interrupts a transition before they fire on their own. Both functions
+// that start an "out" phase (animateTransition/beginPausedTransition) must
+// keep these in sync: set on start, clear (to null) once the out phase
+// completes normally.
+let pendingRevealTimer = null;
+let pendingOutListener = null;
 
 function goTo(index, { animate = false, direction = null } = {}) {
   if (index < 0 || index >= SLIDES.length) return;
@@ -258,46 +324,46 @@ function animateTransition(dir, applyFn) {
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
 
   const discoOn = isDiscoEnabledFor(SLIDES[state.currentIndex]);
-  const revealTimer = discoOn
+  pendingRevealTimer = discoOn
     ? setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS)
     : null;
 
-  slideContentEl.addEventListener(
-    'animationend',
-    function onOut() {
-      slideContentEl.removeEventListener('animationend', onOut);
-      clearTimeout(revealTimer);
-      // Swap in the new slide's content WHILE still hidden by the "out"
-      // classes (which hold the panel off-screen via animation-fill-mode:
-      // forwards). renderSlide() forces a synchronous reflow (scrollTop),
-      // so if we removed the "out" classes first, that reflow could catch
-      // the panel mid-snap-back to its normal (visible, in-place) resting
-      // style and paint a one-frame flash before the "in" class re-hides
-      // it. Doing the swap first, then flipping classes back-to-back with
-      // nothing forcing a reflow in between, avoids that flash entirely.
-      applyFn();
-      slideContentEl.classList.remove('content-anim-out');
-      slideNotesEl.classList.remove('notes-anim-out');
-      slideContentEl.classList.add('content-anim-in');
-      if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+  function onOut() {
+    slideContentEl.removeEventListener('animationend', onOut);
+    clearTimeout(pendingRevealTimer);
+    pendingRevealTimer = null;
+    pendingOutListener = null;
+    // Swap in the new slide's content WHILE still hidden by the "out"
+    // classes (which hold the panel off-screen via animation-fill-mode:
+    // forwards). renderSlide() forces a synchronous reflow (scrollTop),
+    // so if we removed the "out" classes first, that reflow could catch
+    // the panel mid-snap-back to its normal (visible, in-place) resting
+    // style and paint a one-frame flash before the "in" class re-hides
+    // it. Doing the swap first, then flipping classes back-to-back with
+    // nothing forcing a reflow in between, avoids that flash entirely.
+    applyFn();
+    slideContentEl.classList.remove('content-anim-out');
+    slideNotesEl.classList.remove('notes-anim-out');
+    slideContentEl.classList.add('content-anim-in');
+    if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
 
-      if (discoOn) {
-        const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
-        setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
-      }
+    if (discoOn) {
+      const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+      setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+    }
 
-      slideContentEl.addEventListener(
-        'animationend',
-        () => {
-          slideContentEl.classList.remove('content-anim-in');
-          slideNotesEl.classList.remove('notes-anim-in');
-          isAnimatingSlide = false;
-        },
-        { once: true }
-      );
-    },
-    { once: true }
-  );
+    slideContentEl.addEventListener(
+      'animationend',
+      () => {
+        slideContentEl.classList.remove('content-anim-in');
+        slideNotesEl.classList.remove('notes-anim-in');
+        isAnimatingSlide = false;
+      },
+      { once: true }
+    );
+  }
+  pendingOutListener = onOut;
+  slideContentEl.addEventListener('animationend', onOut, { once: true });
 }
 
 // 'pause' mode: play only the "out" half, then freeze fully visible on the
@@ -310,29 +376,33 @@ function beginPausedTransition(dir, toIndex) {
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
 
-  const revealTimer = setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS);
+  pendingRevealTimer = setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS);
 
-  slideContentEl.addEventListener(
-    'animationend',
-    function onOut() {
-      slideContentEl.removeEventListener('animationend', onOut);
-      clearTimeout(revealTimer);
-      // Freeze here: outgoing content/notes stay held off-screen by the
-      // still-applied "out" classes, disco stays fully opaque (no hide
-      // timer scheduled), state.currentIndex and the rendered slide
-      // deliberately do not advance until resumePausedTransition() runs.
-      isAnimatingSlide = false;
-      pendingPause = { toIndex, dir };
-      renderPausedProgress();
-    },
-    { once: true }
-  );
+  function onOut() {
+    slideContentEl.removeEventListener('animationend', onOut);
+    clearTimeout(pendingRevealTimer);
+    pendingRevealTimer = null;
+    pendingOutListener = null;
+    // Freeze here: outgoing content/notes stay held off-screen by the
+    // still-applied "out" classes, disco stays fully opaque (no hide
+    // timer scheduled), state.currentIndex and the rendered slide
+    // deliberately do not advance until resumePausedTransition() runs.
+    isAnimatingSlide = false;
+    pendingPause = { toIndex, dir };
+    renderPausedProgress();
+  }
+  pendingOutListener = onOut;
+  slideContentEl.addEventListener('animationend', onOut, { once: true });
 }
 
 function renderPausedProgress() {
   const from = state.currentIndex + 1;
   const to = pendingPause.toIndex + 1;
-  const mid = (from + to) / 2; // next/prev only ever request ±1, so always fromN.5
+  // Assumes |to - from| === 1 (always true today: pendingPause is only ever
+  // set from goTo()'s next/prev ±1 calls), so this always lands on fromN.5.
+  // A future caller that animates a jump of more than one slide would need
+  // to revisit this formula first.
+  const mid = (from + to) / 2;
   slideProgressEl.textContent = `${String(mid).replace('.', ',')} / ${SLIDES.length}`;
 }
 
@@ -392,10 +462,24 @@ function cancelPendingPause() {
 // stale state (or a permanently stuck isAnimatingSlide) survives the jump.
 // renderSlide() itself already overwrites slideContentEl's className right
 // after this runs, so this mainly guards slideNotesEl/slideStageEl and the
-// isAnimatingSlide flag.
+// isAnimatingSlide flag. Also tears down the interrupted "out" phase's timer
+// and animationend listener (see pendingRevealTimer/pendingOutListener) —
+// left alone, the timer would later re-add 'is-transitioning' to an
+// unrelated slide, and the {once:true} listener never fires on its own
+// (removing its class mid-flight triggers animationcancel, not
+// animationend), leaving it attached to fire unexpectedly on a later
+// transition.
 function resetAnimationState() {
   pendingPause = null;
   isAnimatingSlide = false;
+  if (pendingRevealTimer) {
+    clearTimeout(pendingRevealTimer);
+    pendingRevealTimer = null;
+  }
+  if (pendingOutListener) {
+    slideContentEl.removeEventListener('animationend', pendingOutListener);
+    pendingOutListener = null;
+  }
   slideContentEl.classList.remove('content-anim-out', 'content-anim-in');
   slideNotesEl.classList.remove('notes-anim-out', 'notes-anim-in');
   slideStageEl.classList.remove('is-transitioning');

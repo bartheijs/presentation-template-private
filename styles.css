@@ -60,6 +60,14 @@
 
 * { box-sizing: border-box; }
 
+/* The browser default [hidden] rule has the same specificity as a plain
+   class selector, so any element also matched by a `display`-setting class
+   (.btn-floating, .slide-notes, .overlay-backdrop, .finish-overlay, ...)
+   would stay visible despite the `hidden` attribute, purely based on
+   cascade order. This one !important rule replaces 4 near-identical
+   one-off overrides that each re-fixed the same issue per element. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   height: 100%;
@@ -173,7 +181,6 @@ button {
 }
 .btn-floating:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 26px rgba(134, 87, 255, 0.35); }
 .btn-floating:active { transform: translateY(0) scale(0.99); }
-.btn-floating[hidden] { display: none; }
 
 .timer-widget {
   background: var(--surface);
@@ -549,7 +556,6 @@ button {
   align-items: center;
 }
 .slide-notes > * { width: 100%; max-width: 38rem; }
-.slide-notes[hidden] { display: none; }
 .slide-notes p { margin: 0 0 0.85rem; }
 .slide-notes ul, .slide-notes ol {
   margin: 0 0 0.85rem;
@@ -671,6 +677,7 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .slide-content[class*="anim-"], .slide-notes[class*="anim-"] { animation: none !important; }
+  .slide-content { transition: none !important; }
 }
 
 /* ---------- Skill template overlay ---------- */
@@ -686,7 +693,6 @@ button {
   z-index: 1000;
   padding: 2rem;
 }
-.overlay-backdrop[hidden] { display: none; }
 
 .overlay-panel {
   position: relative;
@@ -761,7 +767,6 @@ button {
   background-size: 200% 200%;
   animation: finishGradient 8s ease infinite;
 }
-.finish-overlay[hidden] { display: none; }
 
 @keyframes finishGradient {
   0%   { background-position: 0% 50%; }

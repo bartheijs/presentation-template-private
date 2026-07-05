@@ -132,6 +132,25 @@ test.describe('bullet subtext', () => {
   });
 });
 
+test.describe('malformed bullet entries', () => {
+  test('null/undefined entries and an object without text render without crashing', async ({ page }) => {
+    await gotoPresentation(page);
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    await page.evaluate(() => {
+      SLIDES[4].bullets = [null, undefined, { subtext: 'orphan subtext, no text' }, 'A real bullet'];
+      state.currentIndex = 4;
+      renderSlide();
+    });
+
+    expect(errors).toEqual([]);
+    const items = page.locator('.slide-bullets li');
+    await expect(items).toHaveCount(4);
+    await expect(items.last()).toHaveText('A real bullet');
+  });
+});
+
 test.describe('isTemplateAnchor slides', () => {
   test('slide 9 renders compact with the inline skill.md code block', async ({ page }) => {
     await gotoPresentation(page);

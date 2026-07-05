@@ -155,6 +155,32 @@ test.describe('pause-mode transition', () => {
   });
 });
 
+test.describe('interrupted transitions (resetAnimationState)', () => {
+  test('a TOC click mid-animation does not leak the reveal timer or animationend listener', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.click('#btn-next'); // starts an animated "out" phase (280ms out, disco reveal at 90ms)
+    await page.click('.toc-item[data-index="10"]'); // interrupts immediately, before onOut ever fires
+    await waitIdle(page);
+
+    const jumped = await page.evaluate(() => state.currentIndex);
+    expect(jumped).toBe(10);
+
+    // The interrupted transition's reveal timer would otherwise fire ~90ms
+    // after the original click and re-add 'is-transitioning' to this
+    // unrelated slide; resetAnimationState() must have cleared it.
+    await page.waitForTimeout(200);
+    await expect(page.locator('#slide-stage')).not.toHaveClass(/is-transitioning/);
+
+    // A leaked {once:true} animationend listener from the interrupted
+    // transition would stay attached to slideContentEl; confirm a fresh
+    // transition still completes normally afterward instead of misbehaving.
+    await page.click('#btn-next');
+    await waitIdle(page);
+    const afterIndex = await page.evaluate(() => state.currentIndex);
+    expect(afterIndex).toBe(11);
+  });
+});
+
 test.describe('non-pause navigation is unaffected (regression)', () => {
   test('a plain auto-mode transition completes in a single click', async ({ page }) => {
     await gotoPresentation(page);
