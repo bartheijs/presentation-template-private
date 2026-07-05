@@ -20,7 +20,8 @@ Dubbelklik `index.html` (of open het via je browser). Dat is alles.
 - `config.js` — presentatie-brede instellingen: titel, taal, timerduur, disco aan/uit + tekst, confetti-kleuren, UI-teksten. Zie hieronder.
 - `slides-data.js` — alle slides (`SLIDES`) plus het gedeelde `SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS` skelet dat zowel in de notes van slide 9/30 als in de overlay wordt gebruikt.
 - `app.js` — rendering, navigatie, timer en confetti.
-- `styles.css` — layout (CSS grid, 70/30-split via flex-ratio's), kleurenpalet (via CSS-variabelen in `:root`), animaties.
+- `styles.css` — layout (CSS grid, 70/30-split via flex-ratio's), kleurenpalet + fonts (via CSS-variabelen in `:root`), animaties.
+- `tests/` — optionele Playwright-testsuite (zie `tests/README.md`); vereist alleen dependencies als je 'm wilt draaien, niet om de presentatie te bekijken.
 
 ## Een slide bewerken of toevoegen
 
@@ -45,7 +46,13 @@ twee projectskills:
 - `.claude/skills/scaffold-presentation` — zet een hele nieuwe presentatie op vanuit een content-document.
 - `.claude/skills/update-slides` — werkt slides in een bestaande presentatie bij (toevoegen/wijzigen), zonder de rest te raken.
 
-Zie die `SKILL.md`-bestanden voor het exacte documentformaat.
+Zie die `SKILL.md`-bestanden voor het exacte documentformaat, of gebruik
+`content-template.md` in de repo-root als leeg invul-sjabloon.
+
+Na een wijziging aan de engine (`app.js`/`styles.css`/`config.js`/
+`slides-data.js`) kan `.claude/skills/test-presentation` de ingecheckte
+Playwright-testsuite (`tests/`, zie `tests/README.md`) draaien en
+interpreteren.
 
 ### Bekende grenzen
 
@@ -56,9 +63,11 @@ Zie die `SKILL.md`-bestanden voor het exacte documentformaat.
 
 De pagina wordt via `file://` geopend (dubbelklikken), en browsers blokkeren `fetch()` en `<script type="module">` in die context. Daarom zijn `config.js`, `slides-data.js` en `app.js` bewust **classic scripts**, in die laadvolgorde: ze delen top-level scope, dus `app.js` kan `CONFIG`/`SLIDES` gewoon direct gebruiken.
 
-## Kleuren aanpassen
+## Kleuren en fonts aanpassen
 
 Alle kleuren staan als CSS custom properties bovenaan `styles.css` (`--accent`, `--accent-2`, ... `--bg`, `--surface`, plus `--disco-*` voor de disco-achtergrond). Wijzig die om het palet aan te passen; de site ondersteunt ook een donker `prefers-color-scheme`-thema (de disco-kleuren blijven bewust hetzelfde in light/dark). Confetti-kleuren staan los daarvan in `config.js` (`confettiColors`).
+
+Fonts staan om dezelfde reden ook in `styles.css`, niet in `config.js`: `--font-heading` (slide-titels), `--font-bullet` (bullet-tekst) en `--font-body` (alle overige tekst) staan elk standaard op `--font-sans`, en kunnen onafhankelijk van elkaar overschreven worden. `--font-mono` (code, timer, TOC-nummers) blijft ongemoeid.
 
 ## Sneltoetsen
 

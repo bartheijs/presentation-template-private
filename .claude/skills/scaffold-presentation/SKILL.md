@@ -125,6 +125,11 @@ sub-agents of code execution.
 
 ## Process
 
+0. Heeft de gebruiker nog geen content-document aangeleverd? Verwijs dan
+   naar `content-template.md` in de repo-root (of bied aan om er een kopie
+   van te maken/in te vullen op basis van een korte beschrijving) in plaats
+   van simpelweg te wachten — dat sjabloon volgt exact het hieronder
+   beschreven formaat.
 1. Lees het volledige content-document.
 2. Vertaal de frontmatter naar een `config.js`, in exact dezelfde vorm als
    het bestaande `config.js` in deze repo (classic script, `const CONFIG =
