@@ -74,8 +74,14 @@ function renderBulletItem(b) {
 }
 
 function buildSlideContentHTML(slide) {
-  const bulletsBlock = slide.bullets.length
-    ? `<ul class="slide-bullets">${slide.bullets.map(renderBulletItem).join('')}</ul>`
+  // A malformed slide (e.g. a generation slip missing `bullets`/`title`)
+  // degrades to blank-ish here instead of throwing — since renderTocOnce()
+  // renders every slide's title in one pass at startup, one bad slide
+  // anywhere in the deck would otherwise crash the entire presentation
+  // before it ever shows anything.
+  const bullets = slide.bullets || [];
+  const bulletsBlock = bullets.length
+    ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
     : '';
   const templateBlock = slide.isTemplateAnchor
     ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
@@ -84,7 +90,7 @@ function buildSlideContentHTML(slide) {
     <div class="slide-inner">
       <div class="slide-heading">
         <svg class="icon"><use href="#icon-${slide.icon}"></use></svg>
-        <h1>${escapeHtml(slide.title)}</h1>
+        <h1>${escapeHtml(slide.title || '')}</h1>
       </div>
       ${bulletsBlock}
       ${templateBlock}
@@ -117,11 +123,13 @@ function renderSlide() {
 }
 
 function renderTocOnce() {
+  // One malformed slide (missing title) must not crash rendering for the
+  // whole deck — this runs once at startup for every slide at once.
   tocListEl.innerHTML = SLIDES.map(
     (s, i) => `
       <button class="toc-item" data-index="${i}" type="button">
         <span class="toc-num">${String(i + 1).padStart(2, '0')}</span>
-        <span class="toc-title">${escapeHtml(s.title)}</span>
+        <span class="toc-title">${escapeHtml(s.title || '')}</span>
       </button>`
   ).join('');
 }

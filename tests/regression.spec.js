@@ -28,6 +28,59 @@ test('clicking through all 31 slides produces no console/page errors', async ({ 
   expect(errors).toEqual([]);
 });
 
+test.describe('malformed slide data degrades gracefully', () => {
+  // A generation slip (scaffold-presentation/update-slides skills, or a
+  // hand-edit) omitting `title`/`bullets` on any slide must not crash the
+  // whole deck — renderTocOnce() renders every slide's title in one pass
+  // at startup, so one bad slide previously broke the entire presentation.
+
+  test('a slide missing `title` elsewhere in the deck does not break the TOC', async ({ page }) => {
+    await gotoPresentation(page);
+    const result = await page.evaluate(() => {
+      delete SLIDES[10].title;
+      try {
+        renderTocOnce();
+        return { crashed: false };
+      } catch (e) {
+        return { crashed: true, message: e.message };
+      }
+    });
+    expect(result.crashed).toBe(false);
+  });
+
+  test('a slide missing `bullets` renders blank-ish instead of crashing', async ({ page }) => {
+    await gotoPresentation(page);
+    const result = await page.evaluate(() => {
+      delete SLIDES[2].bullets;
+      try {
+        state.currentIndex = 2;
+        renderSlide();
+        return { crashed: false };
+      } catch (e) {
+        return { crashed: true, message: e.message };
+      }
+    });
+    expect(result.crashed).toBe(false);
+    await expect(page.locator('.slide-bullets')).toHaveCount(0);
+  });
+
+  test('a slide missing `title` renders an empty heading instead of crashing', async ({ page }) => {
+    await gotoPresentation(page);
+    const result = await page.evaluate(() => {
+      delete SLIDES[2].title;
+      try {
+        state.currentIndex = 2;
+        renderSlide();
+        return { crashed: false };
+      } catch (e) {
+        return { crashed: true, message: e.message };
+      }
+    });
+    expect(result.crashed).toBe(false);
+    await expect(page.locator('.slide-heading h1')).toHaveText('');
+  });
+});
+
 test('opening and closing both overlays produces no errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));

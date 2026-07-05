@@ -157,9 +157,13 @@ sub-agents of code execution.
    nieuwe iconen zijn toegevoegd.
 7. Controleer of alle `##`-secties uit het document zijn verwerkt en of elk
    slide-object een geldig `icon` heeft (bestaat als `<symbol>` in
-   `index.html`). Ontbreekt er iets of is een sectie onduidelijk (bijv. geen
-   enkele bullet én geen notes), stel dan eerst een vraag voordat je
-   oplevert.
+   `index.html`). **Controleer ook expliciet dat elk slide-object een
+   niet-lege `title` (string) heeft en een `bullets`-veld dat een array is
+   (`[]` is prima, `undefined`/ontbrekend niet)** — één slide zonder deze
+   twee velden breekt de hele presentatie bij het opstarten, niet alleen die
+   ene slide (zie Rules). Ontbreekt er iets of is een sectie onduidelijk
+   (bijv. geen enkele bullet én geen notes), stel dan eerst een vraag voordat
+   je oplevert.
 
 ## Output
 
@@ -181,3 +185,7 @@ sub-agents of code execution.
 - NOOIT het skill.md-sjabloonconcept (`isTemplateAnchor`, `templateSection`,
   `SKILL_TEMPLATE_MD`/`SECTIONS`) toevoegen tenzij het content-document dat
   expliciet beschrijft.
+- NOOIT een slide-object opleveren zonder `title` (niet-lege string) of
+  zonder `bullets` (array, mag leeg zijn). `app.js` degradeert dit
+  tegenwoordig defensief (lege titel/geen bullets i.p.v. een crash), maar
+  dat is een vangnet — geen excuus om deze velden achterwege te laten.

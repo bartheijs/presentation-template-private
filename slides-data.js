@@ -13,6 +13,11 @@
  * slide's content block (heading + bullets). A bullet in `bullets` is
  * either a plain string, or `{ text, subtext }` for a smaller, muted line
  * shown below the main bullet text.
+ *
+ * `title` and `bullets` should always be present (title a non-empty
+ * string, bullets an array — `[]` is fine). app.js degrades a missing one
+ * defensively rather than crashing, but don't rely on that — a single
+ * malformed slide is still worth fixing properly.
  */
 
 // Shared skill.md skeleton — shown inline in the slide itself for the two

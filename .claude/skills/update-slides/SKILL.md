@@ -95,9 +95,13 @@ sub-agents of code execution.
    toepassing) zijn aangepast.
 8. Controleer of elke `##`-sectie uit het document daadwerkelijk is verwerkt
    en of geen niet-genoemde slide per ongeluk is aangepast of van positie is
-   veranderd. Ontbreekt er iets of is een match dubbelzinnig (bijv. twee
-   bestaande slides met (bijna) dezelfde titel), stel dan eerst een vraag
-   voordat je oplevert.
+   veranderd. **Controleer ook expliciet dat elke toegevoegde/gewijzigde
+   slide een niet-lege `title` (string) en een `bullets`-array heeft** (`[]`
+   is prima, `undefined`/ontbrekend niet) — één slide zonder deze twee
+   velden breekt de hele presentatie bij het opstarten, niet alleen die ene
+   slide (zie Rules). Ontbreekt er iets of is een match dubbelzinnig (bijv.
+   twee bestaande slides met (bijna) dezelfde titel), stel dan eerst een
+   vraag voordat je oplevert.
 
 ## Output
 
@@ -115,3 +119,7 @@ sub-agents of code execution.
 - NOOIT `config.js`-sleutels aanpassen die niet in de frontmatter van het
   document voorkomen.
 - NOOIT `app.js`/`styles.css` aanraken voor deze skill.
+- NOOIT een slide-object opleveren zonder `title` (niet-lege string) of
+  zonder `bullets` (array, mag leeg zijn). `app.js` degradeert dit
+  tegenwoordig defensief (lege titel/geen bullets i.p.v. een crash), maar
+  dat is een vangnet — geen excuus om deze velden achterwege te laten.
