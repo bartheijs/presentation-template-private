@@ -397,7 +397,6 @@ button {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  text-align: center;
 }
 
 .slide-content--compact {
@@ -410,6 +409,25 @@ button {
 
 .slide-stage.stage-no-notes .slide-content {
   flex: 1 1 auto;
+}
+
+/* 8 of 12 columns, centered as a block regardless of content alignment
+   (.slide-content's own align-items:center above never changes) — only
+   this wrapper's own align-items/text-align flips with the modifier below. */
+.slide-inner {
+  width: min(66.6667%, 64rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.slide-content--align-left .slide-inner {
+  align-items: flex-start;
+  text-align: left;
+}
+.slide-content--align-left .slide-heading {
+  justify-content: flex-start;
 }
 
 .slide-heading {
@@ -443,7 +461,7 @@ button {
   flex-direction: column;
   align-items: stretch;
   gap: 1.1rem;
-  max-width: 48rem;
+  width: 100%;
 }
 .slide-bullets li {
   display: flex;
@@ -459,10 +477,19 @@ button {
   width: 1.05rem;
   height: 1.05rem;
 }
+.slide-bullet-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.slide-bullet-subtext {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
 
 .slide-template-code {
   margin: 0.5rem 0 0;
-  max-width: 52rem;
   width: 100%;
   text-align: left;
   font-family: var(--font-mono);
@@ -805,4 +832,5 @@ button {
   .toc-widgets { flex-direction: row; flex-wrap: wrap; }
   .next-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .btn-next { padding: 1rem; }
+  .slide-inner { width: 100%; max-width: none; }
 }

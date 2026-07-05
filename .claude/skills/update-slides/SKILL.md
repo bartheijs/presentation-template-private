@@ -21,11 +21,13 @@ hun `isTemplateAnchor`/`templateSection`-velden, of ongerelateerde
 
 - Het (deel-)content-document van de gebruiker.
 - De bestaande `slides-data.js` in deze repo (`SLIDES`-array, vorm:
-  `{ id, title, icon, bullets, notes, disco?, discoMode?, isTemplateAnchor?, templateSection? }`.
+  `{ id, title, icon, bullets, notes, disco?, discoMode?, align?, isTemplateAnchor?, templateSection? }`.
   `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
-  slide aan staat.)
+  slide aan staat. `align` (`'center'`/`'left'`) overschrijft
+  `CONFIG.layout.align` voor die ene slide. Een item in `bullets` is een
+  plain string, óf `{ text, subtext }`.)
   en `config.js` (vorm: zie dat bestand — `lang`, `title`, `toc.heading`,
-  `disco.enabled`/`disco.titleLines`/`disco.mode`,
+  `layout.align`, `disco.enabled`/`disco.titleLines`/`disco.mode`,
   `timer.defaultMinutes`/`addMinutes`, `confettiColors`,
   `templateOverlay.enabled`, `ui.*`).
 - Beschikbare iconen (`<symbol id="icon-...">` in `index.html`):
@@ -39,7 +41,8 @@ hun `isTemplateAnchor`/`templateSection`-velden, of ongerelateerde
 
 Zelfde formaat als bij `scaffold-presentation`: optionele `---`-frontmatter
 met document-brede instellingen, gevolgd door `##`-koppen per slide met
-optionele `Icon:`/`Disco:`/`Disco modus:`-regels, een bullet-lijst en een
+optionele `Icon:`/`Disco:`/`Disco modus:`/`Uitlijning:`-regels, een
+bullet-lijst (met optionele ingesprongen `subtext:`-vervolgregels) en een
 `Notes:`-sectie. Hier mag het document echter **een deelverzameling** van de
 slides bevatten — alleen de slides die je wilt toevoegen of wijzigen.
 
@@ -64,7 +67,7 @@ sub-agents of code execution.
      bestaande `SLIDES`-array.
      - Bestaat de titel al → overschrijf alleen die entry's `title`, `icon`
        (als opgegeven), `bullets`, `notes`, `disco` (als opgegeven),
-       `discoMode` (als opgegeven). Laat bestaande
+       `discoMode` (als opgegeven), `align` (als opgegeven). Laat bestaande
        `isTemplateAnchor`/`templateSection`-velden van díe entry ongemoeid
        tenzij het document ze expliciet aanpast.
      - Bestaat de titel nog niet → nieuwe slide, toegevoegd aan het eind van
@@ -78,9 +81,10 @@ sub-agents of code execution.
 4. Bevat het document frontmatter-velden, werk dan alléén de bijbehorende
    sleutels in `config.js` bij (bijv. alleen `disco tekst` opgegeven →
    alleen `CONFIG.disco.titleLines` aanpassen; alleen `disco modus`
-   opgegeven → alleen `CONFIG.disco.mode` aanpassen; de rest van `config.js`
-   ongemoeid laten). Ontbreekt de frontmatter volledig, laat `config.js`
-   dan helemaal met rust.
+   opgegeven → alleen `CONFIG.disco.mode` aanpassen; alleen `uitlijning
+   standaard` opgegeven → alleen `CONFIG.layout.align` aanpassen; de rest
+   van `config.js` ongemoeid laten). Ontbreekt de frontmatter volledig, laat
+   `config.js` dan helemaal met rust.
 5. Ontbreekt een passend icoon in de vaste lijst voor een nieuwe/gewijzigde
    slide, voeg dan één nieuwe `<symbol id="icon-...">` toe aan de sprite in
    `index.html` (regels 13-44) — enige toegestane wijziging buiten

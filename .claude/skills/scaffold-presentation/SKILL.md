@@ -23,15 +23,19 @@ uitzonderingsgeval van een ontbrekend icoon (zie stap 5).
 - Het content-document van de gebruiker (vraag erom als het niet is
   meegegeven — pad of geplakte tekst).
 - `config.js` in deze repo als referentie voor de exacte `CONFIG`-vorm
-  (`lang`, `title`, `toc.heading`,
+  (`lang`, `title`, `toc.heading`, `layout.align`,
   `disco.enabled`/`disco.titleLines`/`disco.mode`,
   `timer.defaultMinutes`/`addMinutes`, `confettiColors`,
   `templateOverlay.enabled`, `ui.*`).
 - `slides-data.js` in deze repo als referentie voor de exacte `SLIDES`-vorm:
-  `{ id, title, icon, bullets, notes, disco?, discoMode?, isTemplateAnchor?, templateSection? }`.
+  `{ id, title, icon, bullets, notes, disco?, discoMode?, align?, isTemplateAnchor?, templateSection? }`.
   `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
   slide aan staat — `'pause'` bevriest de disco-overgang volledig zichtbaar
-  tot een tweede, bijpassende klik op Volgende/Vorige.
+  tot een tweede, bijpassende klik op Volgende/Vorige. `align`
+  (`'center'`/`'left'`) overschrijft `CONFIG.layout.align` voor het
+  content-blok (heading + bullets) van die ene slide. Een item in `bullets`
+  is een plain string, óf `{ text, subtext }` voor een kleinere, gedempte
+  regel onder de hoofdtekst.
   `isTemplateAnchor`/`templateSection`/`SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS`
   horen bij het "skill.md-sjabloon"-concept van *deze* workshop — een nieuw
   onderwerp heeft dat vrijwel nooit nodig.
@@ -56,6 +60,7 @@ timer minuten: 30
 disco standaard: ja
 disco tekst: SKILLS, THRILLS
 disco modus: auto
+uitlijning standaard: center
 ---
 
 ## Titel van de slide
@@ -64,6 +69,7 @@ Disco: nee
 
 - Eerste bullet, ondersteunt **vet** en `code`
 - Tweede bullet
+  subtext: Kleinere, gedempte tekst die onder deze bullet komt
 
 Notes:
 Vrije tekst voor de speaker notes. Lege regel = nieuwe paragraaf.
@@ -75,28 +81,37 @@ Disco modus: pause
 
 - Deze overgang stopt halverwege, bevroren op de disco-achtergrond,
   tot de presenter nogmaals op Volgende/Vorige klikt
+
+## Een linksuitgelijnde slide
+Uitlijning: left
+
+- Deze slide wijkt af van de document-brede uitlijning
 ```
 
 Regels voor het parsen:
 - Frontmatter-velden zijn allemaal optioneel; ontbreekt een veld, gebruik dan
   het bijbehorende default uit `config.js` (`timer minuten` → 30, `disco
-  standaard` → ja, `disco modus` → auto, `taal` → nl). `disco tekst` is een
-  kommagescheiden lijst; elk item wordt één regel op de disco-achtergrond
-  (`CONFIG.disco.titleLines`).
+  standaard` → ja, `disco modus` → auto, `uitlijning standaard` → center,
+  `taal` → nl). `disco tekst` is een kommagescheiden lijst; elk item wordt
+  één regel op de disco-achtergrond (`CONFIG.disco.titleLines`).
 - Elke `##`-kop wordt één slide, in documentvolgorde, met oplopende `id`
   vanaf 1.
-- Optionele `Icon:`/`Disco:`/`Disco modus:`-regels staan direct onder de
-  kop, vóór de bullet-lijst. Ontbreekt `Icon:`, kies dan het best passende
-  icoon uit de lijst hierboven op basis van de inhoud van de slide (bijv.
-  een waarschuwing → `alert`, een vraag → `question`, een stappenplan →
-  `steps`). Ontbreekt `Disco:`/`Disco modus:`, laat het `disco`-/
-  `discoMode`-veld dan gewoon weg (het slide-object erft dan de
-  document-brede default) — voeg het veld niet expliciet toe met dezelfde
-  waarde als de default, dat is ruis. `Disco modus: pause` heeft alleen
-  effect als disco voor die slide ook daadwerkelijk aan staat (globaal of
-  via `Disco: ja`).
-- De bullet-lijst wordt direct `slide.bullets` (array van strings, markdown
-  `**bold**`/`` `code` `` blijft behouden — dat rendert `app.js` al).
+- Optionele `Icon:`/`Disco:`/`Disco modus:`/`Uitlijning:`-regels staan direct
+  onder de kop, vóór de bullet-lijst. Ontbreekt `Icon:`, kies dan het best
+  passende icoon uit de lijst hierboven op basis van de inhoud van de slide
+  (bijv. een waarschuwing → `alert`, een vraag → `question`, een stappenplan
+  → `steps`). Ontbreekt `Disco:`/`Disco modus:`/`Uitlijning:`, laat het
+  bijbehorende veld (`disco`/`discoMode`/`align`) dan gewoon weg (het
+  slide-object erft dan de document-brede default) — voeg het veld niet
+  expliciet toe met dezelfde waarde als de default, dat is ruis. `Disco
+  modus: pause` heeft alleen effect als disco voor die slide ook
+  daadwerkelijk aan staat (globaal of via `Disco: ja`).
+- De bullet-lijst wordt `slide.bullets` — elk item is een plain string
+  (markdown `**bold**`/`` `code` `` blijft behouden, dat rendert `app.js`
+  al), tenzij er direct onder die bullet een verder-ingesprongen regel staat
+  die begint met `subtext:` (zie het voorbeeld hierboven) — dan wordt het
+  `{ text, subtext }`, waarbij `subtext` ook markdown ondersteunt. Geen
+  `subtext:`-regel? Dan blijft de bullet een plain string.
 - Alles ná een regel die begint met `Notes:` (tot de volgende `##`-kop) wordt
   ongewijzigd `slide.notes` — geen extra parsing nodig, `renderNotesHTML()`
   in `app.js` kan paragrafen, `-`/`*`-lijstjes, `1.`-lijstjes en
@@ -113,17 +128,19 @@ sub-agents of code execution.
 1. Lees het volledige content-document.
 2. Vertaal de frontmatter naar een `config.js`, in exact dezelfde vorm als
    het bestaande `config.js` in deze repo (classic script, `const CONFIG =
-   {...}`, geladen vóór `slides-data.js`/`app.js`). Zet
+   {...}`, geladen vóór `slides-data.js`/`app.js`), inclusief
+   `layout.align` uit `uitlijning standaard`. Zet
    `templateOverlay.enabled: false`, tenzij het document zelf expliciet
    sjabloon-secties beschrijft (zeldzaam — dat concept hoort bij déze
    workshop, niet bij een generiek nieuw onderwerp). → CHECKPOINT: als
    twijfelachtig, vraag de gebruiker expliciet of de skill.md-sjabloon-
    overlay nodig is voor deze presentatie.
 3. Vertaal elke `##`-sectie naar een `SLIDES`-object zoals hierboven
-   beschreven. Sla het resultaat op als de volledige `SLIDES`-array in
-   `slides-data.js` (overschrijft de bestaande inhoud; laat
-   `SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS` weg als ze niet gebruikt
-   worden).
+   beschreven, inclusief `align` (indien opgegeven) en `{ text, subtext }`-
+   bullets waar een `subtext:`-regel staat. Sla het resultaat op als de
+   volledige `SLIDES`-array in `slides-data.js` (overschrijft de bestaande
+   inhoud; laat `SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS` weg als ze
+   niet gebruikt worden).
 4. Schrijf `config.js` en `slides-data.js` weg.
 5. Ontbreekt er een passend icoon voor een slide in de vaste lijst (zeldzaam
    — de lijst dekt de meeste onderwerpen), voeg dan één nieuwe

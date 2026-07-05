@@ -9,6 +9,10 @@
  * just for the transition that lands on that slide. Optional
  * `discoMode: 'auto'/'pause'` overrides CONFIG.disco.mode the same way —
  * 'pause' freezes the disco fully visible until a second matching click.
+ * Optional `align: 'center'/'left'` overrides CONFIG.layout.align for that
+ * slide's content block (heading + bullets). A bullet in `bullets` is
+ * either a plain string, or `{ text, subtext }` for a smaller, muted line
+ * shown below the main bullet text.
  */
 
 // Shared skill.md skeleton — shown inline in the slide itself for the two

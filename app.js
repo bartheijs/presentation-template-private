@@ -61,31 +61,51 @@ const finishOverlayEl = document.getElementById('finish-overlay');
 
 /* ---------- Rendering ---------- */
 
+// A bullet is either a plain string, or { text, subtext } for a smaller,
+// muted line shown below the main bullet text.
+function renderBulletItem(b) {
+  const isObj = typeof b === 'object' && b !== null;
+  const text = isObj ? b.text : b;
+  const subtext = isObj ? b.subtext : null;
+  const body = subtext
+    ? `<span class="slide-bullet-stack"><span>${inlineMarkdown(text)}</span><span class="slide-bullet-subtext">${inlineMarkdown(subtext)}</span></span>`
+    : `<span>${inlineMarkdown(text)}</span>`;
+  return `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg>${body}</li>`;
+}
+
 function buildSlideContentHTML(slide) {
   const bulletsBlock = slide.bullets.length
-    ? `<ul class="slide-bullets">
-        ${slide.bullets
-          .map(
-            (b) => `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg><span>${inlineMarkdown(b)}</span></li>`
-          )
-          .join('')}
-      </ul>`
+    ? `<ul class="slide-bullets">${slide.bullets.map(renderBulletItem).join('')}</ul>`
     : '';
   const templateBlock = slide.isTemplateAnchor
     ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
     : '';
   return `
-    <div class="slide-heading">
-      <svg class="icon"><use href="#icon-${slide.icon}"></use></svg>
-      <h1>${escapeHtml(slide.title)}</h1>
-    </div>
-    ${bulletsBlock}
-    ${templateBlock}`;
+    <div class="slide-inner">
+      <div class="slide-heading">
+        <svg class="icon"><use href="#icon-${slide.icon}"></use></svg>
+        <h1>${escapeHtml(slide.title)}</h1>
+      </div>
+      ${bulletsBlock}
+      ${templateBlock}
+    </div>`;
+}
+
+// A slide's own `align` overrides CONFIG.layout.align. Unlike
+// isDiscoEnabledFor()'s typeof-boolean check, a plain `||` is safe here:
+// the only "unset" value for this string enum is undefined, and no valid
+// value ('center'/'left') is falsy.
+function resolveAlignFor(slide) {
+  return slide.align || CONFIG.layout.align;
 }
 
 function renderSlide() {
   const slide = SLIDES[state.currentIndex];
-  slideContentEl.className = 'slide-content' + (slide.isTemplateAnchor ? ' slide-content--compact' : '');
+  const align = resolveAlignFor(slide);
+  slideContentEl.className =
+    'slide-content' +
+    (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
+    (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
   const hasNotes = Boolean(slide.notes && slide.notes.trim());
   slideNotesEl.hidden = !hasNotes;

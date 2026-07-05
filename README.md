@@ -24,14 +24,16 @@ Dubbelklik `index.html` (of open het via je browser). Dat is alles.
 
 ## Een slide bewerken of toevoegen
 
-Open `slides-data.js` en pas het `SLIDES`-array aan. Elk object heeft `{ id, title, icon, bullets, notes }`, optioneel `templateSection` (voor de overlay-highlight bij de sjabloon-slides), optioneel `disco: true/false` om de disco-achtergrond voor de overgang náár die slide af te wijken van de instelling in `config.js`, en optioneel `discoMode: 'auto'/'pause'` (alleen relevant als disco voor die slide aan staat) — `'pause'` laat de overgang halverwege stoppen, volledig zichtbaar bevroren op de disco-achtergrond, tot een tweede, bijpassende klik op Volgende/Vorige. Beschikbare icoon-namen staan als `<symbol id="icon-...">` in `index.html`.
+Open `slides-data.js` en pas het `SLIDES`-array aan. Elk object heeft `{ id, title, icon, bullets, notes }`, optioneel `templateSection` (voor de overlay-highlight bij de sjabloon-slides), optioneel `disco: true/false` om de disco-achtergrond voor de overgang náár die slide af te wijken van de instelling in `config.js`, optioneel `discoMode: 'auto'/'pause'` (alleen relevant als disco voor die slide aan staat) — `'pause'` laat de overgang halverwege stoppen, volledig zichtbaar bevroren op de disco-achtergrond, tot een tweede, bijpassende klik op Volgende/Vorige — en optioneel `align: 'center'/'left'` om de uitlijning van het content-blok (heading + bullets) voor die ene slide af te wijken van `config.js`. Beschikbare icoon-namen staan als `<symbol id="icon-...">` in `index.html`.
+
+Elke bullet in `bullets` is een plain string, óf `{ text: '...', subtext: '...' }` voor een kleinere, gedempte regel onder de hoofdtekst — beide vormen mogen door elkaar in dezelfde array staan.
 
 ## Een nieuwe presentatie maken (branchen vanaf deze repo)
 
 Een nieuwe presentatie hoeft in principe alleen twee bestanden aan te passen:
 
-- `config.js` — titel, taal, timerduur, disco-instellingen (aan/uit + tekst op de achtergrond + `mode: 'auto'/'pause'`), confetti-kleuren, `templateOverlay.enabled` (verberg de "Skill Template"-knop als je dat concept niet gebruikt), en alle knop-/overlay-teksten (`ui.*`).
-- `slides-data.js` — de content zelf, inclusief per-slide `disco`-/`discoMode`-override.
+- `config.js` — titel, taal, timerduur, disco-instellingen (aan/uit + tekst op de achtergrond + `mode: 'auto'/'pause'`), `layout.align` (`'center'`/`'left'`, default voor het content-blok), confetti-kleuren, `templateOverlay.enabled` (verberg de "Skill Template"-knop als je dat concept niet gebruikt), en alle knop-/overlay-teksten (`ui.*`).
+- `slides-data.js` — de content zelf, inclusief per-slide `disco`-/`discoMode`-/`align`-override en optionele bullet-subtekst.
 
 `index.html`, `app.js` en `styles.css` (op het `:root`-kleurenpalet na) horen niet aangepast te hoeven worden.
 

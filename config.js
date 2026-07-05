@@ -17,6 +17,12 @@ const CONFIG = {
     heading: 'Inhoud',
   },
 
+  layout: {
+    align: 'center', // 'center' (default) | 'left' — global default for the
+    // slide-content block (heading + bullets); a slide's own `align`
+    // overrides this just for that slide.
+  },
+
   disco: {
     enabled: true, // global default; a slide's own `disco: true/false` overrides this
     titleLines: ['SKILLS', 'THRILLS'], // one <span> per entry on the disco background
