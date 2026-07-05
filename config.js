@@ -20,6 +20,10 @@ const CONFIG = {
   disco: {
     enabled: true, // global default; a slide's own `disco: true/false` overrides this
     titleLines: ['SKILLS', 'THRILLS'], // one <span> per entry on the disco background
+    mode: 'auto', // 'auto' (default, single click plays the whole flash) | 'pause'
+    // (freezes fully visible after the outgoing slide leaves; a second
+    // matching click/arrow finishes landing on the next slide). A slide's
+    // own `discoMode` overrides this for the transition landing on it.
   },
 
   timer: {

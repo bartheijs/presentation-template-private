@@ -8,7 +8,7 @@ Dubbelklik `index.html` (of open het via je browser). Dat is alles.
 
 ## Bediening
 
-- **Volgende / Vorige knop** (rechts) of **pijltjestoetsen ←/→**: navigeer met animatie.
+- **Volgende / Vorige knop** (rechts) of **pijltjestoetsen ←/→**: navigeer met animatie. Slides met `discoMode: 'pause'` (zie `slides-data.js`) laten de overgang halverwege stoppen — volledig zichtbaar bevroren op de disco-achtergrond — tot je nogmaals dezelfde knop/toets gebruikt; tussentijds tonen teller en inhoudsopgave nog de vorige slide (bv. `"3,5 / 31"`).
 - **Linker inhoudsopgave**: klik direct naar een slide (geen animatie, springt meteen).
 - **Skill Template**-knop (boven de inhoudsopgave): opent het skill.md-skelet als overlay. Op elke slide met een `templateSection`-veld wordt de bijpassende sectie gehighlight. Sluiten met de kruis-knop, klik naast het paneel, of `Esc`. Zet `templateOverlay.enabled` in `config.js` op `false` om deze knop helemaal te verbergen.
 - **Timer**: Start/Pause telt af vanaf 30:00. **+5 min** verlengt de resterende tijd, in elke stand (lopend, gepauzeerd, of al op 0:00). Bij het bereiken van 0:00 verschijnt confetti.
@@ -24,14 +24,14 @@ Dubbelklik `index.html` (of open het via je browser). Dat is alles.
 
 ## Een slide bewerken of toevoegen
 
-Open `slides-data.js` en pas het `SLIDES`-array aan. Elk object heeft `{ id, title, icon, bullets, notes }`, optioneel `templateSection` (voor de overlay-highlight bij de sjabloon-slides) en optioneel `disco: true/false` om de disco-achtergrond voor de overgang náár die slide af te wijken van de instelling in `config.js`. Beschikbare icoon-namen staan als `<symbol id="icon-...">` in `index.html`.
+Open `slides-data.js` en pas het `SLIDES`-array aan. Elk object heeft `{ id, title, icon, bullets, notes }`, optioneel `templateSection` (voor de overlay-highlight bij de sjabloon-slides), optioneel `disco: true/false` om de disco-achtergrond voor de overgang náár die slide af te wijken van de instelling in `config.js`, en optioneel `discoMode: 'auto'/'pause'` (alleen relevant als disco voor die slide aan staat) — `'pause'` laat de overgang halverwege stoppen, volledig zichtbaar bevroren op de disco-achtergrond, tot een tweede, bijpassende klik op Volgende/Vorige. Beschikbare icoon-namen staan als `<symbol id="icon-...">` in `index.html`.
 
 ## Een nieuwe presentatie maken (branchen vanaf deze repo)
 
 Een nieuwe presentatie hoeft in principe alleen twee bestanden aan te passen:
 
-- `config.js` — titel, taal, timerduur, disco-instellingen (aan/uit + tekst op de achtergrond), confetti-kleuren, `templateOverlay.enabled` (verberg de "Skill Template"-knop als je dat concept niet gebruikt), en alle knop-/overlay-teksten (`ui.*`).
-- `slides-data.js` — de content zelf, inclusief per-slide `disco`-override.
+- `config.js` — titel, taal, timerduur, disco-instellingen (aan/uit + tekst op de achtergrond + `mode: 'auto'/'pause'`), confetti-kleuren, `templateOverlay.enabled` (verberg de "Skill Template"-knop als je dat concept niet gebruikt), en alle knop-/overlay-teksten (`ui.*`).
+- `slides-data.js` — de content zelf, inclusief per-slide `disco`-/`discoMode`-override.
 
 `index.html`, `app.js` en `styles.css` (op het `:root`-kleurenpalet na) horen niet aangepast te hoeven worden.
 

@@ -116,15 +116,50 @@ function updateTocActiveState() {
 
 /* ---------- Navigation ---------- */
 
+// While a 'pause'-mode disco transition is frozen mid-flight (outgoing
+// content off-screen, disco fully visible, state.currentIndex NOT yet
+// advanced), this holds the pending destination so a matching second
+// click/arrow can finish it. Any non-matching navigation cancels it.
+let pendingPause = null; // { toIndex, dir } | null
+
 function goTo(index, { animate = false, direction = null } = {}) {
-  if (index < 0 || index >= SLIDES.length || index === state.currentIndex) return;
-  if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid-transition
+  if (index < 0 || index >= SLIDES.length) return;
+  if (index === state.currentIndex && !pendingPause) return;
+  if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid out/in animation
+
   const dir = direction || (index > state.currentIndex ? 'next' : 'prev');
-  state.currentIndex = index;
-  if (animate) {
-    animateTransition(dir, renderSlide);
-  } else {
+
+  if (pendingPause) {
+    if (animate && dir === pendingPause.dir && index === pendingPause.toIndex) {
+      resumePausedTransition();
+      return;
+    }
+    cancelPendingPause(); // falls through to handle the newly requested nav below
+  }
+
+  if (!animate) {
+    // renderSlide() unconditionally overwrites slideContentEl's className,
+    // which would silently cancel a still-in-flight "out"/"in" animation
+    // (no animationend fires for a class removed out from under it) and
+    // strand isAnimatingSlide as true forever, freezing all future animated
+    // navigation. A non-animated jump (TOC click) can land mid-animation,
+    // so settle any in-flight state cleanly first.
+    resetAnimationState();
+    state.currentIndex = index;
     renderSlide();
+    updateTocActiveState();
+    return;
+  }
+
+  const destSlide = SLIDES[index];
+  const discoOn = isDiscoEnabledFor(destSlide);
+  const pauseOn = discoOn && isDiscoPauseFor(destSlide);
+
+  if (pauseOn) {
+    beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
+  } else {
+    state.currentIndex = index;
+    animateTransition(dir, renderSlide);
   }
   updateTocActiveState();
 }
@@ -141,11 +176,19 @@ const ANIM_IN_MS = 420;
 const DISCO_REVEAL_DELAY_MS = 90; // background starts fading in this long after "out" begins
 const DISCO_HIDE_LEAD_MS = 260; // start hiding the background this long before the panels land
 
-// A slide's own `disco` boolean overrides CONFIG.disco.enabled. The
-// *destination* slide decides, since goTo() already advances
-// state.currentIndex before calling animateTransition().
+// A slide's own `disco` boolean overrides CONFIG.disco.enabled. goTo()
+// resolves this against the destination slide *before* touching
+// state.currentIndex, since the 'pause' path (see below) doesn't advance it
+// up front the way the plain 'auto' path still does.
 function isDiscoEnabledFor(slide) {
   return typeof slide.disco === 'boolean' ? slide.disco : CONFIG.disco.enabled;
+}
+
+// A slide's own `discoMode` overrides CONFIG.disco.mode. Only meaningful
+// together with isDiscoEnabledFor() — pausing with disco off has nothing to
+// freeze on.
+function isDiscoPauseFor(slide) {
+  return (slide.discoMode || CONFIG.disco.mode || 'auto') === 'pause';
 }
 
 function animateTransition(dir, applyFn) {
@@ -194,6 +237,107 @@ function animateTransition(dir, applyFn) {
     },
     { once: true }
   );
+}
+
+// 'pause' mode: play only the "out" half, then freeze fully visible on the
+// disco (no hide timer scheduled) instead of swapping content and playing
+// the "in" half. Mirrors animateTransition()'s out-phase exactly; kept as a
+// separate function (rather than merged into animateTransition) so the
+// existing 'auto' path stays byte-for-byte unchanged.
+function beginPausedTransition(dir, toIndex) {
+  isAnimatingSlide = true;
+  slideContentEl.classList.add('content-anim-out');
+  if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
+
+  const revealTimer = setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS);
+
+  slideContentEl.addEventListener(
+    'animationend',
+    function onOut() {
+      slideContentEl.removeEventListener('animationend', onOut);
+      clearTimeout(revealTimer);
+      // Freeze here: outgoing content/notes stay held off-screen by the
+      // still-applied "out" classes, disco stays fully opaque (no hide
+      // timer scheduled), state.currentIndex and the rendered slide
+      // deliberately do not advance until resumePausedTransition() runs.
+      isAnimatingSlide = false;
+      pendingPause = { toIndex, dir };
+      renderPausedProgress();
+    },
+    { once: true }
+  );
+}
+
+function renderPausedProgress() {
+  const from = state.currentIndex + 1;
+  const to = pendingPause.toIndex + 1;
+  const mid = (from + to) / 2; // next/prev only ever request ±1, so always fromN.5
+  slideProgressEl.textContent = `${String(mid).replace('.', ',')} / ${SLIDES.length}`;
+}
+
+// Finishes a frozen pause: mirrors the tail half of animateTransition()'s
+// onOut handler (swap content, play the "in" half, schedule disco's hide).
+function resumePausedTransition() {
+  const { toIndex } = pendingPause;
+  pendingPause = null;
+  isAnimatingSlide = true;
+
+  state.currentIndex = toIndex;
+  renderSlide();
+  slideContentEl.classList.remove('content-anim-out');
+  slideNotesEl.classList.remove('notes-anim-out');
+  slideContentEl.classList.add('content-anim-in');
+  if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+
+  const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+  setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+
+  slideContentEl.addEventListener(
+    'animationend',
+    () => {
+      slideContentEl.classList.remove('content-anim-in');
+      slideNotesEl.classList.remove('notes-anim-in');
+      isAnimatingSlide = false;
+    },
+    { once: true }
+  );
+
+  updateTocActiveState();
+}
+
+// Any non-matching navigation while frozen cancels the pause: snap the
+// outgoing panels back to resting position and let disco fade out. The snap
+// is masked because disco is still fully opaque at this exact instant —
+// removing is-transitioning right after starts its existing fade, so the
+// instant class removal above never paints a visible flash.
+function cancelPendingPause() {
+  pendingPause = null;
+  slideContentEl.classList.remove('content-anim-out');
+  slideNotesEl.classList.remove('notes-anim-out');
+  // Force a reflow before returning. The caller immediately starts a fresh
+  // transition, which re-adds this exact same class name to kick off the
+  // "out" animation again — without a style flush in between, the browser
+  // sees no net change to animation-name across the task and never restarts
+  // the animation, so its animationend would never fire and callers waiting
+  // on it (animateTransition/beginPausedTransition) would hang forever.
+  void slideContentEl.offsetWidth;
+  slideStageEl.classList.remove('is-transitioning');
+  isAnimatingSlide = false;
+}
+
+// Hard reset for a non-animated jump (e.g. a TOC click) that may land while
+// a full animateTransition()/beginPausedTransition() is still mid-flight:
+// clears any frozen pause and strips every animation/disco class so no
+// stale state (or a permanently stuck isAnimatingSlide) survives the jump.
+// renderSlide() itself already overwrites slideContentEl's className right
+// after this runs, so this mainly guards slideNotesEl/slideStageEl and the
+// isAnimatingSlide flag.
+function resetAnimationState() {
+  pendingPause = null;
+  isAnimatingSlide = false;
+  slideContentEl.classList.remove('content-anim-out', 'content-anim-in');
+  slideNotesEl.classList.remove('notes-anim-out', 'notes-anim-in');
+  slideStageEl.classList.remove('is-transitioning');
 }
 
 document.getElementById('btn-next').addEventListener('click', () =>

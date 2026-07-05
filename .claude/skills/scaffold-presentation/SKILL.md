@@ -23,11 +23,15 @@ uitzonderingsgeval van een ontbrekend icoon (zie stap 5).
 - Het content-document van de gebruiker (vraag erom als het niet is
   meegegeven — pad of geplakte tekst).
 - `config.js` in deze repo als referentie voor de exacte `CONFIG`-vorm
-  (`lang`, `title`, `toc.heading`, `disco.enabled`/`disco.titleLines`,
+  (`lang`, `title`, `toc.heading`,
+  `disco.enabled`/`disco.titleLines`/`disco.mode`,
   `timer.defaultMinutes`/`addMinutes`, `confettiColors`,
   `templateOverlay.enabled`, `ui.*`).
 - `slides-data.js` in deze repo als referentie voor de exacte `SLIDES`-vorm:
-  `{ id, title, icon, bullets, notes, disco?, isTemplateAnchor?, templateSection? }`.
+  `{ id, title, icon, bullets, notes, disco?, discoMode?, isTemplateAnchor?, templateSection? }`.
+  `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
+  slide aan staat — `'pause'` bevriest de disco-overgang volledig zichtbaar
+  tot een tweede, bijpassende klik op Volgende/Vorige.
   `isTemplateAnchor`/`templateSection`/`SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS`
   horen bij het "skill.md-sjabloon"-concept van *deze* workshop — een nieuw
   onderwerp heeft dat vrijwel nooit nodig.
@@ -51,6 +55,7 @@ taal: nl
 timer minuten: 30
 disco standaard: ja
 disco tekst: SKILLS, THRILLS
+disco modus: auto
 ---
 
 ## Titel van de slide
@@ -64,22 +69,32 @@ Notes:
 Vrije tekst voor de speaker notes. Lege regel = nieuwe paragraaf.
 - Lijstjes met - of * werken
 1. Genummerde lijstjes ook
+
+## Een andere slide, met een bevroren disco-overgang
+Disco modus: pause
+
+- Deze overgang stopt halverwege, bevroren op de disco-achtergrond,
+  tot de presenter nogmaals op Volgende/Vorige klikt
 ```
 
 Regels voor het parsen:
 - Frontmatter-velden zijn allemaal optioneel; ontbreekt een veld, gebruik dan
   het bijbehorende default uit `config.js` (`timer minuten` → 30, `disco
-  standaard` → ja, `taal` → nl). `disco tekst` is een kommagescheiden lijst;
-  elk item wordt één regel op de disco-achtergrond (`CONFIG.disco.titleLines`).
+  standaard` → ja, `disco modus` → auto, `taal` → nl). `disco tekst` is een
+  kommagescheiden lijst; elk item wordt één regel op de disco-achtergrond
+  (`CONFIG.disco.titleLines`).
 - Elke `##`-kop wordt één slide, in documentvolgorde, met oplopende `id`
   vanaf 1.
-- Optionele `Icon:`/`Disco:`-regels staan direct onder de kop, vóór de
-  bullet-lijst. Ontbreekt `Icon:`, kies dan het best passende icoon uit de
-  lijst hierboven op basis van de inhoud van de slide (bijv. een
-  waarschuwing → `alert`, een vraag → `question`, een stappenplan →
-  `steps`). Ontbreekt `Disco:`, laat het `disco`-veld dan gewoon weg (het
-  slide-object erft dan de document-brede default) — voeg het veld niet
-  expliciet toe met dezelfde waarde als de default, dat is ruis.
+- Optionele `Icon:`/`Disco:`/`Disco modus:`-regels staan direct onder de
+  kop, vóór de bullet-lijst. Ontbreekt `Icon:`, kies dan het best passende
+  icoon uit de lijst hierboven op basis van de inhoud van de slide (bijv.
+  een waarschuwing → `alert`, een vraag → `question`, een stappenplan →
+  `steps`). Ontbreekt `Disco:`/`Disco modus:`, laat het `disco`-/
+  `discoMode`-veld dan gewoon weg (het slide-object erft dan de
+  document-brede default) — voeg het veld niet expliciet toe met dezelfde
+  waarde als de default, dat is ruis. `Disco modus: pause` heeft alleen
+  effect als disco voor die slide ook daadwerkelijk aan staat (globaal of
+  via `Disco: ja`).
 - De bullet-lijst wordt direct `slide.bullets` (array van strings, markdown
   `**bold**`/`` `code` `` blijft behouden — dat rendert `app.js` al).
 - Alles ná een regel die begint met `Notes:` (tot de volgende `##`-kop) wordt
