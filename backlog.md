@@ -142,3 +142,125 @@ testsuite bewust wat minder dekking heeft — precies zoals nu al voor
    aanmaken en met de `scaffold-presentation`-skill (of handmatig) vullen,
    om te bevestigen dat de workflow voor een nieuwe presentatie soepel
    werkt.
+
+---
+
+## Generieke naamgeving: disco → flashyTransition, Skill Template → Reference overlay, timer-duidelijkheid
+
+**Status:** gepland, nog niet uitgevoerd. Uit te voeren ná de live-presentatie
+van de gebruiker, in een nieuwe sessie — net als de branch-strategie
+hierboven, om niets te riskeren vlak vóór het optreden. Deze rename raakt
+namelijk niet alleen interne engine-code, maar ook echte content op de
+huidige presentatie-branch (bijv. `isTemplateAnchor`/`templateSection` op de
+daadwerkelijke slides 9 en 30, en elke `disco`-CSS-class die de live demo
+gebruikt).
+
+### Context
+
+Bij het doornemen van de configuratiemogelijkheden gaf de gebruiker feedback
+op drie punten:
+
+1. **"disco"** — de flitsende achtergrond-overgang heet overal letterlijk
+   "disco" (config-sleutel, functienamen, CSS-classes/variabelen,
+   testbestand). Het gevoel/effect moet blijven, maar de naam is niet
+   generiek genoeg voor een herbruikbaar sjabloon. Gekozen nieuwe naam:
+   **`flashyTransition`**.
+2. **"Skill Template"-overlay** — het knop+overlay-mechanisme (highlightbare
+   markdown-paneel) is generiek bruikbaar, maar de naamgeving in code
+   (`SKILL_TEMPLATE_MD`, `isTemplateAnchor`, standaardtekst "skill.md
+   template") is workshop-specifiek. Gekozen nieuwe naam: **"Reference
+   overlay"**. De inhoud van het paneel (de daadwerkelijke markdown-tekst)
+   blijft bewust vrije, presentatie-specifieke content — alleen het
+   mechanisme/de identifiers worden generiek.
+3. **Timer** — `CONFIG.timer.defaultMinutes`/`addMinutes` zijn al
+   configureerbaar, en de bevestigde gewenste regel is dat de "+N min"-knop
+   nooit boven de ingestelde `defaultMinutes` mag uitkomen (dat gedrag is al
+   correct/ongewijzigd). Het probleem is puur naamgeving:
+   `THIRTY_MIN_MS`/`FIVE_MIN_MS` in `app.js` suggereren hardcoded waarden,
+   terwijl ze al afgeleid worden van `CONFIG.timer.*` — waarschijnlijk de
+   bron van de "is dit hardcoded?"-vraag.
+
+### Mapping: `disco` → `flashyTransition`
+
+| Huidig | Nieuw |
+|---|---|
+| `CONFIG.disco.enabled`/`.titleLines`/`.mode` | `CONFIG.flashyTransition.enabled`/`.titleLines`/`.mode` |
+| `slide.disco` (per-slide bool) | `slide.flashyTransition` |
+| `slide.discoMode` | `slide.flashyTransitionMode` |
+| `isDiscoEnabledFor()`/`isDiscoPauseFor()` (app.js) | `isFlashyTransitionEnabledFor()`/`isFlashyTransitionPauseFor()` |
+| `discoOn` (lokale var), `DISCO_REVEAL_DELAY_MS`, `DISCO_HIDE_LEAD_MS` | `flashyOn`, `FLASHY_REVEAL_DELAY_MS`, `FLASHY_HIDE_LEAD_MS` |
+| `.disco-bg`/`.disco-rays`/`.disco-title`/`.disco-sparkle(-1..12)` (CSS) | `.flashy-bg`/`.flashy-rays`/`.flashy-title`/`.flashy-sparkle(-1..12)` |
+| `--disco-backdrop`/`--disco-ray-1..5`/`--disco-title-*`/`--disco-sparkle-color` | `--flashy-backdrop`/`--flashy-ray-1..5`/`--flashy-title-*`/`--flashy-sparkle-color` |
+| `@keyframes discoSpin`/`discoTwinkle` | `@keyframes flashySpin`/`flashyTwinkle` |
+| `#disco-title` (HTML id) | `#flashy-title` |
+| `tests/disco-and-pause.spec.js` (bestandsnaam + describe/test-namen) | `tests/flashy-transition-and-pause.spec.js` |
+
+Ook bijwerken: `tests/config-and-ui.spec.js` (`#disco-title`-locator,
+`delete CONFIG.disco`), `tests/README.md`, `README.md`, `content-template.md`
+(Dutch frontmatter-labels `disco standaard`/`disco tekst`/`disco modus` →
+`flash standaard`/`flash tekst`/`flash modus`), en de drie skill-docs
+(`scaffold-presentation`, `update-slides`, `test-presentation`) — inclusief
+hun `description`-frontmatter en mapping-tabellen.
+
+### Mapping: "Skill Template"-overlay → "Reference overlay"
+
+| Huidig | Nieuw |
+|---|---|
+| `CONFIG.templateOverlay.enabled` | `CONFIG.referenceOverlay.enabled` |
+| `CONFIG.ui.templateButton` (sleutel; waarde/tekst blijft ongemoeid) | `CONFIG.ui.referenceButton` |
+| `CONFIG.ui.overlayTitle` | ongewijzigd (sleutel al generiek; waarde blijft content) |
+| `SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS` (globals, slides-data.js) | `REFERENCE_MD`/`REFERENCE_SECTIONS` — **alleen de variabelenamen**, de markdown-inhoud zelf blijft ongewijzigde presentatie-content |
+| `slide.isTemplateAnchor`/`slide.templateSection` | `slide.isReferenceAnchor`/`slide.referenceSection` |
+| `openTemplateOverlay()`/`closeTemplateOverlay()`/`renderTemplateOverlay()` | `openReferenceOverlay()`/`closeReferenceOverlay()`/`renderReferenceOverlay()` |
+| `.tpl-block`/`.tpl-block--<id>`/`.tpl-heading`/`.tpl-block.is-highlighted` | `.ref-block`/`.ref-block--<id>`/`.ref-heading`/`.ref-block.is-highlighted` |
+| `.template-code`/`.slide-template-code` | `.reference-code`/`.slide-reference-code` |
+| `#template-overlay`/`#btn-template`/`.btn-template`/`#btn-template-label` | `#reference-overlay`/`#btn-reference`/`.btn-reference`/`#btn-reference-label` |
+
+**Uitzondering (bewust ongemoeid laten):** `#icon-template` (SVG-symbol-id in
+de iconenset) — dat is een icoonvorm-naam, niet de featurenaam.
+**Uitzondering:** dit hoofdstuk hierboven ("Branch-strategie: engine-template
+vs. persoonlijke presentaties") en `content-template.md` gebruiken "template"
+in de zin van een repo-/document-sjabloon — een ander concept, niet
+aanraken.
+
+Ook bijwerken: `tests/layout.spec.js` (`isTemplateAnchor`-describe/test,
+`.slide-template-code`-locator), `tests/config-and-ui.spec.js`,
+`tests/regression.spec.js`, `tests/README.md`, `README.md`, en de drie
+skill-docs.
+
+**Extra actie in `scaffold-presentation/SKILL.md`:** een expliciete
+checkpoint/vraag toevoegen die bij het opzetten van een nieuwe presentatie
+vraagt of de "Reference overlay" gebruikt gaat worden, en zo ja, welke
+content erin moet (blijft vrije tekst — dit voegt alleen het gesprek erover
+toe, geen generieke content-structuur).
+
+### Timer: alleen naamgeving verduidelijken (geen gedragswijziging)
+
+- `THIRTY_MIN_MS` → `TIMER_DEFAULT_MS`, `FIVE_MIN_MS` → `TIMER_ADD_MS`
+  (app.js), plus een korte comment die expliciet maakt dat beide van
+  `CONFIG.timer.*` zijn afgeleid (niet hardcoded), en dat de "+N min"-knop
+  bewust nooit boven de geconfigureerde `defaultMinutes` uitkomt (bevestigd
+  gewenst gedrag, geen aparte `maxMinutes`-sleutel nodig).
+
+### Kritieke bestanden (bij uitvoering)
+
+- `app.js`, `config.js`, `styles.css`, `index.html`, `slides-data.js`
+- `tests/disco-and-pause.spec.js` (hernoemen), `tests/config-and-ui.spec.js`,
+  `tests/layout.spec.js`, `tests/regression.spec.js`, `tests/README.md`
+- `README.md`, `content-template.md`
+- `.claude/skills/scaffold-presentation/SKILL.md`,
+  `.claude/skills/update-slides/SKILL.md`,
+  `.claude/skills/test-presentation/SKILL.md`
+
+### Verificatie (bij uitvoering)
+
+1. `grep -ri disco` en `grep -ri "isTemplateAnchor\|SKILL_TEMPLATE\|templateOverlay"`
+   over de hele repo draaien — alleen de bewust uitgezonderde treffers
+   (icon-template, dit hoofdstuk's "engine-template", content-template.md)
+   mogen overblijven.
+2. `npx playwright test` — volledige suite groen na de hernoemingen in de
+   testbestanden zelf.
+3. Visuele controle: `index.html` openen, bevestigen dat de flashy-transition
+   achtergrond en de reference-overlay (openen, sluiten, highlight per
+   slide) nog exact hetzelfde werken/ogen als voorheen — dit is een pure
+   rename, geen gedrags- of visuele wijziging.
