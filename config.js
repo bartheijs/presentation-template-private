@@ -50,6 +50,8 @@ const CONFIG = {
 
   ui: {
     templateButton: 'Skill Template',
+    notesToggleHide: 'Notities verbergen', // shown while notes are visible (clicking hides them)
+    notesToggleShow: 'Notities tonen', // shown while notes are hidden (clicking shows them)
     timerStart: 'Start',
     timerPause: 'Pause',
     timerFinish: 'Klaar!',

@@ -58,6 +58,9 @@ Bash (om `npm`/`npx playwright` te draaien). Geen MCP of sub-agents nodig.
      `styles.css`.
    - `tests/notes-resize.spec.js` faalt → de `flex-grow`-transitie op
      `.slide-content` en de `stage-no-notes`-regel in `styles.css`.
+   - `tests/notes-toggle.spec.js` faalt → `toggleNotesVisibility`/
+     `shouldShowNotes`/`notesHiddenByUser`/`updateNotesToggleLabel` in
+     `app.js`, of `#btn-toggle-notes`/`#notes-toggle-label` in `index.html`.
    - `tests/regression.spec.js` faalt → iets breekt breder dan één
      specifiek onderdeel; lees de console-errors in de testoutput, die
      citeren de daadwerkelijke JS-fout.

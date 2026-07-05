@@ -105,6 +105,17 @@ function resolveAlignFor(slide) {
   return slide.align || CONFIG.layout.align;
 }
 
+// Presenter-only, session-level override: hides the notes panel regardless
+// of whether the current slide has notes (e.g. when screen-sharing this
+// window to an audience). Persists across slide navigation on purpose —
+// it's a mode for the whole session, not a per-slide property.
+let notesHiddenByUser = false;
+
+function shouldShowNotes(slide) {
+  const hasNotesText = Boolean(slide.notes && slide.notes.trim());
+  return hasNotesText && !notesHiddenByUser;
+}
+
 function renderSlide() {
   const slide = SLIDES[state.currentIndex];
   const align = resolveAlignFor(slide);
@@ -113,13 +124,35 @@ function renderSlide() {
     (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
     (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
-  const hasNotes = Boolean(slide.notes && slide.notes.trim());
-  slideNotesEl.hidden = !hasNotes;
-  slideStageEl.classList.toggle('stage-no-notes', !hasNotes);
-  slideNotesEl.innerHTML = hasNotes ? renderNotesHTML(slide.notes) : '';
+  const hasNotesText = Boolean(slide.notes && slide.notes.trim());
+  const showNotes = hasNotesText && !notesHiddenByUser;
+  slideNotesEl.hidden = !showNotes;
+  slideStageEl.classList.toggle('stage-no-notes', !showNotes);
+  // Populated whenever the slide actually has notes, regardless of the
+  // toggle — so switching the toggle back on doesn't need a re-render.
+  slideNotesEl.innerHTML = hasNotesText ? renderNotesHTML(slide.notes) : '';
   slideProgressEl.textContent = `${state.currentIndex + 1} / ${SLIDES.length}`;
   slideContentEl.scrollTop = 0;
   slideNotesEl.scrollTop = 0;
+}
+
+// Toggling mid-animation/mid-pause would fight the same layout the slide
+// transition or frozen-pause freeze is already animating — block it until
+// things are settled, same guard pattern goTo() already uses.
+function toggleNotesVisibility() {
+  if (isAnimatingSlide || pendingPause) return;
+  notesHiddenByUser = !notesHiddenByUser;
+  const slide = SLIDES[state.currentIndex];
+  const showNotes = shouldShowNotes(slide);
+  slideNotesEl.hidden = !showNotes;
+  slideStageEl.classList.toggle('stage-no-notes', !showNotes);
+  updateNotesToggleLabel();
+}
+
+function updateNotesToggleLabel() {
+  document.getElementById('notes-toggle-label').textContent = notesHiddenByUser
+    ? CONFIG.ui.notesToggleShow
+    : CONFIG.ui.notesToggleHide;
 }
 
 function renderTocOnce() {
@@ -651,6 +684,7 @@ function closeTemplateOverlay() {
 }
 
 document.getElementById('btn-template').addEventListener('click', openTemplateOverlay);
+document.getElementById('btn-toggle-notes').addEventListener('click', toggleNotesVisibility);
 document.getElementById('btn-overlay-close').addEventListener('click', closeTemplateOverlay);
 overlayEl.addEventListener('click', (e) => {
   if (e.target === overlayEl) closeTemplateOverlay();
@@ -696,6 +730,7 @@ function applyConfigStrings() {
 
   document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
+  updateNotesToggleLabel();
   timerToggleBtn.textContent = CONFIG.ui.timerStart;
   document.getElementById('timer-add5-label').textContent = `+${CONFIG.timer.addMinutes} min`;
   document.getElementById('btn-timer-finish-label').textContent = CONFIG.ui.timerFinish;

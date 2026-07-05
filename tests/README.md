@@ -51,9 +51,13 @@ npx playwright test
 - `notes-resize.spec.js` — the `flex-grow` transition on `#slide-content`
   that smooths the resize when speaker-notes presence differs between the
   outgoing and incoming slide, across all with/without combinations.
+- `notes-toggle.spec.js` — the presenter-only notes visibility toggle: label
+  flip, smooth resize (reusing the notes-resize fix), heading position
+  staying fixed, persistence across slide navigation, and the guard that
+  ignores the toggle during an in-flight transition.
 - `regression.spec.js` — a full click-through of every slide (forward and
   back) and both overlays opening/closing, asserting zero console/page
-  errors.
+  errors, plus malformed-slide-data resilience checks.
 
 If a future change breaks one of these, the failing spec file name points
 directly at which part of the engine to look at — no need to re-derive
