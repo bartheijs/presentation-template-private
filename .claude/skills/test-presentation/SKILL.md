@@ -33,14 +33,20 @@ Bash (om `npm`/`npx playwright` te draaien). Geen MCP of sub-agents nodig.
 ## Process
 
 1. Eerste keer in een omgeving: controleer of `node_modules/@playwright`
-   bestaat. Zo niet:
+   bestaat en of de juiste browser-revisie al gecached staat (zie Rules —
+   revisie-mismatch telt ook als "ontbreekt"). Zo niet, **vraag eerst
+   toestemming aan de gebruiker** voordat je iets installeert of download:
    ```
    npm install
    npx playwright install chromium
    ```
-   Als de browser-download faalt (bv. door een netwerkbeperking in een
-   sandbox), meld dat expliciet — dan kan er niet automatisch getest
-   worden, en moet er een manuele/visuele controle als alternatief.
+   Leg daarbij uit wat het gevolg is als de gebruiker dit weigert: dan kan
+   de suite niet automatisch draaien, en valt de verificatie terug op een
+   manuele/visuele controle (app in de browser openen en de wijziging met
+   de hand doorklikken) in plaats van de Playwright-tests.
+   Als de download zelf faalt (bv. door een netwerkbeperking in een
+   sandbox) nadat toestemming is gegeven, meld dat expliciet — dan kan er
+   ook niet automatisch getest worden, met hetzelfde gevolg als hierboven.
 2. Draai de suite: `npx playwright test`. Gebruik `-g "<naam>"` om één
    scenario of bestand gericht te draaien tijdens het debuggen.
 3. Bij een falende test: gebruik onderstaande mapping om direct naar de
@@ -88,7 +94,26 @@ Bash (om `npm`/`npx playwright` te draaien). Geen MCP of sub-agents nodig.
 - ALTIJD de daadwerkelijke oorzaak oplossen bij een falende test, niet de
   assertion verzwakken om hem groen te krijgen — tenzij de test zelf
   aantoonbaar de verkeerde aanname maakt.
+- ALTIJD content-waarden uit `config.js` (titel, disco-tekst, ui-labels,
+  timer-defaults, ...) in tests lezen via `page.evaluate(() => CONFIG...)`
+  in plaats van de huidige waarde te hardcoden als string — deze presentatie
+  wordt actief aangepast, en een test die "CONFIG.x is exact 'Y'" checkt in
+  plaats van "wat er ook in CONFIG.x staat komt in de DOM terecht" breekt
+  bij elke content-tweak zonder dat er iets kapot is. Test wél tegen een
+  hardcoded/expliciet geforceerde waarde wanneer het gedrag zelf het
+  onderwerp is (bijv. "als disco AAN staat, flitst het") — zet dan expliciet
+  `CONFIG.disco.enabled = true`/`slide.disco = true` in de test-setup zelf,
+  in plaats van te vertrouwen op wat dit deck's `config.js` daar toevallig
+  voor default heeft staan (zie disco-and-pause.spec.js voor het patroon).
 - NOOIT `npx playwright install` proberen zonder eerst te checken of er al
   een gedeelde browser-cache beschikbaar is (bv. via
   `PLAYWRIGHT_BROWSERS_PATH`) — een sandbox kan de download blokkeren; meld
   dat dan expliciet in plaats van te blijven retryen.
+- NOOIT `npm install` of `npx playwright install` uitvoeren zonder eerst
+  expliciet toestemming te vragen aan de gebruiker, ook als dit de
+  standaard/voor-de-hand-liggende volgende stap lijkt. Dit geldt ook
+  wanneer een gecachete browser-revisie niet overeenkomt met wat de
+  gepinde `@playwright/test`-versie verwacht (revisie-mismatch), want dat
+  triggert dezelfde download. Gevolg bij weigering: de Playwright-suite
+  kan niet draaien; val terug op een manuele/visuele controle in de
+  browser als verificatie.

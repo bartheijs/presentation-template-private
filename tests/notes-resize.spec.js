@@ -35,10 +35,14 @@ test.describe('flex-grow interpolates instead of snapping', () => {
     expect(growBefore).toBe('7');
 
     await page.click('#btn-next'); // 2 -> 3, notes disappear
-    // Sample mid-way through the flex-grow transition: the swap happens at
-    // ~280ms (ANIM_OUT_MS), the flex-grow transition then runs another
-    // 280ms, so ~420ms total should be mid-flight.
-    await page.waitForTimeout(420);
+    // Sample mid-way through the flex-grow transition: the swap happens
+    // after ANIM_OUT_MS (config-driven, see CONFIG.transitions.outMs), the
+    // flex-grow transition (a fixed, independent 280ms CSS transition —
+    // see styles.css) then runs on top of that, so ANIM_OUT_MS + 140ms
+    // (half of 280ms) should land mid-flight regardless of how the slide
+    // transition itself is configured.
+    const outMs = await page.evaluate(() => ANIM_OUT_MS);
+    await page.waitForTimeout(outMs + 140);
     const growMid = parseFloat(
       await page.evaluate(() => getComputedStyle(document.getElementById('slide-content')).flexGrow)
     );
@@ -72,7 +76,10 @@ test.describe('flex-grow interpolates instead of snapping', () => {
     expect(growBefore).toBe('1');
 
     await page.click('#btn-next'); // 2 -> 3, notes appear
-    await page.waitForTimeout(420);
+    // See the mirrored "with notes -> without notes" test above for why
+    // this wait is ANIM_OUT_MS + 140ms rather than a fixed number.
+    const outMs = await page.evaluate(() => ANIM_OUT_MS);
+    await page.waitForTimeout(outMs + 140);
     const growMid = parseFloat(
       await page.evaluate(() => getComputedStyle(document.getElementById('slide-content')).flexGrow)
     );

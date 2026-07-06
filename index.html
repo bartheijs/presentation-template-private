@@ -22,6 +22,8 @@
   <symbol id="icon-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4V5Z"/></symbol>
   <symbol id="icon-seed" viewBox="0 0 24 24"><path d="M12 21v-8"/><path d="M12 13c0-4-3-7-7-7 0 4 3 7 7 7Z"/><path d="M12 13c0-4 3-7 7-7 0 4-3 7-7 7Z"/></symbol>
   <symbol id="icon-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="icon-play" viewBox="0 0 24 24"><path d="M7 4v16l14-8L7 4Z"/></symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="icon-question" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.7"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></symbol>
   <symbol id="icon-checklist" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8l1.5 1.5L12 7"/><path d="M8 14l1.5 1.5L12 13"/><path d="M14 8.5h4M14 14.5h4"/></symbol>
   <symbol id="icon-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></symbol>
@@ -46,7 +48,10 @@
 
 <div class="app-shell">
 
-  <aside class="toc-column">
+  <aside class="toc-column" id="toc-column">
+    <button id="btn-toc-collapse" class="btn-pane-toggle btn-pane-toggle--toc" type="button">
+      <svg class="icon"><use id="toc-collapse-icon" href="#icon-arrow-left"></use></svg>
+    </button>
     <div class="toc-heading" id="toc-heading"></div>
     <nav class="toc-list" id="toc-list" aria-label="Slide-navigatie"></nav>
   </aside>
@@ -74,16 +79,20 @@
     </div>
   </main>
 
-  <aside class="next-column">
+  <aside class="next-column" id="next-column">
+    <button id="btn-next-collapse" class="btn-pane-toggle btn-pane-toggle--next" type="button">
+      <svg class="icon"><use id="next-collapse-icon" href="#icon-arrow-right"></use></svg>
+    </button>
+
     <div class="toc-widgets">
       <button id="btn-template" class="btn-floating btn-template" type="button">
         <svg class="icon"><use href="#icon-template"></use></svg>
-        <span id="btn-template-label"></span>
+        <span id="btn-template-label" class="btn-label-text"></span>
       </button>
 
       <button id="btn-toggle-notes" class="btn-floating btn-toggle-notes" type="button">
         <svg class="icon"><use href="#icon-book"></use></svg>
-        <span id="notes-toggle-label"></span>
+        <span id="notes-toggle-label" class="btn-label-text"></span>
       </button>
 
       <div class="timer-widget" id="timer-widget">
@@ -92,12 +101,18 @@
           <span id="timer-display"></span>
         </div>
         <div class="timer-controls">
-          <button id="btn-timer-toggle" class="btn-pill" type="button"></button>
-          <button id="btn-timer-add5" class="btn-pill" type="button"><span id="timer-add5-label"></span></button>
+          <button id="btn-timer-toggle" class="btn-pill" type="button">
+            <svg class="icon"><use id="timer-toggle-icon" href="#icon-play"></use></svg>
+            <span id="timer-toggle-label" class="btn-label-text"></span>
+          </button>
+          <button id="btn-timer-add5" class="btn-pill" type="button">
+            <svg class="icon"><use href="#icon-plus"></use></svg>
+            <span id="timer-add5-label" class="btn-label-text"></span>
+          </button>
         </div>
         <button id="btn-timer-finish" class="btn-finish" type="button">
           <svg class="icon icon--fill"><use href="#icon-party"></use></svg>
-          <span id="btn-timer-finish-label"></span>
+          <span id="btn-timer-finish-label" class="btn-label-text"></span>
         </button>
       </div>
     </div>
@@ -106,11 +121,11 @@
       <div class="slide-progress" id="slide-progress"></div>
       <button id="btn-next" class="btn-next" type="button">
         <svg class="icon"><use href="#icon-arrow-right"></use></svg>
-        <span id="btn-next-label"></span>
+        <span id="btn-next-label" class="btn-label-text"></span>
       </button>
       <button id="btn-prev" class="btn-prev" type="button">
         <svg class="icon"><use href="#icon-arrow-left"></use></svg>
-        <span id="btn-prev-label"></span>
+        <span id="btn-prev-label" class="btn-label-text"></span>
       </button>
     </div>
   </aside>

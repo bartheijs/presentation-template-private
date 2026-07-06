@@ -9,6 +9,10 @@ const { gotoPresentation, waitIdle } = require('./helpers');
 test.describe('disco enable/disable', () => {
   test('auto mode: disco flashes during a normal transition', async ({ page }) => {
     await gotoPresentation(page);
+    // Force disco on regardless of this deck's own CONFIG.disco.enabled
+    // default — this test is about the 'auto mode' behavior when disco is
+    // on, not about what this particular presentation ships with.
+    await page.evaluate(() => { CONFIG.disco.enabled = true; });
     await page.click('#btn-next');
     await page.waitForTimeout(150); // past DISCO_REVEAL_DELAY_MS (90ms), mid-animation
     await expect(page.locator('#slide-stage')).toHaveClass(/is-transitioning/);
@@ -53,12 +57,40 @@ test.describe('disco enable/disable', () => {
     await waitIdle(page);
     await page.evaluate(() => { delete SLIDES[1].disco; });
   });
+
+  test('per-slide discoTitleLines overrides the global disco text for that transition only', async ({ page }) => {
+    await gotoPresentation(page);
+    const defaultHtml = await page.evaluate(() => document.getElementById('disco-title').innerHTML);
+
+    await page.evaluate(() => {
+      // Force disco on regardless of the ambient CONFIG.disco.enabled
+      // default, so this test doesn't depend on that value.
+      CONFIG.disco.enabled = true;
+      SLIDES[1].discoTitleLines = ['CUSTOM', 'TEXT'];
+      state.currentIndex = 0;
+      renderSlide();
+    });
+    await page.click('#btn-next'); // lands on index1, its own discoTitleLines should apply
+    await waitIdle(page);
+    await expect(page.locator('#disco-title')).toHaveText('CUSTOMTEXT');
+
+    await page.evaluate(() => { delete SLIDES[1].discoTitleLines; });
+    await page.click('#btn-next'); // lands on index2, no override -> falls back to CONFIG default
+    await waitIdle(page);
+    const restoredHtml = await page.evaluate(() => document.getElementById('disco-title').innerHTML);
+    expect(restoredHtml).toBe(defaultHtml);
+  });
 });
 
 test.describe('pause-mode transition', () => {
   async function setupPauseOnSlide3(page) {
     await gotoPresentation(page);
     await page.evaluate(() => {
+      // disco:true set explicitly (not relying on CONFIG.disco.enabled)
+      // so this pause mechanic is exercised regardless of this deck's own
+      // global default — otherwise pauseOn silently evaluates to false
+      // and every test below would "pass" without ever engaging pause.
+      SLIDES[3].disco = true;
       SLIDES[3].discoMode = 'pause';
       state.currentIndex = 2;
       renderSlide();

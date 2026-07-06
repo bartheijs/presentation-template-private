@@ -1,6 +1,21 @@
 const { test, expect } = require('@playwright/test');
 const { gotoPresentation, waitIdle } = require('./helpers');
 
+// A slide with `discoMode: 'pause'` freezes the transition landing on it
+// until a second matching click (see disco-and-pause.spec.js) — one click
+// doesn't always mean one slide advance. Mirror that here so this loop
+// still lands exactly on the last/first slide regardless of which slides
+// happen to use a pause.
+async function clickAndSettle(page, selector) {
+  await page.click(selector);
+  await waitIdle(page);
+  // eslint-disable-next-line no-undef
+  if (await page.evaluate(() => pendingPause !== null)) {
+    await page.click(selector);
+    await waitIdle(page);
+  }
+}
+
 test('clicking through all 31 slides produces no console/page errors', async ({ page }) => {
   test.setTimeout(90_000); // ~60 animated transitions at up to 700ms each
   const errors = [];
@@ -12,15 +27,13 @@ test('clicking through all 31 slides produces no console/page errors', async ({ 
   expect(slideCount).toBeGreaterThan(0);
 
   for (let i = 0; i < slideCount - 1; i++) {
-    await page.click('#btn-next');
-    await waitIdle(page);
+    await clickAndSettle(page, '#btn-next');
   }
   const finalIndex = await page.evaluate(() => state.currentIndex);
   expect(finalIndex).toBe(slideCount - 1);
 
   for (let i = 0; i < slideCount - 1; i++) {
-    await page.click('#btn-prev');
-    await waitIdle(page);
+    await clickAndSettle(page, '#btn-prev');
   }
   const backAtStart = await page.evaluate(() => state.currentIndex);
   expect(backAtStart).toBe(0);

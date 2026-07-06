@@ -9,6 +9,10 @@
  * just for the transition that lands on that slide. Optional
  * `discoMode: 'auto'/'pause'` overrides CONFIG.disco.mode the same way —
  * 'pause' freezes the disco fully visible until a second matching click.
+ * Optional `discoTitleLines: ['LINE', ...]` overrides CONFIG.disco.titleLines
+ * just for that slide's transition — one <span> per entry on the disco
+ * background, same as the global default. Only meaningful together with
+ * `disco: true` (or the global default being on).
  * Optional `align: 'center'/'left'` overrides CONFIG.layout.align for that
  * slide's content block (heading + bullets). A bullet in `bullets` is
  * either a plain string, or `{ text, subtext }` for a smaller, muted line
@@ -199,6 +203,8 @@ const SLIDES = [
     title: 'Zo ziet een skill.md eruit',
     icon: 'template',
     isTemplateAnchor: true,
+    disco: true,
+    discoMode: 'pause',
     bullets: [],
     notes: `- Concreet: een \`skill.md\` heeft een vaste basisvorm
 - Frontmatter (name + description) + secties voor Goal, Process, Output, Rules
@@ -297,6 +303,9 @@ Nadenken over dit soort vragen houdt elk onderdeel van het framework in dezelfde
     title: 'Name & trigger',
     icon: 'tag',
     templateSection: 'frontmatter',
+    disco: true,
+    discoMode: 'pause',
+    discoTitleLines: ['LEARN IT', 'SKILL IT', 'SHIP IT'],
     bullets: [
       'Naam + hoe de skill getriggerd wordt',
       'Basis voor naam en beschrijving in de YAML frontmatter',

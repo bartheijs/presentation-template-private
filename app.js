@@ -212,6 +212,34 @@ function updateNotesToggleLabel() {
     : CONFIG.ui.notesToggleHide;
 }
 
+// Collapsible side panes: TOC (left) and the template/timer/nav controls
+// (right). Each just toggles a class on .app-shell — styles.css handles
+// narrowing the grid track and hiding that pane's text/labels down to an
+// icon-only rail. Independent of each other and of the notes toggle above.
+let tocCollapsed = false;
+let nextCollapsed = false;
+const appShellEl = document.querySelector('.app-shell');
+
+function toggleTocCollapse() {
+  tocCollapsed = !tocCollapsed;
+  appShellEl.classList.toggle('toc-collapsed', tocCollapsed);
+  document.getElementById('toc-collapse-icon').setAttribute('href', tocCollapsed ? '#icon-arrow-right' : '#icon-arrow-left');
+  document.getElementById('btn-toc-collapse').setAttribute(
+    'aria-label',
+    tocCollapsed ? CONFIG.ui.tocCollapseShow : CONFIG.ui.tocCollapseHide
+  );
+}
+
+function toggleNextCollapse() {
+  nextCollapsed = !nextCollapsed;
+  appShellEl.classList.toggle('next-collapsed', nextCollapsed);
+  document.getElementById('next-collapse-icon').setAttribute('href', nextCollapsed ? '#icon-arrow-left' : '#icon-arrow-right');
+  document.getElementById('btn-next-collapse').setAttribute(
+    'aria-label',
+    nextCollapsed ? CONFIG.ui.controlsCollapseShow : CONFIG.ui.controlsCollapseHide
+  );
+}
+
 function renderTocOnce() {
   // One malformed slide (missing title) must not crash rendering for the
   // whole deck — this runs once at startup for every slide at once.
@@ -228,6 +256,17 @@ function updateTocActiveState() {
   document.querySelectorAll('.toc-item').forEach((el, i) => {
     el.classList.toggle('is-active', i === state.currentIndex);
   });
+  // Clicking a TOC row focuses that <button>, and its native focus ring
+  // only clears on its own if focus moves elsewhere — pressing Next/Prev
+  // (which does move focus) clears it, but a keyboard shortcut (ArrowRight
+  // etc., handled on `document`) never touches focus at all, leaving a
+  // stale ring on a row that's no longer the current slide. Called on
+  // every navigation path, so this always catches that regardless of
+  // which control was used.
+  const focused = document.activeElement;
+  if (focused && focused.classList.contains('toc-item') && !focused.classList.contains('is-active')) {
+    focused.blur();
+  }
   const active = document.querySelector('.toc-item.is-active');
   if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -282,6 +321,8 @@ function goTo(index, { animate = false, direction = null } = {}) {
   const discoOn = isDiscoEnabledFor(destSlide);
   const pauseOn = discoOn && isDiscoPauseFor(destSlide);
 
+  if (discoOn) renderDiscoTitle(destSlide.discoTitleLines || CONFIG.disco.titleLines);
+
   if (pauseOn) {
     beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
   } else {
@@ -291,17 +332,32 @@ function goTo(index, { animate = false, direction = null } = {}) {
   updateTocActiveState();
 }
 
-/* Content up / notes down (out, 280ms) -> swap content while off-screen ->
- * content down / notes up (in, 420ms). The disco-bg layer behind them is
+// Shared by the Next button, ArrowRight and Space: goTo() itself just
+// no-ops past the last slide (see its bounds guard above), so "next" on
+// the last slide instead opens the same finish/confetti celebration as
+// clicking the dedicated "Klaar!" button.
+function goNext() {
+  if (state.currentIndex >= SLIDES.length - 1) {
+    if (!finishOverlayEl.hidden) return;
+    launchConfetti();
+    openFinishOverlay();
+    return;
+  }
+  goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
+}
+
+/* Content up / notes down (out) -> swap content while off-screen ->
+ * content down / notes up (in). Durations come from CONFIG.transitions.
+ * The disco-bg layer behind them is
  * sequenced independently on its own explicit delays, deliberately timed
  * so it (a) appears a beat after the panels start leaving, not instantly,
  * and (b) is fully faded out well before the panels finish landing — with
  * a comfortable buffer, not a race against the panels' own transition. */
 let isAnimatingSlide = false;
-const ANIM_OUT_MS = 280;
-const ANIM_IN_MS = 420;
-const DISCO_REVEAL_DELAY_MS = 90; // background starts fading in this long after "out" begins
-const DISCO_HIDE_LEAD_MS = 260; // start hiding the background this long before the panels land
+const ANIM_OUT_MS = CONFIG.transitions.outMs;
+const ANIM_IN_MS = CONFIG.transitions.inMs;
+const DISCO_REVEAL_DELAY_MS = CONFIG.transitions.discoRevealDelayMs; // background starts fading in this long after "out" begins
+const DISCO_HIDE_LEAD_MS = CONFIG.transitions.discoHideLeadMs; // start hiding the background this long before the panels land
 
 // A slide's own `disco` boolean overrides CONFIG.disco.enabled. goTo()
 // resolves this against the destination slide *before* touching
@@ -316,6 +372,16 @@ function isDiscoEnabledFor(slide) {
 // freeze on.
 function isDiscoPauseFor(slide) {
   return (slide.discoMode || CONFIG.disco.mode || 'auto') === 'pause';
+}
+
+// A slide's own `discoTitleLines` overrides CONFIG.disco.titleLines just
+// for the transition landing on it. #disco-title is a single shared
+// element (see index.html) re-rendered right before that one transition
+// starts, rather than per-slide markup kept in sync ahead of time.
+function renderDiscoTitle(lines) {
+  document.getElementById('disco-title').innerHTML = lines
+    .map((line) => `<span>${escapeHtml(line)}</span>`)
+    .join('');
 }
 
 function animateTransition(dir, applyFn) {
@@ -485,9 +551,7 @@ function resetAnimationState() {
   slideStageEl.classList.remove('is-transitioning');
 }
 
-document.getElementById('btn-next').addEventListener('click', () =>
-  goTo(state.currentIndex + 1, { animate: true, direction: 'next' })
-);
+document.getElementById('btn-next').addEventListener('click', goNext);
 document.getElementById('btn-prev').addEventListener('click', () =>
   goTo(state.currentIndex - 1, { animate: true, direction: 'prev' })
 );
@@ -506,8 +570,16 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (!overlayEl.hidden) return;
-  if (e.key === 'ArrowRight') goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
+  if (e.key === 'ArrowRight') goNext();
   if (e.key === 'ArrowLeft') goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+  if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
+    // Skipped when a <button> is focused (Next itself, a TOC row, ...) —
+    // space already natively activates that button on its own, so also
+    // advancing here would double-fire (or fire a jarring extra "next"
+    // while e.g. the timer's Start button happens to have focus).
+    e.preventDefault(); // space's native behavior scrolls the page otherwise
+    goNext();
+  }
 });
 
 tocListEl.addEventListener('click', (e) => {
@@ -531,6 +603,8 @@ const timer = {
 
 const timerDisplayEl = document.getElementById('timer-display');
 const timerToggleBtn = document.getElementById('btn-timer-toggle');
+const timerToggleIconEl = document.getElementById('timer-toggle-icon');
+const timerToggleLabelEl = document.getElementById('timer-toggle-label');
 
 function renderTimerDisplay() {
   const totalSec = Math.ceil(timer.remainingMs / 1000);
@@ -539,12 +613,19 @@ function renderTimerDisplay() {
   timerDisplayEl.textContent = `${m}:${s}`;
 }
 
+// Icon + text both swap together — collapsed mode (see .next-column) only
+// shows the icon, so it alone must communicate running vs. paused.
+function setTimerToggleUI(running) {
+  timerToggleIconEl.setAttribute('href', running ? '#icon-pause' : '#icon-play');
+  timerToggleLabelEl.textContent = running ? CONFIG.ui.timerPause : CONFIG.ui.timerStart;
+}
+
 function timerStart() {
   if (timer.running) return;
   timer.running = true;
   timer.endAt = Date.now() + timer.remainingMs;
   timer.intervalId = setInterval(timerTick, 250);
-  timerToggleBtn.textContent = CONFIG.ui.timerPause;
+  setTimerToggleUI(true);
 }
 
 function timerPause() {
@@ -552,7 +633,7 @@ function timerPause() {
   timer.running = false;
   clearInterval(timer.intervalId);
   timer.remainingMs = Math.max(0, timer.endAt - Date.now());
-  timerToggleBtn.textContent = CONFIG.ui.timerStart;
+  setTimerToggleUI(false);
 }
 
 function timerAddFive() {
@@ -572,7 +653,7 @@ function timerTick() {
   if (timer.remainingMs <= 0) {
     clearInterval(timer.intervalId);
     timer.running = false;
-    timerToggleBtn.textContent = CONFIG.ui.timerStart;
+    setTimerToggleUI(false);
     if (!timer.firedZero) {
       timer.firedZero = true;
       launchConfetti();
@@ -769,6 +850,8 @@ function closeTemplateOverlay() {
 
 document.getElementById('btn-template').addEventListener('click', openTemplateOverlay);
 document.getElementById('btn-toggle-notes').addEventListener('click', toggleNotesVisibility);
+document.getElementById('btn-toc-collapse').addEventListener('click', toggleTocCollapse);
+document.getElementById('btn-next-collapse').addEventListener('click', toggleNextCollapse);
 document.getElementById('btn-overlay-close').addEventListener('click', closeTemplateOverlay);
 overlayEl.addEventListener('click', (e) => {
   if (e.target === overlayEl) closeTemplateOverlay();
@@ -806,16 +889,18 @@ document.addEventListener('keydown', (e) => {
 function applyConfigStrings() {
   document.title = CONFIG.title;
   document.documentElement.lang = CONFIG.lang;
+  document.documentElement.style.setProperty('--transition-out-ms', `${ANIM_OUT_MS}ms`);
+  document.documentElement.style.setProperty('--transition-in-ms', `${ANIM_IN_MS}ms`);
 
   document.getElementById('toc-heading').textContent = CONFIG.toc.heading;
-  document.getElementById('disco-title').innerHTML = CONFIG.disco.titleLines
-    .map((line) => `<span>${escapeHtml(line)}</span>`)
-    .join('');
+  renderDiscoTitle(CONFIG.disco.titleLines);
 
   document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
   updateNotesToggleLabel();
-  timerToggleBtn.textContent = CONFIG.ui.timerStart;
+  document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
+  document.getElementById('btn-next-collapse').setAttribute('aria-label', CONFIG.ui.controlsCollapseHide);
+  setTimerToggleUI(false);
   document.getElementById('timer-add5-label').textContent = `+${CONFIG.timer.addMinutes} min`;
   document.getElementById('btn-timer-finish-label').textContent = CONFIG.ui.timerFinish;
   document.getElementById('btn-next-label').textContent = CONFIG.ui.navNext;

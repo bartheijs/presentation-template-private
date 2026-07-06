@@ -25,13 +25,19 @@ uitzonderingsgeval van een ontbrekend icoon (zie stap 5).
 - `config.js` in deze repo als referentie voor de exacte `CONFIG`-vorm
   (`lang`, `title`, `toc.heading`, `layout.align`,
   `disco.enabled`/`disco.titleLines`/`disco.mode`,
-  `timer.defaultMinutes`/`addMinutes`, `confettiColors`,
-  `templateOverlay.enabled`, `ui.*`).
+  `timer.defaultMinutes`/`addMinutes`, `transitions.*` (slide-overgang-
+  timing in ms — geen frontmatter-veld, gewoon ongewijzigd overnemen uit
+  het referentie-`config.js`), `confettiColors`, `templateOverlay.enabled`,
+  `ui.*`).
 - `slides-data.js` in deze repo als referentie voor de exacte `SLIDES`-vorm:
-  `{ id, title, icon, bullets, notes, disco?, discoMode?, align?, isTemplateAnchor?, templateSection? }`.
+  `{ id, title, icon, bullets, notes, disco?, discoMode?, discoTitleLines?, align?, isTemplateAnchor?, templateSection? }`.
   `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
   slide aan staat — `'pause'` bevriest de disco-overgang volledig zichtbaar
-  tot een tweede, bijpassende klik op Volgende/Vorige. `align`
+  tot een tweede, bijpassende klik op Volgende/Vorige. `discoTitleLines`
+  (array van strings) overschrijft `CONFIG.disco.titleLines` voor alléén de
+  overgang die op die slide landt — geen frontmatter-veld in het content-
+  document (zeldzaam gebruik), dus alleen zetten als de gebruiker expliciet
+  andere disco-tekst voor die ene overgang vraagt. `align`
   (`'center'`/`'left'`) overschrijft `CONFIG.layout.align` voor het
   content-blok (heading + bullets) van die ene slide. Een item in `bullets`
   is een plain string, óf `{ text, subtext }` voor een kleinere, gedempte

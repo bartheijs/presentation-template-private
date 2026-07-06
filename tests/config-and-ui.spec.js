@@ -8,23 +8,33 @@ test.describe('config-driven UI strings', () => {
   test('applies CONFIG values to the DOM at startup', async ({ page }) => {
     await gotoPresentation(page);
 
-    await expect(page).toHaveTitle('Skill Engineering Workshop');
-    await expect(page.locator('html')).toHaveAttribute('lang', 'nl');
-    await expect(page.locator('#toc-heading')).toHaveText('Inhoud');
-    await expect(page.locator('#disco-title')).toContainText('SKILLS');
-    await expect(page.locator('#disco-title')).toContainText('THRILLS');
-    await expect(page.locator('#btn-template-label')).toHaveText('Skill Template');
-    await expect(page.locator('#timer-display')).toHaveText('30:00');
-    await expect(page.locator('#btn-timer-toggle')).toHaveText('Start');
-    await expect(page.locator('#timer-add5-label')).toHaveText('+5 min');
-    await expect(page.locator('#btn-timer-finish-label')).toHaveText('Klaar!');
-    await expect(page.locator('#btn-next-label')).toHaveText('Volgende');
-    await expect(page.locator('#btn-prev-label')).toHaveText('Vorige');
-    await expect(page.locator('#overlay-title-text')).toHaveText('skill.md template');
-    await expect(page.locator('#btn-overlay-close')).toHaveAttribute('aria-label', 'Sluiten');
-    await expect(page.locator('#btn-finish-close')).toHaveAttribute('aria-label', 'Terug naar de presentatie');
-    await expect(page.locator('#finish-title')).toHaveText('Eindelijk kunnen we aan de slag!');
-    await expect(page.locator('#finish-back-label')).toHaveText('Terug naar de presentatie');
+    // Reads CONFIG back from the page rather than hardcoding its values
+    // here: this test's job is "whatever CONFIG says ends up in the DOM",
+    // not "CONFIG contains these exact strings" — this deck's own
+    // config.js content (title, disco text, ui labels, ...) is free to
+    // change without this test needing to change alongside it.
+    const cfg = await page.evaluate(() => CONFIG);
+
+    await expect(page).toHaveTitle(cfg.title);
+    await expect(page.locator('html')).toHaveAttribute('lang', cfg.lang);
+    await expect(page.locator('#toc-heading')).toHaveText(cfg.toc.heading);
+    for (const line of cfg.disco.titleLines) {
+      await expect(page.locator('#disco-title')).toContainText(line);
+    }
+    await expect(page.locator('#btn-template-label')).toHaveText(cfg.ui.templateButton);
+    await expect(page.locator('#timer-display')).toHaveText(
+      `${String(cfg.timer.defaultMinutes).padStart(2, '0')}:00`
+    );
+    await expect(page.locator('#timer-toggle-label')).toHaveText(cfg.ui.timerStart);
+    await expect(page.locator('#timer-add5-label')).toHaveText(`+${cfg.timer.addMinutes} min`);
+    await expect(page.locator('#btn-timer-finish-label')).toHaveText(cfg.ui.timerFinish);
+    await expect(page.locator('#btn-next-label')).toHaveText(cfg.ui.navNext);
+    await expect(page.locator('#btn-prev-label')).toHaveText(cfg.ui.navPrev);
+    await expect(page.locator('#overlay-title-text')).toHaveText(cfg.ui.overlayTitle);
+    await expect(page.locator('#btn-overlay-close')).toHaveAttribute('aria-label', cfg.ui.overlayCloseLabel);
+    await expect(page.locator('#btn-finish-close')).toHaveAttribute('aria-label', cfg.ui.backToDeckLabel);
+    await expect(page.locator('#finish-title')).toHaveText(cfg.ui.finishTitle);
+    await expect(page.locator('#finish-back-label')).toHaveText(cfg.ui.backToDeckLabel);
     // Derived from SLIDES rather than hardcoded, so this test doesn't need
     // updating every time a slide is added/removed from this deck.
     const total = await page.evaluate(() => SLIDES.length);

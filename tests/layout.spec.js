@@ -7,8 +7,12 @@ const { gotoPresentation } = require('./helpers');
 // isTemplateAnchor compact slides.
 
 test.describe('content alignment', () => {
-  test('defaults to centered, .slide-inner present', async ({ page }) => {
+  test('CONFIG.layout.align = "center" applies no align-left modifier', async ({ page }) => {
     await gotoPresentation(page);
+    // Forced explicitly rather than assumed from this deck's own
+    // config.js — that value is content, not an engine default, and is
+    // free to be 'left' here.
+    await page.evaluate(() => { CONFIG.layout.align = 'center'; renderSlide(); });
     await expect(page.locator('#slide-content')).not.toHaveClass(/slide-content--align-left/);
     await expect(page.locator('.slide-inner')).toBeVisible();
   });
@@ -48,6 +52,11 @@ test.describe('content alignment', () => {
   test('a per-slide align override only affects that slide', async ({ page }) => {
     await gotoPresentation(page);
     await page.evaluate(() => {
+      // Baseline forced to 'center' explicitly, independent of this deck's
+      // own config.js default, so the "other slide" check below is
+      // actually isolating the per-slide override rather than coinciding
+      // with whatever the ambient global default happens to be.
+      CONFIG.layout.align = 'center';
       SLIDES[2].align = 'left';
       state.currentIndex = 2;
       renderSlide();
