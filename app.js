@@ -1,8 +1,62 @@
 /*
  * Presentation logic: rendering, navigation, timer, confetti, template overlay.
  * Classic script (not a module) so this keeps working when opened via file://.
- * Depends on SLIDES / SKILL_TEMPLATE_SECTIONS from slides-data.js, loaded first.
+ * Depends on CONFIG from config.js and SLIDES / SKILL_TEMPLATE_SECTIONS from
+ * slides-data.js, both loaded first.
  */
+
+/* ---------- Config normalization ---------- */
+
+// Fallback values for every CONFIG key this file reads. A presentation
+// branch with an incomplete config.js (a missing section, or the whole file
+// stripped down) must not crash — several reads below (the timer/confetti
+// constants) run at module-evaluation time, before anything is rendered, so
+// a thrown error here would blank the entire page with no visible cause.
+const CONFIG_DEFAULTS = {
+  lang: 'nl',
+  title: 'Presentatie',
+  toc: { heading: 'Inhoud' },
+  layout: { align: 'center' },
+  disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
+  timer: { defaultMinutes: 30, addMinutes: 5 },
+  confettiColors: ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'],
+  templateOverlay: { enabled: true },
+  ui: {
+    templateButton: 'Skill Template',
+    notesToggleHide: 'Notities verbergen',
+    notesToggleShow: 'Notities tonen',
+    timerStart: 'Start',
+    timerPause: 'Pause',
+    timerFinish: 'Klaar!',
+    navNext: 'Volgende',
+    navPrev: 'Vorige',
+    overlayCloseLabel: 'Sluiten',
+    overlayTitle: 'Template',
+    backToDeckLabel: 'Terug naar de presentatie',
+    finishTitle: 'Klaar!',
+    finishBodyHtml: '',
+  },
+};
+
+// Mutates `cfg` in place, filling in any key missing (or non-object, where a
+// nested section is expected) with the matching fallback from `defaults`.
+// CONFIG is declared `const` in config.js, so this fills gaps in the
+// existing object rather than replacing it.
+function normalizeConfig(cfg, defaults) {
+  for (const key of Object.keys(defaults)) {
+    const defaultVal = defaults[key];
+    const isSection = defaultVal && typeof defaultVal === 'object' && !Array.isArray(defaultVal);
+    if (isSection) {
+      if (!cfg[key] || typeof cfg[key] !== 'object') cfg[key] = {};
+      normalizeConfig(cfg[key], defaultVal);
+    } else if (cfg[key] === undefined) {
+      cfg[key] = defaultVal;
+    }
+  }
+  return cfg;
+}
+
+normalizeConfig(CONFIG, CONFIG_DEFAULTS);
 
 /* ---------- Small helpers ---------- */
 
@@ -60,47 +114,140 @@ const finishOverlayEl = document.getElementById('finish-overlay');
 
 /* ---------- Rendering ---------- */
 
+// A bullet is either a plain string, or { text, subtext } for a smaller,
+// muted line shown below the main bullet text.
+function renderBulletItem(b) {
+  const isObj = typeof b === 'object' && b !== null;
+  // A malformed entry (null/undefined element, or an object missing `text`)
+  // must not crash inlineMarkdown()/escapeHtml(), which require a string —
+  // fall back to an empty string rather than throwing and blanking the
+  // whole slide.
+  const text = (isObj ? b.text : b) || '';
+  const subtext = isObj && typeof b.subtext === 'string' ? b.subtext : null;
+  const body = subtext
+    ? `<span class="slide-bullet-stack"><span>${inlineMarkdown(text)}</span><span class="slide-bullet-subtext">${inlineMarkdown(subtext)}</span></span>`
+    : `<span>${inlineMarkdown(text)}</span>`;
+  return `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg>${body}</li>`;
+}
+
 function buildSlideContentHTML(slide) {
-  const bulletsBlock = slide.bullets.length
-    ? `<ul class="slide-bullets">
-        ${slide.bullets
-          .map(
-            (b) => `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg><span>${inlineMarkdown(b)}</span></li>`
-          )
-          .join('')}
-      </ul>`
+  // A malformed slide (e.g. a generation slip missing `bullets`/`title`)
+  // degrades to blank-ish here instead of throwing — since renderTocOnce()
+  // renders every slide's title in one pass at startup, one bad slide
+  // anywhere in the deck would otherwise crash the entire presentation
+  // before it ever shows anything.
+  const bullets = slide.bullets || [];
+  const bulletsBlock = bullets.length
+    ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
     : '';
   const templateBlock = slide.isTemplateAnchor
     ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
     : '';
   return `
-    <div class="slide-heading">
-      <svg class="icon"><use href="#icon-${slide.icon}"></use></svg>
-      <h1>${escapeHtml(slide.title)}</h1>
-    </div>
-    ${bulletsBlock}
-    ${templateBlock}`;
+    <div class="slide-inner">
+      <div class="slide-heading">
+        <svg class="icon"><use href="#icon-${slide.icon}"></use></svg>
+        <h1>${escapeHtml(slide.title || '')}</h1>
+      </div>
+      ${bulletsBlock}
+      ${templateBlock}
+    </div>`;
+}
+
+// A slide's own `align` overrides CONFIG.layout.align. Unlike
+// isDiscoEnabledFor()'s typeof-boolean check, a plain `||` is safe here:
+// the only "unset" value for this string enum is undefined, and no valid
+// value ('center'/'left') is falsy.
+function resolveAlignFor(slide) {
+  return slide.align || CONFIG.layout.align;
+}
+
+// Presenter-only, session-level override: hides the notes panel regardless
+// of whether the current slide has notes (e.g. when screen-sharing this
+// window to an audience). Persists across slide navigation on purpose —
+// it's a mode for the whole session, not a per-slide property.
+let notesHiddenByUser = false;
+
+function shouldShowNotes(slide) {
+  const hasNotesText = Boolean(slide.notes && slide.notes.trim());
+  return hasNotesText && !notesHiddenByUser;
 }
 
 function renderSlide() {
   const slide = SLIDES[state.currentIndex];
-  slideContentEl.className = 'slide-content' + (slide.isTemplateAnchor ? ' slide-content--compact' : '');
+  const align = resolveAlignFor(slide);
+  slideContentEl.className =
+    'slide-content' +
+    (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
+    (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
-  const hasNotes = Boolean(slide.notes && slide.notes.trim());
-  slideNotesEl.hidden = !hasNotes;
-  slideStageEl.classList.toggle('stage-no-notes', !hasNotes);
-  slideNotesEl.innerHTML = hasNotes ? renderNotesHTML(slide.notes) : '';
+  const hasNotesText = Boolean(slide.notes && slide.notes.trim());
+  const showNotes = shouldShowNotes(slide);
+  slideNotesEl.hidden = !showNotes;
+  slideStageEl.classList.toggle('stage-no-notes', !showNotes);
+  // Populated whenever the slide actually has notes, regardless of the
+  // toggle — so switching the toggle back on doesn't need a re-render.
+  slideNotesEl.innerHTML = hasNotesText ? renderNotesHTML(slide.notes) : '';
   slideProgressEl.textContent = `${state.currentIndex + 1} / ${SLIDES.length}`;
   slideContentEl.scrollTop = 0;
   slideNotesEl.scrollTop = 0;
 }
 
+// Toggling mid-animation/mid-pause would fight the same layout the slide
+// transition or frozen-pause freeze is already animating — block it until
+// things are settled, same guard pattern goTo() already uses.
+function toggleNotesVisibility() {
+  if (isAnimatingSlide || pendingPause) return;
+  notesHiddenByUser = !notesHiddenByUser;
+  const slide = SLIDES[state.currentIndex];
+  const showNotes = shouldShowNotes(slide);
+  slideNotesEl.hidden = !showNotes;
+  slideStageEl.classList.toggle('stage-no-notes', !showNotes);
+  updateNotesToggleLabel();
+}
+
+function updateNotesToggleLabel() {
+  document.getElementById('notes-toggle-label').textContent = notesHiddenByUser
+    ? CONFIG.ui.notesToggleShow
+    : CONFIG.ui.notesToggleHide;
+}
+
+// Collapsible side panes: TOC (left) and the template/timer/nav controls
+// (right). Each just toggles a class on .app-shell — styles.css handles
+// narrowing the grid track and hiding that pane's text/labels down to an
+// icon-only rail. Independent of each other and of the notes toggle above.
+let tocCollapsed = false;
+let nextCollapsed = false;
+const appShellEl = document.querySelector('.app-shell');
+
+function toggleTocCollapse() {
+  tocCollapsed = !tocCollapsed;
+  appShellEl.classList.toggle('toc-collapsed', tocCollapsed);
+  document.getElementById('toc-collapse-icon').setAttribute('href', tocCollapsed ? '#icon-arrow-right' : '#icon-arrow-left');
+  document.getElementById('btn-toc-collapse').setAttribute(
+    'aria-label',
+    tocCollapsed ? CONFIG.ui.tocCollapseShow : CONFIG.ui.tocCollapseHide
+  );
+}
+
+function toggleNextCollapse() {
+  nextCollapsed = !nextCollapsed;
+  appShellEl.classList.toggle('next-collapsed', nextCollapsed);
+  document.getElementById('next-collapse-icon').setAttribute('href', nextCollapsed ? '#icon-arrow-left' : '#icon-arrow-right');
+  document.getElementById('btn-next-collapse').setAttribute(
+    'aria-label',
+    nextCollapsed ? CONFIG.ui.controlsCollapseShow : CONFIG.ui.controlsCollapseHide
+  );
+}
+
 function renderTocOnce() {
+  // One malformed slide (missing title) must not crash rendering for the
+  // whole deck — this runs once at startup for every slide at once.
   tocListEl.innerHTML = SLIDES.map(
     (s, i) => `
       <button class="toc-item" data-index="${i}" type="button">
         <span class="toc-num">${String(i + 1).padStart(2, '0')}</span>
-        <span class="toc-title">${escapeHtml(s.title)}</span>
+        <span class="toc-title">${escapeHtml(s.title || '')}</span>
       </button>`
   ).join('');
 }
@@ -109,83 +256,302 @@ function updateTocActiveState() {
   document.querySelectorAll('.toc-item').forEach((el, i) => {
     el.classList.toggle('is-active', i === state.currentIndex);
   });
+  // Clicking a TOC row focuses that <button>, and its native focus ring
+  // only clears on its own if focus moves elsewhere — pressing Next/Prev
+  // (which does move focus) clears it, but a keyboard shortcut (ArrowRight
+  // etc., handled on `document`) never touches focus at all, leaving a
+  // stale ring on a row that's no longer the current slide. Called on
+  // every navigation path, so this always catches that regardless of
+  // which control was used.
+  const focused = document.activeElement;
+  if (focused && focused.classList.contains('toc-item') && !focused.classList.contains('is-active')) {
+    focused.blur();
+  }
   const active = document.querySelector('.toc-item.is-active');
   if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 /* ---------- Navigation ---------- */
 
+// While a 'pause'-mode disco transition is frozen mid-flight (outgoing
+// content off-screen, disco fully visible, state.currentIndex NOT yet
+// advanced), this holds the pending destination so a matching second
+// click/arrow can finish it. Any non-matching navigation cancels it.
+let pendingPause = null; // { toIndex, dir } | null
+
+// Handles for the "out"-phase timer/listener currently in flight, so
+// resetAnimationState() can reach and tear them down if a TOC click
+// interrupts a transition before they fire on their own. Both functions
+// that start an "out" phase (animateTransition/beginPausedTransition) must
+// keep these in sync: set on start, clear (to null) once the out phase
+// completes normally.
+let pendingRevealTimer = null;
+let pendingOutListener = null;
+
 function goTo(index, { animate = false, direction = null } = {}) {
-  if (index < 0 || index >= SLIDES.length || index === state.currentIndex) return;
-  if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid-transition
+  if (index < 0 || index >= SLIDES.length) return;
+  if (index === state.currentIndex && !pendingPause) return;
+  if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid out/in animation
+
   const dir = direction || (index > state.currentIndex ? 'next' : 'prev');
-  state.currentIndex = index;
-  if (animate) {
-    animateTransition(dir, renderSlide);
-  } else {
+
+  if (pendingPause) {
+    if (animate && dir === pendingPause.dir && index === pendingPause.toIndex) {
+      resumePausedTransition();
+      return;
+    }
+    cancelPendingPause(); // falls through to handle the newly requested nav below
+  }
+
+  if (!animate) {
+    // renderSlide() unconditionally overwrites slideContentEl's className,
+    // which would silently cancel a still-in-flight "out"/"in" animation
+    // (no animationend fires for a class removed out from under it) and
+    // strand isAnimatingSlide as true forever, freezing all future animated
+    // navigation. A non-animated jump (TOC click) can land mid-animation,
+    // so settle any in-flight state cleanly first.
+    resetAnimationState();
+    state.currentIndex = index;
     renderSlide();
+    updateTocActiveState();
+    return;
+  }
+
+  const destSlide = SLIDES[index];
+  const discoOn = isDiscoEnabledFor(destSlide);
+  const pauseOn = discoOn && isDiscoPauseFor(destSlide);
+
+  if (discoOn) renderDiscoTitle(destSlide.discoTitleLines || CONFIG.disco.titleLines);
+
+  if (pauseOn) {
+    beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
+  } else {
+    state.currentIndex = index;
+    animateTransition(dir, renderSlide);
   }
   updateTocActiveState();
 }
 
-/* Content up / notes down (out, 280ms) -> swap content while off-screen ->
- * content down / notes up (in, 420ms). The disco-bg layer behind them is
+// Shared by the Next button, ArrowRight and Space: goTo() itself just
+// no-ops past the last slide (see its bounds guard above), so "next" on
+// the last slide instead opens the same finish/confetti celebration as
+// clicking the dedicated "Klaar!" button.
+function goNext() {
+  if (state.currentIndex >= SLIDES.length - 1) {
+    if (!finishOverlayEl.hidden) return;
+    launchConfetti();
+    openFinishOverlay();
+    return;
+  }
+  goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
+}
+
+/* Content up / notes down (out) -> swap content while off-screen ->
+ * content down / notes up (in). Durations come from CONFIG.transitions.
+ * The disco-bg layer behind them is
  * sequenced independently on its own explicit delays, deliberately timed
  * so it (a) appears a beat after the panels start leaving, not instantly,
  * and (b) is fully faded out well before the panels finish landing — with
  * a comfortable buffer, not a race against the panels' own transition. */
 let isAnimatingSlide = false;
-const ANIM_OUT_MS = 280;
-const ANIM_IN_MS = 420;
-const DISCO_REVEAL_DELAY_MS = 90; // background starts fading in this long after "out" begins
-const DISCO_HIDE_LEAD_MS = 260; // start hiding the background this long before the panels land
+const ANIM_OUT_MS = CONFIG.transitions.outMs;
+const ANIM_IN_MS = CONFIG.transitions.inMs;
+const DISCO_REVEAL_DELAY_MS = CONFIG.transitions.discoRevealDelayMs; // background starts fading in this long after "out" begins
+const DISCO_HIDE_LEAD_MS = CONFIG.transitions.discoHideLeadMs; // start hiding the background this long before the panels land
+
+// A slide's own `disco` boolean overrides CONFIG.disco.enabled. goTo()
+// resolves this against the destination slide *before* touching
+// state.currentIndex, since the 'pause' path (see below) doesn't advance it
+// up front the way the plain 'auto' path still does.
+function isDiscoEnabledFor(slide) {
+  return typeof slide.disco === 'boolean' ? slide.disco : CONFIG.disco.enabled;
+}
+
+// A slide's own `discoMode` overrides CONFIG.disco.mode. Only meaningful
+// together with isDiscoEnabledFor() — pausing with disco off has nothing to
+// freeze on.
+function isDiscoPauseFor(slide) {
+  return (slide.discoMode || CONFIG.disco.mode || 'auto') === 'pause';
+}
+
+// A slide's own `discoTitleLines` overrides CONFIG.disco.titleLines just
+// for the transition landing on it. #disco-title is a single shared
+// element (see index.html) re-rendered right before that one transition
+// starts, rather than per-slide markup kept in sync ahead of time.
+function renderDiscoTitle(lines) {
+  document.getElementById('disco-title').innerHTML = lines
+    .map((line) => `<span>${escapeHtml(line)}</span>`)
+    .join('');
+}
 
 function animateTransition(dir, applyFn) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
 
-  const revealTimer = setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS);
+  const discoOn = isDiscoEnabledFor(SLIDES[state.currentIndex]);
+  pendingRevealTimer = discoOn
+    ? setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS)
+    : null;
+
+  function onOut() {
+    slideContentEl.removeEventListener('animationend', onOut);
+    clearTimeout(pendingRevealTimer);
+    pendingRevealTimer = null;
+    pendingOutListener = null;
+    // Swap in the new slide's content WHILE still hidden by the "out"
+    // classes (which hold the panel off-screen via animation-fill-mode:
+    // forwards). renderSlide() forces a synchronous reflow (scrollTop),
+    // so if we removed the "out" classes first, that reflow could catch
+    // the panel mid-snap-back to its normal (visible, in-place) resting
+    // style and paint a one-frame flash before the "in" class re-hides
+    // it. Doing the swap first, then flipping classes back-to-back with
+    // nothing forcing a reflow in between, avoids that flash entirely.
+    applyFn();
+    slideContentEl.classList.remove('content-anim-out');
+    slideNotesEl.classList.remove('notes-anim-out');
+    slideContentEl.classList.add('content-anim-in');
+    if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+
+    if (discoOn) {
+      const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+      setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+    }
+
+    slideContentEl.addEventListener(
+      'animationend',
+      () => {
+        slideContentEl.classList.remove('content-anim-in');
+        slideNotesEl.classList.remove('notes-anim-in');
+        isAnimatingSlide = false;
+      },
+      { once: true }
+    );
+  }
+  pendingOutListener = onOut;
+  slideContentEl.addEventListener('animationend', onOut, { once: true });
+}
+
+// 'pause' mode: play only the "out" half, then freeze fully visible on the
+// disco (no hide timer scheduled) instead of swapping content and playing
+// the "in" half. Mirrors animateTransition()'s out-phase exactly; kept as a
+// separate function (rather than merged into animateTransition) so the
+// existing 'auto' path stays byte-for-byte unchanged.
+function beginPausedTransition(dir, toIndex) {
+  isAnimatingSlide = true;
+  slideContentEl.classList.add('content-anim-out');
+  if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
+
+  pendingRevealTimer = setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS);
+
+  function onOut() {
+    slideContentEl.removeEventListener('animationend', onOut);
+    clearTimeout(pendingRevealTimer);
+    pendingRevealTimer = null;
+    pendingOutListener = null;
+    // Freeze here: outgoing content/notes stay held off-screen by the
+    // still-applied "out" classes, disco stays fully opaque (no hide
+    // timer scheduled), state.currentIndex and the rendered slide
+    // deliberately do not advance until resumePausedTransition() runs.
+    isAnimatingSlide = false;
+    pendingPause = { toIndex, dir };
+    renderPausedProgress();
+  }
+  pendingOutListener = onOut;
+  slideContentEl.addEventListener('animationend', onOut, { once: true });
+}
+
+function renderPausedProgress() {
+  const from = state.currentIndex + 1;
+  const to = pendingPause.toIndex + 1;
+  // Assumes |to - from| === 1 (always true today: pendingPause is only ever
+  // set from goTo()'s next/prev ±1 calls), so this always lands on fromN.5.
+  // A future caller that animates a jump of more than one slide would need
+  // to revisit this formula first.
+  const mid = (from + to) / 2;
+  slideProgressEl.textContent = `${String(mid).replace('.', ',')} / ${SLIDES.length}`;
+}
+
+// Finishes a frozen pause: mirrors the tail half of animateTransition()'s
+// onOut handler (swap content, play the "in" half, schedule disco's hide).
+function resumePausedTransition() {
+  const { toIndex } = pendingPause;
+  pendingPause = null;
+  isAnimatingSlide = true;
+
+  state.currentIndex = toIndex;
+  renderSlide();
+  slideContentEl.classList.remove('content-anim-out');
+  slideNotesEl.classList.remove('notes-anim-out');
+  slideContentEl.classList.add('content-anim-in');
+  if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+
+  const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+  setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
 
   slideContentEl.addEventListener(
     'animationend',
-    function onOut() {
-      slideContentEl.removeEventListener('animationend', onOut);
-      clearTimeout(revealTimer);
-      // Swap in the new slide's content WHILE still hidden by the "out"
-      // classes (which hold the panel off-screen via animation-fill-mode:
-      // forwards). renderSlide() forces a synchronous reflow (scrollTop),
-      // so if we removed the "out" classes first, that reflow could catch
-      // the panel mid-snap-back to its normal (visible, in-place) resting
-      // style and paint a one-frame flash before the "in" class re-hides
-      // it. Doing the swap first, then flipping classes back-to-back with
-      // nothing forcing a reflow in between, avoids that flash entirely.
-      applyFn();
-      slideContentEl.classList.remove('content-anim-out');
-      slideNotesEl.classList.remove('notes-anim-out');
-      slideContentEl.classList.add('content-anim-in');
-      if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
-
-      const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
-      setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
-
-      slideContentEl.addEventListener(
-        'animationend',
-        () => {
-          slideContentEl.classList.remove('content-anim-in');
-          slideNotesEl.classList.remove('notes-anim-in');
-          isAnimatingSlide = false;
-        },
-        { once: true }
-      );
+    () => {
+      slideContentEl.classList.remove('content-anim-in');
+      slideNotesEl.classList.remove('notes-anim-in');
+      isAnimatingSlide = false;
     },
     { once: true }
   );
+
+  updateTocActiveState();
 }
 
-document.getElementById('btn-next').addEventListener('click', () =>
-  goTo(state.currentIndex + 1, { animate: true, direction: 'next' })
-);
+// Any non-matching navigation while frozen cancels the pause: snap the
+// outgoing panels back to resting position and let disco fade out. The snap
+// is masked because disco is still fully opaque at this exact instant —
+// removing is-transitioning right after starts its existing fade, so the
+// instant class removal above never paints a visible flash.
+function cancelPendingPause() {
+  pendingPause = null;
+  slideContentEl.classList.remove('content-anim-out');
+  slideNotesEl.classList.remove('notes-anim-out');
+  // Force a reflow before returning. The caller immediately starts a fresh
+  // transition, which re-adds this exact same class name to kick off the
+  // "out" animation again — without a style flush in between, the browser
+  // sees no net change to animation-name across the task and never restarts
+  // the animation, so its animationend would never fire and callers waiting
+  // on it (animateTransition/beginPausedTransition) would hang forever.
+  void slideContentEl.offsetWidth;
+  slideStageEl.classList.remove('is-transitioning');
+  isAnimatingSlide = false;
+}
+
+// Hard reset for a non-animated jump (e.g. a TOC click) that may land while
+// a full animateTransition()/beginPausedTransition() is still mid-flight:
+// clears any frozen pause and strips every animation/disco class so no
+// stale state (or a permanently stuck isAnimatingSlide) survives the jump.
+// renderSlide() itself already overwrites slideContentEl's className right
+// after this runs, so this mainly guards slideNotesEl/slideStageEl and the
+// isAnimatingSlide flag. Also tears down the interrupted "out" phase's timer
+// and animationend listener (see pendingRevealTimer/pendingOutListener) —
+// left alone, the timer would later re-add 'is-transitioning' to an
+// unrelated slide, and the {once:true} listener never fires on its own
+// (removing its class mid-flight triggers animationcancel, not
+// animationend), leaving it attached to fire unexpectedly on a later
+// transition.
+function resetAnimationState() {
+  pendingPause = null;
+  isAnimatingSlide = false;
+  if (pendingRevealTimer) {
+    clearTimeout(pendingRevealTimer);
+    pendingRevealTimer = null;
+  }
+  if (pendingOutListener) {
+    slideContentEl.removeEventListener('animationend', pendingOutListener);
+    pendingOutListener = null;
+  }
+  slideContentEl.classList.remove('content-anim-out', 'content-anim-in');
+  slideNotesEl.classList.remove('notes-anim-out', 'notes-anim-in');
+  slideStageEl.classList.remove('is-transitioning');
+}
+
+document.getElementById('btn-next').addEventListener('click', goNext);
 document.getElementById('btn-prev').addEventListener('click', () =>
   goTo(state.currentIndex - 1, { animate: true, direction: 'prev' })
 );
@@ -193,6 +559,7 @@ document.getElementById('btn-prev').addEventListener('click', () =>
 document.addEventListener('keydown', (e) => {
   if (!finishOverlayEl.hidden) return;
   if (e.key === 'ArrowDown') {
+    if (!CONFIG.templateOverlay.enabled) return;
     e.preventDefault();
     if (overlayEl.hidden) openTemplateOverlay();
     return;
@@ -203,8 +570,16 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (!overlayEl.hidden) return;
-  if (e.key === 'ArrowRight') goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
+  if (e.key === 'ArrowRight') goNext();
   if (e.key === 'ArrowLeft') goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+  if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
+    // Skipped when a <button> is focused (Next itself, a TOC row, ...) —
+    // space already natively activates that button on its own, so also
+    // advancing here would double-fire (or fire a jarring extra "next"
+    // while e.g. the timer's Start button happens to have focus).
+    e.preventDefault(); // space's native behavior scrolls the page otherwise
+    goNext();
+  }
 });
 
 tocListEl.addEventListener('click', (e) => {
@@ -215,8 +590,8 @@ tocListEl.addEventListener('click', (e) => {
 
 /* ---------- Timer ---------- */
 
-const THIRTY_MIN_MS = 30 * 60 * 1000;
-const FIVE_MIN_MS = 5 * 60 * 1000;
+const THIRTY_MIN_MS = CONFIG.timer.defaultMinutes * 60 * 1000;
+const FIVE_MIN_MS = CONFIG.timer.addMinutes * 60 * 1000;
 
 const timer = {
   remainingMs: THIRTY_MIN_MS,
@@ -228,6 +603,8 @@ const timer = {
 
 const timerDisplayEl = document.getElementById('timer-display');
 const timerToggleBtn = document.getElementById('btn-timer-toggle');
+const timerToggleIconEl = document.getElementById('timer-toggle-icon');
+const timerToggleLabelEl = document.getElementById('timer-toggle-label');
 
 function renderTimerDisplay() {
   const totalSec = Math.ceil(timer.remainingMs / 1000);
@@ -236,12 +613,19 @@ function renderTimerDisplay() {
   timerDisplayEl.textContent = `${m}:${s}`;
 }
 
+// Icon + text both swap together — collapsed mode (see .next-column) only
+// shows the icon, so it alone must communicate running vs. paused.
+function setTimerToggleUI(running) {
+  timerToggleIconEl.setAttribute('href', running ? '#icon-pause' : '#icon-play');
+  timerToggleLabelEl.textContent = running ? CONFIG.ui.timerPause : CONFIG.ui.timerStart;
+}
+
 function timerStart() {
   if (timer.running) return;
   timer.running = true;
   timer.endAt = Date.now() + timer.remainingMs;
   timer.intervalId = setInterval(timerTick, 250);
-  timerToggleBtn.textContent = 'Pause';
+  setTimerToggleUI(true);
 }
 
 function timerPause() {
@@ -249,7 +633,7 @@ function timerPause() {
   timer.running = false;
   clearInterval(timer.intervalId);
   timer.remainingMs = Math.max(0, timer.endAt - Date.now());
-  timerToggleBtn.textContent = 'Start';
+  setTimerToggleUI(false);
 }
 
 function timerAddFive() {
@@ -269,7 +653,7 @@ function timerTick() {
   if (timer.remainingMs <= 0) {
     clearInterval(timer.intervalId);
     timer.running = false;
-    timerToggleBtn.textContent = 'Start';
+    setTimerToggleUI(false);
     if (!timer.firedZero) {
       timer.firedZero = true;
       launchConfetti();
@@ -292,7 +676,7 @@ renderTimerDisplay();
 
 const confettiCanvas = document.getElementById('confetti-canvas');
 const confettiCtx = confettiCanvas.getContext('2d');
-const CONFETTI_COLORS = ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'];
+const CONFETTI_COLORS = CONFIG.confettiColors;
 const PILE_COLUMN_WIDTH = 4;
 const SPAWN_INTERVAL_MS = 200;
 const SPAWN_BATCH_SIZE = 10;
@@ -456,9 +840,7 @@ function renderTemplateOverlay(highlightId) {
 
 function openTemplateOverlay() {
   const slide = SLIDES[state.currentIndex];
-  const slideNum = state.currentIndex + 1;
-  const highlight = slideNum >= 17 && slideNum <= 28 ? slide.templateSection : null;
-  renderTemplateOverlay(highlight);
+  renderTemplateOverlay(slide.templateSection || null);
   overlayEl.hidden = false;
 }
 
@@ -467,6 +849,9 @@ function closeTemplateOverlay() {
 }
 
 document.getElementById('btn-template').addEventListener('click', openTemplateOverlay);
+document.getElementById('btn-toggle-notes').addEventListener('click', toggleNotesVisibility);
+document.getElementById('btn-toc-collapse').addEventListener('click', toggleTocCollapse);
+document.getElementById('btn-next-collapse').addEventListener('click', toggleNextCollapse);
 document.getElementById('btn-overlay-close').addEventListener('click', closeTemplateOverlay);
 overlayEl.addEventListener('click', (e) => {
   if (e.target === overlayEl) closeTemplateOverlay();
@@ -499,8 +884,40 @@ document.addEventListener('keydown', (e) => {
   else if (!overlayEl.hidden) closeTemplateOverlay();
 });
 
+/* ---------- Apply config-driven strings/toggles ---------- */
+
+function applyConfigStrings() {
+  document.title = CONFIG.title;
+  document.documentElement.lang = CONFIG.lang;
+  document.documentElement.style.setProperty('--transition-out-ms', `${ANIM_OUT_MS}ms`);
+  document.documentElement.style.setProperty('--transition-in-ms', `${ANIM_IN_MS}ms`);
+
+  document.getElementById('toc-heading').textContent = CONFIG.toc.heading;
+  renderDiscoTitle(CONFIG.disco.titleLines);
+
+  document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
+  document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
+  updateNotesToggleLabel();
+  document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
+  document.getElementById('btn-next-collapse').setAttribute('aria-label', CONFIG.ui.controlsCollapseHide);
+  setTimerToggleUI(false);
+  document.getElementById('timer-add5-label').textContent = `+${CONFIG.timer.addMinutes} min`;
+  document.getElementById('btn-timer-finish-label').textContent = CONFIG.ui.timerFinish;
+  document.getElementById('btn-next-label').textContent = CONFIG.ui.navNext;
+  document.getElementById('btn-prev-label').textContent = CONFIG.ui.navPrev;
+
+  document.getElementById('btn-overlay-close').setAttribute('aria-label', CONFIG.ui.overlayCloseLabel);
+  document.getElementById('overlay-title-text').textContent = CONFIG.ui.overlayTitle;
+
+  document.getElementById('btn-finish-close').setAttribute('aria-label', CONFIG.ui.backToDeckLabel);
+  document.getElementById('finish-title').textContent = CONFIG.ui.finishTitle;
+  document.getElementById('finish-body').innerHTML = CONFIG.ui.finishBodyHtml;
+  document.getElementById('finish-back-label').textContent = CONFIG.ui.backToDeckLabel;
+}
+
 /* ---------- Init ---------- */
 
+applyConfigStrings();
 renderTocOnce();
 renderSlide();
 updateTocActiveState();

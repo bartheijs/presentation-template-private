@@ -1,0 +1,11 @@
+{
+  "name": "skill-workshop-presentation",
+  "private": true,
+  "description": "Automated tests for the skill-workshop-presentation deck. The presentation itself needs no dependencies at all — this package.json only exists to test it.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
