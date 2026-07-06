@@ -26,8 +26,11 @@ test.describe('flex-grow interpolates instead of snapping', () => {
     // Setup itself can trigger the new flex-grow transition (renderSlide()
     // is also used by non-animated jumps) — let it settle before sampling
     // the baseline, so we're only measuring the transition triggered by
-    // the click below.
-    await page.waitForTimeout(350);
+    // the click below. The transition's own duration now tracks
+    // --transition-out-ms (see styles.css), so this wait is config-driven
+    // too rather than a fixed number.
+    const outMs = await page.evaluate(() => ANIM_OUT_MS);
+    await page.waitForTimeout(outMs + 100);
 
     const growBefore = await page.evaluate(
       () => getComputedStyle(document.getElementById('slide-content')).flexGrow
@@ -37,12 +40,11 @@ test.describe('flex-grow interpolates instead of snapping', () => {
     await page.click('#btn-next'); // 2 -> 3, notes disappear
     // Sample mid-way through the flex-grow transition: the swap happens
     // after ANIM_OUT_MS (config-driven, see CONFIG.transitions.outMs), the
-    // flex-grow transition (a fixed, independent 280ms CSS transition —
-    // see styles.css) then runs on top of that, so ANIM_OUT_MS + 140ms
-    // (half of 280ms) should land mid-flight regardless of how the slide
-    // transition itself is configured.
-    const outMs = await page.evaluate(() => ANIM_OUT_MS);
-    await page.waitForTimeout(outMs + 140);
+    // flex-grow transition then runs on top of that for another ANIM_OUT_MS
+    // (styles.css ties its duration to the same --transition-out-ms), so
+    // ANIM_OUT_MS * 1.5 (half of its own duration) should land mid-flight
+    // regardless of how the slide transition itself is configured.
+    await page.waitForTimeout(outMs * 1.5);
     const growMid = parseFloat(
       await page.evaluate(() => getComputedStyle(document.getElementById('slide-content')).flexGrow)
     );
@@ -68,7 +70,8 @@ test.describe('flex-grow interpolates instead of snapping', () => {
     // is also used by non-animated jumps) — let it settle before sampling
     // the baseline, so we're only measuring the transition triggered by
     // the click below.
-    await page.waitForTimeout(350);
+    const outMs = await page.evaluate(() => ANIM_OUT_MS);
+    await page.waitForTimeout(outMs + 100);
 
     const growBefore = await page.evaluate(
       () => getComputedStyle(document.getElementById('slide-content')).flexGrow
@@ -77,9 +80,8 @@ test.describe('flex-grow interpolates instead of snapping', () => {
 
     await page.click('#btn-next'); // 2 -> 3, notes appear
     // See the mirrored "with notes -> without notes" test above for why
-    // this wait is ANIM_OUT_MS + 140ms rather than a fixed number.
-    const outMs = await page.evaluate(() => ANIM_OUT_MS);
-    await page.waitForTimeout(outMs + 140);
+    // this wait is ANIM_OUT_MS * 1.5 rather than a fixed number.
+    await page.waitForTimeout(outMs * 1.5);
     const growMid = parseFloat(
       await page.evaluate(() => getComputedStyle(document.getElementById('slide-content')).flexGrow)
     );

@@ -21,14 +21,16 @@ hun `isTemplateAnchor`/`templateSection`-velden, of ongerelateerde
 
 - Het (deel-)content-document van de gebruiker.
 - De bestaande `slides-data.js` in deze repo (`SLIDES`-array, vorm:
-  `{ id, title, icon, bullets, notes, disco?, discoMode?, align?, isTemplateAnchor?, templateSection? }`.
+  `{ id, title, icon, bullets, notes, disco?, discoMode?, discoTitleLines?, align?, isTemplateAnchor?, templateSection? }`.
   `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
-  slide aan staat. `align` (`'center'`/`'left'`) overschrijft
-  `CONFIG.layout.align` voor die ene slide. Een item in `bullets` is een
-  plain string, óf `{ text, subtext }`.)
+  slide aan staat. `discoTitleLines` (array van strings) overschrijft
+  `CONFIG.disco.titleLines` voor alléén de overgang die op die ene slide
+  landt — zeldzaam gebruik, alleen zetten als expliciet gevraagd. `align`
+  (`'center'`/`'left'`) overschrijft `CONFIG.layout.align` voor die ene
+  slide. Een item in `bullets` is een plain string, óf `{ text, subtext }`.)
   en `config.js` (vorm: zie dat bestand — `lang`, `title`, `toc.heading`,
   `layout.align`, `disco.enabled`/`disco.titleLines`/`disco.mode`,
-  `timer.defaultMinutes`/`addMinutes`, `confettiColors`,
+  `timer.defaultMinutes`/`addMinutes`, `transitions.*`, `confettiColors`,
   `templateOverlay.enabled`, `ui.*`).
 - Beschikbare iconen (`<symbol id="icon-...">` in `index.html`):
   `spark, bulb, book, alert, compare, bolt, repeat, folder, template, chat,
@@ -68,8 +70,11 @@ sub-agents of code execution.
      - Bestaat de titel al → overschrijf alleen die entry's `title`, `icon`
        (als opgegeven), `bullets`, `notes`, `disco` (als opgegeven),
        `discoMode` (als opgegeven), `align` (als opgegeven). Laat bestaande
-       `isTemplateAnchor`/`templateSection`-velden van díe entry ongemoeid
-       tenzij het document ze expliciet aanpast.
+       `isTemplateAnchor`/`templateSection`/`discoTitleLines`-velden van díe
+       entry ongemoeid tenzij het document ze expliciet aanpast — dit
+       content-formaat heeft geen frontmatter-regel voor `discoTitleLines`,
+       dus een bestaande waarde alleen laten staan, nooit stilzwijgend
+       verwijderen omdat het document het veld niet noemt.
      - Bestaat de titel nog niet → nieuwe slide, toegevoegd aan het eind van
        de array met een nieuwe oplopende `id`, tenzij de gebruiker een
        positie aangeeft (bijv. "na slide 5" of "vóór 'Wat is een skill?'").
@@ -120,8 +125,8 @@ sub-agents of code execution.
 
 - ALTIJD niet-genoemde slides en hun volgorde ongemoeid laten bij een
   gerichte update.
-- ALTIJD `isTemplateAnchor`/`templateSection` van bestaande slides bewaren
-  tenzij het content-document ze expliciet noemt.
+- ALTIJD `isTemplateAnchor`/`templateSection`/`discoTitleLines` van
+  bestaande slides bewaren tenzij het content-document ze expliciet noemt.
 - NOOIT `config.js`-sleutels aanpassen die niet in de frontmatter van het
   document voorkomen.
 - NOOIT `app.js`/`styles.css` aanraken voor deze skill.

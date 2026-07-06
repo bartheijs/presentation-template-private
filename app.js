@@ -19,6 +19,7 @@ const CONFIG_DEFAULTS = {
   layout: { align: 'center' },
   disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
   timer: { defaultMinutes: 30, addMinutes: 5 },
+  transitions: { outMs: 280, inMs: 420, discoRevealDelayMs: 90, discoHideLeadMs: 260 },
   confettiColors: ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'],
   templateOverlay: { enabled: true },
   ui: {
@@ -30,6 +31,10 @@ const CONFIG_DEFAULTS = {
     timerFinish: 'Klaar!',
     navNext: 'Volgende',
     navPrev: 'Vorige',
+    tocCollapseHide: 'Hide TOC',
+    tocCollapseShow: 'Show TOC',
+    controlsCollapseHide: 'Hide controls',
+    controlsCollapseShow: 'Show controls',
     overlayCloseLabel: 'Sluiten',
     overlayTitle: 'Template',
     backToDeckLabel: 'Terug naar de presentatie',
@@ -207,15 +212,24 @@ function toggleNotesVisibility() {
 }
 
 function updateNotesToggleLabel() {
-  document.getElementById('notes-toggle-label').textContent = notesHiddenByUser
-    ? CONFIG.ui.notesToggleShow
-    : CONFIG.ui.notesToggleHide;
+  const label = notesHiddenByUser ? CONFIG.ui.notesToggleShow : CONFIG.ui.notesToggleHide;
+  document.getElementById('notes-toggle-label').textContent = label;
+  document.getElementById('btn-toggle-notes').setAttribute('aria-label', label);
 }
 
 // Collapsible side panes: TOC (left) and the template/timer/nav controls
 // (right). Each just toggles a class on .app-shell — styles.css handles
 // narrowing the grid track and hiding that pane's text/labels down to an
 // icon-only rail. Independent of each other and of the notes toggle above.
+//
+// MOBILE_BREAKPOINT must match styles.css's `@media (max-width: 900px)` —
+// pane collapse is a desktop-rail concept, and below this width the panes
+// are already stacked full-width by that media query. Rather than
+// maintaining a second, easy-to-forget list of CSS overrides that resets
+// every collapsed-state style at that width, the resize listener below
+// just guarantees the collapsed classes are never present on .app-shell
+// in the first place once the viewport gets that narrow.
+const MOBILE_BREAKPOINT = 900;
 let tocCollapsed = false;
 let nextCollapsed = false;
 const appShellEl = document.querySelector('.app-shell');
@@ -239,6 +253,12 @@ function toggleNextCollapse() {
     nextCollapsed ? CONFIG.ui.controlsCollapseShow : CONFIG.ui.controlsCollapseHide
   );
 }
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= MOBILE_BREAKPOINT) return;
+  if (tocCollapsed) toggleTocCollapse();
+  if (nextCollapsed) toggleNextCollapse();
+});
 
 function renderTocOnce() {
   // One malformed slide (missing title) must not crash rendering for the
@@ -616,8 +636,10 @@ function renderTimerDisplay() {
 // Icon + text both swap together — collapsed mode (see .next-column) only
 // shows the icon, so it alone must communicate running vs. paused.
 function setTimerToggleUI(running) {
+  const label = running ? CONFIG.ui.timerPause : CONFIG.ui.timerStart;
   timerToggleIconEl.setAttribute('href', running ? '#icon-pause' : '#icon-play');
-  timerToggleLabelEl.textContent = running ? CONFIG.ui.timerPause : CONFIG.ui.timerStart;
+  timerToggleLabelEl.textContent = label;
+  timerToggleBtn.setAttribute('aria-label', label);
 }
 
 function timerStart() {
@@ -896,15 +918,21 @@ function applyConfigStrings() {
   renderDiscoTitle(CONFIG.disco.titleLines);
 
   document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
+  document.getElementById('btn-template').setAttribute('aria-label', CONFIG.ui.templateButton);
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
   updateNotesToggleLabel();
   document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
   document.getElementById('btn-next-collapse').setAttribute('aria-label', CONFIG.ui.controlsCollapseHide);
   setTimerToggleUI(false);
-  document.getElementById('timer-add5-label').textContent = `+${CONFIG.timer.addMinutes} min`;
+  const timerAdd5Label = `+${CONFIG.timer.addMinutes} min`;
+  document.getElementById('timer-add5-label').textContent = timerAdd5Label;
+  document.getElementById('btn-timer-add5').setAttribute('aria-label', timerAdd5Label);
   document.getElementById('btn-timer-finish-label').textContent = CONFIG.ui.timerFinish;
+  document.getElementById('btn-timer-finish').setAttribute('aria-label', CONFIG.ui.timerFinish);
   document.getElementById('btn-next-label').textContent = CONFIG.ui.navNext;
+  document.getElementById('btn-next').setAttribute('aria-label', CONFIG.ui.navNext);
   document.getElementById('btn-prev-label').textContent = CONFIG.ui.navPrev;
+  document.getElementById('btn-prev').setAttribute('aria-label', CONFIG.ui.navPrev);
 
   document.getElementById('btn-overlay-close').setAttribute('aria-label', CONFIG.ui.overlayCloseLabel);
   document.getElementById('overlay-title-text').textContent = CONFIG.ui.overlayTitle;
