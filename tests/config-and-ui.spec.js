@@ -72,17 +72,30 @@ test.describe('config-driven UI strings', () => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
 
-    await page.evaluate(() => {
+    const transitionsAfterNormalize = await page.evaluate(() => {
       delete CONFIG.ui;
       delete CONFIG.disco;
       delete CONFIG.layout;
+      delete CONFIG.transitions;
       normalizeConfig(CONFIG, CONFIG_DEFAULTS);
       applyConfigStrings();
       renderSlide();
+      return CONFIG.transitions;
     });
 
     expect(errors).toEqual([]);
     await expect(page.locator('#btn-template-label')).toHaveText('Skill Template');
     await expect(page.locator('.slide-heading')).toBeVisible();
+    // Regression guard: CONFIG.transitions.* is read at module-evaluation
+    // time in app.js (ANIM_OUT_MS and friends), before anything renders —
+    // if CONFIG_DEFAULTS ever loses its `transitions` fallback again,
+    // normalizeConfig() would leave this undefined and a presentation
+    // missing that section would blank on load with no visible error.
+    expect(transitionsAfterNormalize).toEqual({
+      outMs: expect.any(Number),
+      inMs: expect.any(Number),
+      discoRevealDelayMs: expect.any(Number),
+      discoHideLeadMs: expect.any(Number),
+    });
   });
 });

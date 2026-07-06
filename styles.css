@@ -143,21 +143,28 @@ button {
 /* ---------- App shell ---------- */
 .app-shell {
   display: grid;
-  grid-template-columns: 260px 1fr 280px;
+  /* Each side pane's width is its own custom property with an expanded-
+     state fallback, so .toc-collapsed/.next-collapsed below only ever need
+     to set their own variable — independent of whatever the other pane is
+     doing. A 3rd collapsible region would only add one more var() slot
+     here plus one one-line rule, never a new combination rule. */
+  grid-template-columns: var(--toc-width, 260px) 1fr var(--next-width, 280px);
   gap: 1.25rem;
   height: 100vh;
   padding: 1.25rem;
   /* Not universally animatable across browsers (older ones just snap
-     instantly instead) — an acceptable, harmless degradation here. */
+     instantly instead) — an acceptable, harmless degradation here. The
+     var()s above are resolved into the computed grid-template-columns
+     value before the browser diffs old vs. new for the transition, so
+     this animates exactly as it would with literal values. */
   transition: grid-template-columns 0.25s ease;
 }
 .app-shell > * { min-width: 0; }
 
 /* Collapsed side panes shrink their grid track down to a slim icon rail
    instead of disappearing outright, so the toggle button stays put. */
-.app-shell.toc-collapsed { grid-template-columns: 60px 1fr 280px; }
-.app-shell.next-collapsed { grid-template-columns: 260px 1fr 68px; }
-.app-shell.toc-collapsed.next-collapsed { grid-template-columns: 60px 1fr 68px; }
+.app-shell.toc-collapsed { --toc-width: 60px; }
+.app-shell.next-collapsed { --next-width: 68px; }
 
 /* ---------- Pane collapse toggle buttons (TOC + controls) ---------- */
 .btn-pane-toggle {
@@ -456,7 +463,7 @@ button {
      the landing animation use a different height than the exit animation
      did. flex-basis stays 0 in both states (see stage-no-notes below) so
      only flex-grow — a plain animatable number — ever changes. */
-  transition: flex-grow 280ms ease;
+  transition: flex-grow var(--transition-out-ms, 280ms) ease;
 }
 
 .slide-content--compact {
@@ -715,21 +722,18 @@ button {
   width: 1rem;
   height: 1rem;
 }
-.app-shell.next-collapsed .btn-floating {
-  justify-content: center;
-  padding: 0.75rem;
-}
 .app-shell.next-collapsed .timer-controls {
   flex-direction: column;
 }
-.app-shell.next-collapsed .btn-finish {
-  padding: 0.55rem;
-}
-.app-shell.next-collapsed .btn-next {
-  padding: 1rem 0.5rem;
-}
-.app-shell.next-collapsed .btn-prev {
-  padding: 0.6rem 0.5rem;
+/* Shared by every icon-only nav/action button in this pane (.btn-floating,
+   .btn-finish, .btn-next, .btn-prev all reduce to the same square-icon
+   shape once their label hides) — one class + one rule instead of a
+   separate hand-tuned padding override per button. A future button added
+   to this pane opts in by adding this class in its markup, rather than
+   needing a new CSS rule here. */
+.app-shell.next-collapsed .btn-compact-collapsible {
+  justify-content: center;
+  padding: 0.65rem;
 }
 
 /* ---------- Slide transition animation (button/keyboard nav only) ----------
@@ -931,35 +935,18 @@ button {
 
 /* ---------- Responsive fallback ---------- */
 @media (max-width: 900px) {
-  .app-shell,
-  .app-shell.toc-collapsed,
-  .app-shell.next-collapsed,
-  .app-shell.toc-collapsed.next-collapsed {
+  /* Pane collapse is a desktop-rail concept, and below this width (must
+     match MOBILE_BREAKPOINT in app.js) the panes are already stacked
+     full-width by the rules below. app.js's resize listener guarantees
+     .toc-collapsed/.next-collapsed are never present on .app-shell at
+     this width, so — unlike an earlier version of this block — nothing
+     here needs to individually reset each collapsed-state override; there
+     never is one to reset. */
+  .app-shell {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
     height: auto;
     min-height: 100vh;
-  }
-  /* Pane collapse is a desktop-rail concept — at this width both panes are
-     already stacked full-width, so ignore any collapsed state entirely.
-     Matches the collapsed-state selectors' specificity so this actually
-     wins the cascade instead of losing silently to them. */
-  .app-shell.toc-collapsed .toc-heading {
-    display: block;
-  }
-  .app-shell.toc-collapsed .toc-list {
-    display: flex;
-  }
-  .app-shell.next-collapsed .btn-label-text {
-    display: inline;
-  }
-  .app-shell.next-collapsed .timer-readout {
-    flex-direction: row;
-    font-size: 1.6rem;
-  }
-  .app-shell.next-collapsed .timer-readout .icon {
-    width: 1.4em;
-    height: 1.4em;
   }
   .btn-pane-toggle { display: none; }
   .toc-column { flex-direction: row; flex-wrap: wrap; }
