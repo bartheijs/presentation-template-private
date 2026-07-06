@@ -16,7 +16,7 @@ async function clickAndSettle(page, selector) {
   }
 }
 
-test('clicking through all 31 slides produces no console/page errors', async ({ page }) => {
+test('clicking through all slides produces no console/page errors', async ({ page }) => {
   test.setTimeout(90_000); // ~60 animated transitions at up to 700ms each
   const errors = [];
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));

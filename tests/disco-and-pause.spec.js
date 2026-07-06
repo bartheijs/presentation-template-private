@@ -100,13 +100,16 @@ test.describe('pause-mode transition', () => {
 
   test('freezes fully visible and resumes on a matching second click', async ({ page }) => {
     await setupPauseOnSlide3(page);
+    // Derived from SLIDES rather than hardcoded, so this test doesn't need
+    // updating every time a slide is added/removed from this deck.
+    const total = await page.evaluate(() => SLIDES.length);
 
     await page.click('#btn-next'); // 2 -> 3, should freeze
     await page.waitForTimeout(500);
 
     await expect(page.locator('#slide-stage')).toHaveClass(/is-transitioning/);
     await expect(page.locator('#slide-content')).toHaveClass(/content-anim-out/);
-    await expect(page.locator('#slide-progress')).toHaveText('3,5 / 31');
+    await expect(page.locator('#slide-progress')).toHaveText(`3,5 / ${total}`);
     await expect(page.locator('.toc-item.is-active')).toHaveAttribute('data-index', '2');
     const currentIndexWhileFrozen = await page.evaluate(() => state.currentIndex);
     expect(currentIndexWhileFrozen).toBe(2);
@@ -115,7 +118,7 @@ test.describe('pause-mode transition', () => {
     await waitIdle(page);
 
     await expect(page.locator('#slide-stage')).not.toHaveClass(/is-transitioning/);
-    await expect(page.locator('#slide-progress')).toHaveText('4 / 31');
+    await expect(page.locator('#slide-progress')).toHaveText(`4 / ${total}`);
     await expect(page.locator('.toc-item.is-active')).toHaveAttribute('data-index', '3');
     const finalIndex = await page.evaluate(() => state.currentIndex);
     expect(finalIndex).toBe(3);
