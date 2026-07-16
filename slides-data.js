@@ -201,6 +201,9 @@ const SLIDES = [
     id: 10,
     title: 'Voor en door AI',
     icon: 'chat',
+    disco: true,
+    discoMode: 'pause',
+    discoTitleLines: ['MAAR', 'HOE', 'DAN!?'],
     bullets: [
       'Skills kan je zelf schrijven...',
       '...maar met AI gaat het makkelijker.',
