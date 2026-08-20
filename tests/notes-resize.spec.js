@@ -20,6 +20,10 @@ test.describe('flex-grow interpolates instead of snapping', () => {
 
   test('with notes -> without notes', async ({ page }) => {
     await gotoPresentation(page);
+    // This suite is about the notes-presence-driven flex-grow transition,
+    // not the presenter-only hide/show override (see notes-toggle.spec.js)
+    // — the session now starts with that override on, so switch it off here.
+    await page.evaluate(() => { notesHiddenByUser = false; });
     await setNotes(page, 2, 'Has notes.');
     await setNotes(page, 3, ''); // no notes
     await page.evaluate(() => { state.currentIndex = 2; renderSlide(); });
@@ -63,6 +67,7 @@ test.describe('flex-grow interpolates instead of snapping', () => {
 
   test('without notes -> with notes', async ({ page }) => {
     await gotoPresentation(page);
+    await page.evaluate(() => { notesHiddenByUser = false; });
     await setNotes(page, 2, ''); // no notes
     await setNotes(page, 3, 'Has notes.');
     await page.evaluate(() => { state.currentIndex = 2; renderSlide(); });
@@ -97,9 +102,15 @@ test.describe('flex-grow interpolates instead of snapping', () => {
 
   test('with notes -> with notes: no resize at all (flex-grow constant)', async ({ page }) => {
     await gotoPresentation(page);
+    await page.evaluate(() => { notesHiddenByUser = false; });
     await setNotes(page, 2, 'Has notes.');
     await setNotes(page, 3, 'Also has notes.');
     await page.evaluate(() => { state.currentIndex = 2; renderSlide(); });
+    // The setup itself just flipped notesHiddenByUser, which triggers its
+    // own flex-grow reveal transition — let that settle before clicking,
+    // so the sample below only reflects the (absent) resize from the click.
+    const outMs = await page.evaluate(() => ANIM_OUT_MS);
+    await page.waitForTimeout(outMs + 100);
 
     await page.click('#btn-next');
     await page.waitForTimeout(150);

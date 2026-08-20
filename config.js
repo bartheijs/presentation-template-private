@@ -11,7 +11,7 @@
 
 const CONFIG = {
   lang: 'nl',
-  title: 'Skill Engineering Workshop',
+  title: 'Wat Skillen We Vandaag?',
 
   toc: {
     heading: 'Inhoud',
@@ -33,7 +33,8 @@ const CONFIG = {
   },
 
   timer: {
-    defaultMinutes: 30, // also doubles as the ceiling when using "+N min"
+    defaultMinutes: 30, // presenter's live-build timer; started for the
+    // whole 45-min slot, leaving >=15 min free for the live build itself
     addMinutes: 5,
   },
 
@@ -77,7 +78,6 @@ const CONFIG = {
     backToDeckLabel: 'Terug naar de presentatie',
     finishTitle: 'Eindelijk kunnen we aan de slag!',
     // Set via innerHTML at startup — trusted local config, not user input.
-    finishBodyHtml:
-      'Tijd om je eigen <code>skill.md</code> te bouwen — schrijf het proces één keer goed op, en je hoeft het nooit meer opnieuw uit te leggen.',
+    finishBodyHtml: 'Laten we samen een skill bouwen!',
   },
 };

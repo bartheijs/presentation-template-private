@@ -148,15 +148,65 @@ function buildSlideContentHTML(slide) {
   const templateBlock = slide.isTemplateAnchor
     ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
     : '';
+  // `icon` is optional — a title slide can omit it to show just the
+  // heading text, with no icon glyph taking up space next to it. A slide
+  // with no icon and a subtitle reads as the deck's title slide, so it
+  // gets the gradient-accent treatment on its own instead of a separate
+  // opt-in flag.
+  const isTitleSlide = !slide.icon && Boolean(slide.subtitle);
+  const iconBlock = slide.icon
+    ? `<svg class="icon"><use href="#icon-${slide.icon}"></use></svg>`
+    : '';
+  // Optional `subtitle` renders a tagline under the title — for a title
+  // slide's tagline, not a general-purpose per-slide field.
+  const subtitleBlock = slide.subtitle
+    ? `<p class="slide-subtitle${isTitleSlide ? ' slide-subtitle--accent' : ''}">${inlineMarkdown(slide.subtitle)}</p>`
+    : '';
+  const headingBlock = `
+      <div class="slide-heading${slide.subtitle ? ' slide-heading--with-subtitle' : ''}">
+        ${iconBlock}
+        <h1${isTitleSlide ? ' class="slide-title-accent"' : ''}>${escapeHtml(slide.title || '')}</h1>
+      </div>
+      ${subtitleBlock}`;
+
+  // Optional `meta: [line, ...]` — a small byline (speaker / event / date)
+  // pinned to the bottom-left corner of the slide card, independent of the
+  // centered heading/bullets column above it.
+  const metaBlock = Array.isArray(slide.meta) && slide.meta.length
+    ? `<div class="slide-meta">${slide.meta.map((line) => `<span>${escapeHtml(line)}</span>`).join('')}</div>`
+    : '';
+
+  // Optional slide-level `image: { src, alt }` (or an array of those) — the
+  // full bullet list sits in one column, the image(s) stacked in a second
+  // column beside it, so the bullets keep their normal uniform gap instead
+  // of a lead bullet being pushed into its own row sized by the (taller)
+  // image.
+  const images = Array.isArray(slide.image)
+    ? slide.image.filter((img) => img && img.src)
+    : (slide.image && slide.image.src ? [slide.image] : []);
+  if (images.length) {
+    const imagesEl = images
+      .map((img) => `<img class="slide-image" src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || '')}">`)
+      .join('');
+    return `
+    <div class="slide-inner">
+      ${headingBlock}
+      <div class="slide-row-with-image">
+        ${bulletsBlock}
+        <div class="slide-image-stack">${imagesEl}</div>
+      </div>
+      ${templateBlock}
+    </div>
+    ${metaBlock}`;
+  }
+
   return `
     <div class="slide-inner">
-      <div class="slide-heading">
-        <svg class="icon"><use href="#icon-${slide.icon}"></use></svg>
-        <h1>${escapeHtml(slide.title || '')}</h1>
-      </div>
+      ${headingBlock}
       ${bulletsBlock}
       ${templateBlock}
-    </div>`;
+    </div>
+    ${metaBlock}`;
 }
 
 // A slide's own `align` overrides CONFIG.layout.align. Unlike
@@ -171,7 +221,7 @@ function resolveAlignFor(slide) {
 // of whether the current slide has notes (e.g. when screen-sharing this
 // window to an audience). Persists across slide navigation on purpose —
 // it's a mode for the whole session, not a per-slide property.
-let notesHiddenByUser = false;
+let notesHiddenByUser = true;
 
 function shouldShowNotes(slide) {
   const hasNotesText = Boolean(slide.notes && slide.notes.trim());

@@ -161,9 +161,14 @@ test.describe('malformed bullet entries', () => {
 });
 
 test.describe('isTemplateAnchor slides', () => {
-  test('slide 9 renders compact with the inline skill.md code block', async ({ page }) => {
+  test('an isTemplateAnchor slide renders compact with the inline skill.md code block', async ({ page }) => {
     await gotoPresentation(page);
-    await page.evaluate(() => { state.currentIndex = 8; renderSlide(); });
+    // Looked up by the isTemplateAnchor flag rather than a fixed index —
+    // this deck's content is edited often and slide positions shift.
+    await page.evaluate(() => {
+      state.currentIndex = SLIDES.findIndex((s) => s.isTemplateAnchor);
+      renderSlide();
+    });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--compact/);
     await expect(page.locator('.slide-template-code')).toBeVisible();
   });

@@ -17,6 +17,20 @@
  * slide's content block (heading + bullets). A bullet in `bullets` is
  * either a plain string, or `{ text, subtext }` for a smaller, muted line
  * shown below the main bullet text.
+ * `icon` is optional — omit it on a title slide to show just the title
+ * text, with no icon glyph next to it. Combined with a `subtitle`, this
+ * marks the slide as the deck's title slide, which also gives the title
+ * text a gradient-accent treatment. Optional `subtitle` renders a
+ * tagline line under the title — a per-slide field, not part of
+ * `bullets`. Optional `meta: [line, ...]` renders a small byline (e.g.
+ * speaker / event / date) pinned to the bottom-left corner of the slide,
+ * independent of the centered heading/bullets column.
+ * Optional `image: { src, alt }` renders a 200x200 image to the right of
+ * the bullet list (see .slide-row-with-image in styles.css) — meant for a
+ * one-off mark like a company logo rather than a general content image.
+ * The title stays full-width above it. Pass an array of `{ src, alt }`
+ * instead to stack several images in that same column (e.g. a photo above
+ * a logo).
  *
  * `title` and `bullets` should always be present (title a non-empty
  * string, bullets an array — `[]` is fine). app.js degrades a missing one
@@ -25,7 +39,7 @@
  */
 
 // Shared skill.md skeleton — shown inline in the slide itself for the two
-// "template anchor" slides (9 & 29, see isTemplateAnchor below) AND reused
+// "template anchor" slides (13 & 32, see isTemplateAnchor below) AND reused
 // by the floating "Skill Template" overlay, so it only has to be maintained
 // once.
 const SKILL_TEMPLATE_MD = `---
@@ -106,25 +120,72 @@ const SKILL_TEMPLATE_SECTIONS = [
 const SLIDES = [
   {
     id: 1,
-    title: 'Skill Workshop',
-    icon: 'spark',
+    title: 'Elke terugkerende taak verdient een skill!',
+    subtitle: 'Wat "skillen" we vandaag?',
     bullets: [],
+    meta: ['Bart Heijs', 'AI On Stage', '1 september 2026'],
     notes: '',
   },
   {
     id: 2,
-    title: 'Intro',
-    icon: 'bulb',
+    title: 'Even voorstellen',
+    icon: 'tag',
+    image: [
+      { src: 'assets/bart-muzikant.png', alt: 'Bart als muzikant' },
+      { src: 'assets/mendix-logo.jpeg', alt: 'Mendix logo' },
+    ],
     bullets: [
-      'Skill engineering: één van de meest waardevolle AI-vaardigheden van 2026',
-      'De meeste AI aanbieders ondersteunen een vorm van skills',
-      'De discipline van ontwerpen, verbeteren en onderhouden van skills',
-      'Skill engineering',
+      'Bart Heijs',
+      'Vrouw en 2 tiener dochters',
+      'Muzikant',
+      'Conclusion Low Code Company',
+      'Mendix developer en Consultant',
     ],
     notes: ``,
   },
   {
     id: 3,
+    title: 'Wat eten we vandaag?',
+    icon: 'chat',
+    bullets: [
+      'Bijna elke dag dezelfde vraag van mijn kinderen',
+    ],
+    notes: `Persoonlijke opener. Herkenbaar en luchtig — zet de menselijke toon voor de rest van de talk.`,
+  },
+  {
+    id: 4,
+    title: 'Dus vroeg ik het aan AI',
+    icon: 'alert',
+    bullets: [
+      '"Zeg Claude, wat kunnen we vanavond eten?"',
+      'Antwoord: generiek; geen rekening met voorkeuren, dieet, allergieën of wie er aanschuift',
+    ],
+    notes: `Brug naar het eigenlijke probleem: hoe krachtig het model ook is, een open vraag levert een generiek antwoord op.`,
+  },
+  {
+    id: 5,
+    title: 'Open vraag, generiek antwoord',
+    icon: 'target',
+    bullets: [
+      'Een open vraag aan AI levert een generiek antwoord op',
+      'Zeker als het een herhalende vraag is: telkens dezelfde open vraag, telkens weer een generiek antwoord',
+      'Vertel AI hoe de uitkomst eruit moet zien, en je krijgt iets bruikbaars',
+      'Precies daarom bestaan skills: het doel vastleggen, niet alleen de vraag',
+    ],
+    notes: `Kernles die de rest van de talk motiveert — bruggetje naar de volgende slide over skill engineering.`,
+  },
+  {
+    id: 6,
+    title: 'Intro',
+    icon: 'bulb',
+    bullets: [
+      'Skill engineering: één van de meest waardevolle AI-vaardigheden van 2026',
+      'De meeste AI aanbieders ondersteunen een vorm van skills',
+    ],
+    notes: ``,
+  },
+  {
+    id: 7,
     title: 'Wat je leert',
     icon: 'book',
     bullets: [
@@ -134,7 +195,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 4,
+    id: 8,
     title: 'Het probleem',
     icon: 'alert',
     bullets: [
@@ -144,7 +205,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 5,
+    id: 9,
     title: 'Prompts vs. skills',
     icon: 'compare',
     bullets: [
@@ -153,7 +214,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 6,
+    id: 10,
     title: 'Wanneer een prompt',
     icon: 'bolt',
     bullets: [
@@ -163,7 +224,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 7,
+    id: 11,
     title: 'Wanneer een skill',
     icon: 'repeat',
     bullets: [
@@ -174,7 +235,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 8,
+    id: 12,
     title: 'Wat is een skill?',
     icon: 'folder',
     disco: true,
@@ -182,12 +243,12 @@ const SLIDES = [
     bullets: [
       'Herbruikbare workflow voor een AI-model',
       'skill.md markdown bestand',
-      'Verpakt in folder met reference files, voorbeelden van input/output, tools',      
+      'Verpakt in folder met reference files, voorbeelden van input/output, tools',
     ],
     notes: ``,
   },
   {
-    id: 9,
+    id: 13,
     title: 'Zo ziet een skill.md eruit',
     icon: 'template',
     isTemplateAnchor: true,
@@ -198,7 +259,7 @@ const SLIDES = [
     - De vorm van dit bestand is een framework dat je zou kunnen volgen`,
   },
   {
-    id: 10,
+    id: 14,
     title: 'Voor en door AI',
     icon: 'chat',
     disco: true,
@@ -211,7 +272,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 11,
+    id: 15,
     title: 'Simpel beginnen',
     icon: 'seed',
     bullets: [
@@ -221,7 +282,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 12,
+    id: 16,
     title: 'Bezint eer ge begint',
     icon: 'pause',
     bullets: [
@@ -230,7 +291,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 13,
+    id: 17,
     title: 'Vragen om over na te denken',
     icon: 'question',
     bullets: [
@@ -244,7 +305,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 14,
+    id: 18,
     title: 'Eén duidelijk doel',
     icon: 'target',
     bullets: [
@@ -255,7 +316,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 15,
+    id: 19,
     title: 'Het framework',
     icon: 'layers',
     bullets: [
@@ -264,7 +325,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 16,
+    id: 20,
     title: 'Frontmatter',
     icon: 'tag',
     templateSection: 'frontmatter',
@@ -279,7 +340,7 @@ const SLIDES = [
     notes: `YAML (Yet Another Markup Language) wordt gebruikt om metadata vast te leggen in Markdown documenten. Wordt door Markdown viewers niet getoond of netjes in tabelvorm.`,
   },
   {
-    id: 17,
+    id: 21,
     title: 'Goal',
     icon: 'target',
     templateSection: 'goal',
@@ -289,7 +350,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 18,
+    id: 22,
     title: 'Inputs & context',
     icon: 'inbox',
     templateSection: 'inputs',
@@ -301,7 +362,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 19,
+    id: 23,
     title: 'Tools',
     icon: 'wrench',
     templateSection: 'tools',
@@ -313,7 +374,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 20,
+    id: 24,
     title: 'Process: de basis',
     icon: 'steps',
     templateSection: 'process',
@@ -325,7 +386,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 21,
+    id: 25,
     title: 'Human-in-the-loop',
     icon: 'checkpoint',
     templateSection: 'process',
@@ -337,7 +398,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 22,
+    id: 26,
     title: 'Checkpoint',
     icon: 'checkpoint',
     templateSection: 'process',
@@ -349,7 +410,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 23,
+    id: 27,
     title: 'Laatste proces stap: controle',
     icon: 'check',
     templateSection: 'process',
@@ -361,7 +422,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 24,
+    id: 28,
     title: 'Output',
     icon: 'output',
     templateSection: 'output',
@@ -373,7 +434,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 25,
+    id: 29,
     title: 'Rules',
     icon: 'rules',
     templateSection: 'rules',
@@ -385,7 +446,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 26,
+    id: 30,
     title: 'Rules: verbod + alternatief',
     icon: 'swap',
     templateSection: 'rules',
@@ -397,7 +458,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 27,
+    id: 31,
     title: 'Rules: groeit continu',
     icon: 'repeat',
     templateSection: 'rules',
@@ -409,7 +470,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 28,
+    id: 32,
     title: 'Het skeleton',
     icon: 'template',
     isTemplateAnchor: true,
@@ -417,7 +478,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 29,
+    id: 33,
     title: 'Tips',
     icon: 'ruler',
     bullets: [
@@ -428,7 +489,18 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 30,
+    id: 34,
+    title: 'Tijd voor de live build',
+    icon: 'wrench',
+    bullets: [
+      '"Wat eten we vandaag" wordt vanavond een echte skill',
+      'Rekening houdend met voorkeuren, dieet, allergieën en wie er mee-eet',
+      'Het tegenovergestelde van het generieke AI-antwoord van net',
+    ],
+    notes: `Transitie naar het live-bouwmoment. Start hier de timer. Geen scriptinhoud op de slide zelf — de build gebeurt live in de tool.`,
+  },
+  {
+    id: 35,
     title: 'Stel dat je maar drie dingen onthoudt',
     icon: 'flag',
     bullets: [

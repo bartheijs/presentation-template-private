@@ -193,12 +193,27 @@ test.describe('pause-mode transition', () => {
 test.describe('interrupted transitions (resetAnimationState)', () => {
   test('a TOC click mid-animation does not leak the reveal timer or animationend listener', async ({ page }) => {
     await gotoPresentation(page);
+    // Picked dynamically rather than hardcoded: this test is about
+    // interrupted-transition cleanup, not disco/template-anchor behavior,
+    // so it needs a target slide (and the one right after it) that are
+    // both plain — otherwise a disco-pause landing would need a second
+    // click to complete and the deck's content is free to move disco
+    // slides around.
+    const targetIndex = await page.evaluate(() => {
+      for (let i = 0; i < SLIDES.length - 1; i++) {
+        const plain = (s) => !isDiscoEnabledFor(s) && !s.isTemplateAnchor;
+        if (plain(SLIDES[i]) && plain(SLIDES[i + 1])) return i;
+      }
+      return -1;
+    });
+    expect(targetIndex).toBeGreaterThanOrEqual(0);
+
     await page.click('#btn-next'); // starts an animated "out" phase (280ms out, disco reveal at 90ms)
-    await page.click('.toc-item[data-index="10"]'); // interrupts immediately, before onOut ever fires
+    await page.click(`.toc-item[data-index="${targetIndex}"]`); // interrupts immediately, before onOut ever fires
     await waitIdle(page);
 
     const jumped = await page.evaluate(() => state.currentIndex);
-    expect(jumped).toBe(10);
+    expect(jumped).toBe(targetIndex);
 
     // The interrupted transition's reveal timer would otherwise fire ~90ms
     // after the original click and re-add 'is-transitioning' to this
@@ -212,7 +227,7 @@ test.describe('interrupted transitions (resetAnimationState)', () => {
     await page.click('#btn-next');
     await waitIdle(page);
     const afterIndex = await page.evaluate(() => state.currentIndex);
-    expect(afterIndex).toBe(11);
+    expect(afterIndex).toBe(targetIndex + 1);
   });
 });
 

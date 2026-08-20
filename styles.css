@@ -523,6 +523,56 @@ button {
   font-size: clamp(1.9rem, 3.6vw, 2.9rem);
   line-height: 1.15;
 }
+/* Title slide only (no icon + a subtitle, see buildSlideContentHTML) — the
+   same accent/accent-5 gradient already used behind slide-heading icons,
+   applied to the title text itself since there's no icon to carry it. */
+.slide-heading h1.slide-title-accent {
+  background: linear-gradient(135deg, var(--accent), var(--accent-5));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* When a subtitle follows, it takes over the heading's bottom spacing so
+   the two don't stack their gaps on top of each other. */
+.slide-heading--with-subtitle {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0;
+}
+.slide-subtitle {
+  margin: 0 0 2.25rem;
+  max-width: 40rem;
+  font-family: var(--font-body);
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+  color: var(--text-muted);
+  text-align: center;
+}
+.slide-content--align-left .slide-subtitle { text-align: left; }
+.slide-subtitle--accent {
+  color: var(--accent-4);
+  font-weight: 600;
+}
+
+/* Byline (speaker / event / date, see slide `meta`) — pinned to the slide
+   card's own corner, independent of the centered heading/bullets column,
+   which is why it's a sibling of .slide-inner rather than part of it. */
+.slide-meta {
+  position: absolute;
+  left: 3rem;
+  bottom: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.slide-meta span:not(:last-child)::after {
+  content: '·';
+  margin-left: 0.6rem;
+  color: var(--accent-4);
+}
 
 .slide-bullets {
   list-style: none;
@@ -558,6 +608,39 @@ button {
   font-size: 0.7em;
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+/* Optional slide-level `image` (see buildSlideContentHTML) — paired with
+   the bullet list, not the title, in a side-by-side row: bullet text wraps
+   comfortably at any width, while a title can contain a single long word
+   that can't shrink to share a row with a large image. Only slides with an
+   `image` field get this row; every other slide's layout is untouched. */
+.slide-row-with-image {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2.5rem;
+  width: 100%;
+  margin-bottom: 1.1rem; /* matches .slide-bullets li's own gap, for the
+    full-width bullet list that continues below this row */
+}
+.slide-row-with-image .slide-bullets {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.slide-image-stack {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-right: -1.5rem;
+}
+.slide-image {
+  height: 200px;
+  width: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 24px rgba(36, 26, 34, 0.18);
 }
 
 .slide-template-code {
@@ -956,4 +1039,6 @@ button {
   .next-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .btn-next { padding: 1rem; }
   .slide-inner { width: 100%; max-width: none; }
+  .slide-row-with-image { flex-direction: column; align-items: center; }
+  .slide-image { height: 6.5rem; width: 6.5rem; }
 }
