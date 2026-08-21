@@ -57,8 +57,9 @@ npx playwright test
   staying fixed, persistence across slide navigation, and the guard that
   ignores the toggle during an in-flight transition.
 - `regression.spec.js` — a full click-through of every slide (forward and
-  back) and both overlays opening/closing, asserting zero console/page
-  errors, plus malformed-slide-data resilience checks.
+  back), PageDown/PageUp presentation-clicker navigation, and both overlays
+  opening/closing, asserting zero console/page errors, plus malformed-slide-
+  data resilience checks.
 
 If a future change breaks one of these, the failing spec file name points
 directly at which part of the engine to look at — no need to re-derive

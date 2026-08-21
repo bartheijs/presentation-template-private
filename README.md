@@ -109,7 +109,8 @@ Combineer nooit een icoon met een gecentreerde titel.
 
 ## Bediening
 
-- Volgende/Vorige of `←`/`→` navigeert door de slides.
+- Volgende/Vorige, `←`/`→` of een presentatieklikker navigeert door de
+  slides. Gangbare `PageDown`/`PageUp`-signalen worden ook ondersteund.
 - De inhoudsopgave springt direct naar een slide.
 - Presentation brief opent de configureerbare reference-overlay; `Esc` sluit
   hem.

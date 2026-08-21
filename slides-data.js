@@ -244,9 +244,9 @@ const SLIDES = [
       'Timer met start, pauze en configureerbare extra minuten',
       'Klaar-knop met confetti voor een bewuste afsluiting',
       'Inhoudsopgave en bedieningspaneel kunnen worden ingeklapt',
-      'Pijltjestoetsen navigeren door de slides',
+      'Pijltjestoetsen en een presentatieklikker navigeren door de slides',
     ],
-    notes: `Test de timer en de Klaar-knop. De standaardduur en alle labels komen uit config.js.`,
+    notes: `Test de timer en de Klaar-knop. Een gangbare presentatieklikker stuurt PageDown/PageUp of pijltjestoetsen; beide werken. De standaardduur en alle labels komen uit config.js.`,
   },
   {
     id: 15,

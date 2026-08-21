@@ -664,8 +664,18 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (!overlayEl.hidden) return;
-  if (e.key === 'ArrowRight') goNext();
-  if (e.key === 'ArrowLeft') goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+  // Presentation clickers commonly emit PageDown/PageUp rather than arrow
+  // keys, so support both pairs as equivalent navigation controls.
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+    e.preventDefault();
+    goNext();
+    return;
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+    e.preventDefault();
+    goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+    return;
+  }
   if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
     // Skipped when a <button> is focused (Next itself, a TOC row, ...) —
     // space already natively activates that button on its own, so also
