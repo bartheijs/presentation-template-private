@@ -6,7 +6,8 @@
  * from develop to main without bringing topic-specific content with them.
  *
  * Each slide requires { id, title, bullets, notes }. Optional fields:
- * - icon: name from the SVG sprite in index.html
+ * - icon: name from the SVG sprite in index.html. Use icons only on
+ *   left-aligned slides; centered headings deliberately have no icon.
  * - subtitle / meta: title-slide supporting copy
  * - align: 'center' or 'left' (overrides CONFIG.layout.align)
  * - disco: enables/disables the flashy transition for this slide
@@ -130,7 +131,6 @@ const SLIDES = [
   {
     id: 5,
     title: 'Center is geschikt voor één kernboodschap',
-    icon: 'target',
     align: 'center',
     bullets: [
       'Rustige compositie',
@@ -170,7 +170,6 @@ const SLIDES = [
   {
     id: 8,
     title: 'Een overgang kan per slide uit staan',
-    icon: 'pause',
     disco: false,
     bullets: [
       'Deze slide landt zonder flashy transition',
@@ -181,7 +180,6 @@ const SLIDES = [
   {
     id: 9,
     title: 'Auto-modus speelt de transition in één keer af',
-    icon: 'bolt',
     disco: true,
     discoMode: 'auto',
     discoTitleLines: ['AUTO', 'MODE'],
@@ -194,7 +192,6 @@ const SLIDES = [
   {
     id: 10,
     title: 'Pause-modus maakt ruimte voor een live moment',
-    icon: 'checkpoint',
     disco: true,
     discoMode: 'pause',
     discoTitleLines: ['PAUSE', 'EN', 'VERVOLG'],
@@ -207,7 +204,6 @@ const SLIDES = [
   {
     id: 11,
     title: 'De reference-overlay houdt context binnen bereik',
-    icon: 'template',
     isTemplateAnchor: true,
     bullets: [],
     notes: `Open de knop “Presentation brief”. Deze anchor-slide toont dezelfde bron ook direct in de slide. De interne veldnaam isTemplateAnchor is om compatibiliteitsredenen behouden.`,
@@ -266,7 +262,6 @@ const SLIDES = [
   {
     id: 16,
     title: 'Maak nu je eigen presentatiebranch',
-    icon: 'flag',
     bullets: [
       '`git switch main`',
       '`git switch -c presentation-<onderwerp>`',

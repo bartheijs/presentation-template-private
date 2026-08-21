@@ -7,6 +7,14 @@ const { gotoPresentation } = require('./helpers');
 // isTemplateAnchor compact slides.
 
 test.describe('content alignment', () => {
+  test('demo slides never combine an icon with a centered title', async ({ page }) => {
+    await gotoPresentation(page);
+    const violations = await page.evaluate(() => SLIDES
+      .filter((slide) => slide.icon && (slide.align || CONFIG.layout.align) !== 'left')
+      .map((slide) => slide.id));
+    expect(violations).toEqual([]);
+  });
+
   test('CONFIG.layout.align = "center" applies no align-left modifier', async ({ page }) => {
     await gotoPresentation(page);
     // Forced explicitly rather than assumed from this deck's own

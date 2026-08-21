@@ -76,7 +76,8 @@ Elk object in `SLIDES` heeft minimaal:
 
 Ondersteunde optionele velden:
 
-- `icon` — naam van een SVG-symbol uit `index.html`.
+- `icon` — naam van een SVG-symbol uit `index.html`; alleen gebruiken op
+  links uitgelijnde slides.
 - `subtitle` en `meta` — aanvullende tekst voor een titelslide.
 - `align: 'center' | 'left'` — override van `CONFIG.layout.align`.
 - `disco: true | false` — flashy transition per slide aan of uit.
@@ -93,6 +94,16 @@ Een bullet is een string of een object met extra subtekst:
 ```js
 { text: 'Scanbare hoofdregel', subtext: 'Kleinere toelichting.' }
 ```
+
+### Titel- en icoonconventie
+
+Gebruik één van deze twee composities:
+
+- Icoon naast de titel: zet de volledige slide links uitgelijnd.
+- Titel gecentreerd: laat `icon` weg; de bullets blijven binnen hun kolom
+  links uitgelijnd.
+
+Combineer nooit een icoon met een gecentreerde titel.
 
 ## Bediening
 

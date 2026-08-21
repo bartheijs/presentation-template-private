@@ -53,6 +53,9 @@ uitzonderingsgeval van een ontbrekend icoon (zie stap 5).
   steps, checkpoint, check, output, rules, swap, ruler, flag`.
   (`clock, close, arrow-left, arrow-right, party` zijn vaste UI-chrome-iconen
   — gebruik die niet voor slide-content tenzij de gebruiker dat expliciet vraagt.)
+- Vaste compositieregel: een slide met `icon` moet links uitgelijnd zijn.
+  Een gecentreerde slide krijgt geen `icon`; de bullets blijven wel links
+  uitgelijnd binnen de gecentreerde contentkolom.
 
 ## Content-document formaat
 
@@ -107,7 +110,8 @@ Regels voor het parsen:
   onder de kop, vóór de bullet-lijst. Ontbreekt `Icon:`, kies dan het best
   passende icoon uit de lijst hierboven op basis van de inhoud van de slide
   (bijv. een waarschuwing → `alert`, een vraag → `question`, een stappenplan
-  → `steps`). Ontbreekt `Disco:`/`Disco modus:`/`Uitlijning:`, laat het
+  → `steps`), maar alleen wanneer de effectieve uitlijning `left` is. Laat
+  bij `center` het `icon`-veld weg. Ontbreekt `Disco:`/`Disco modus:`/`Uitlijning:`, laat het
   bijbehorende veld (`disco`/`discoMode`/`align`) dan gewoon weg (het
   slide-object erft dan de document-brede default) — voeg het veld niet
   expliciet toe met dezelfde waarde als de default, dat is ruis. `Disco
@@ -187,6 +191,9 @@ sub-agents of code execution.
   `import`/`export`), consistent met de rest van deze repo.
 - ALTIJD Nederlandse UI-teksten/inhoud aanhouden, tenzij het content-document
   een andere `taal` opgeeft.
+- ALTIJD kiezen tussen: icoon + volledig links uitgelijnd, of gecentreerde
+  titel zonder icoon + links uitgelijnde bullets. NOOIT een icoon naast een
+  gecentreerde titel plaatsen.
 - NOOIT `app.js`/`styles.css` structureel wijzigen voor deze skill — alleen
   `index.html`'s iconen-sprite mag uitgebreid worden, en alleen als stap 5
   dat noodzakelijk maakt.

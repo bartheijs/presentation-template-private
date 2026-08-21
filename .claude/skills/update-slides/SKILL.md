@@ -38,6 +38,8 @@ hun `isTemplateAnchor`/`templateSection`-velden, of ongerelateerde
   steps, checkpoint, check, output, rules, swap, ruler, flag`
   (`clock, close, arrow-left, arrow-right, party` zijn UI-chrome, niet voor
   slide-content).
+- Vaste compositieregel: `icon` vereist effectieve uitlijning `left`.
+  Gecentreerde slides laten `icon` weg; hun bullets blijven links uitgelijnd.
 
 ## Content-document formaat
 
@@ -128,6 +130,9 @@ sub-agents of code execution.
 
 - ALTIJD niet-genoemde slides en hun volgorde ongemoeid laten bij een
   gerichte update.
+- ALTIJD kiezen tussen icoon + volledig links uitgelijnd, of gecentreerde
+  titel zonder icoon + links uitgelijnde bullets. NOOIT een icoon naast een
+  gecentreerde titel plaatsen.
 - ALTIJD `isTemplateAnchor`/`templateSection`/`discoTitleLines` van
   bestaande slides bewaren tenzij het content-document ze expliciet noemt.
 - NOOIT `config.js`-sleutels aanpassen die niet in de frontmatter van het
