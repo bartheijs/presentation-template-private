@@ -183,7 +183,7 @@ const SLIDES = [
     title: 'Een automatische overgang geeft kort extra energie',
     disco: true,
     discoMode: 'auto',
-    discoHoldMs: 800,
+    discoHoldMs: 1600,
     discoTitleLines: ['KORTE', 'ENERGIE'],
     bullets: [
       'Eén klik is genoeg',
