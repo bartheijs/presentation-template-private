@@ -15,6 +15,33 @@ test.describe('content alignment', () => {
     expect(violations).toEqual([]);
   });
 
+  test('icons stay aligned with the top of multi-line titles', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await gotoPresentation(page);
+    const result = await page.evaluate(() => {
+      const slideIndex = SLIDES.findIndex((slide) => slide.icon);
+      SLIDES[slideIndex].title = 'Een bewust lange titel die over meerdere regels wordt verdeeld';
+      state.currentIndex = slideIndex;
+      renderSlide();
+
+      const heading = document.querySelector('.slide-heading');
+      const icon = heading.querySelector('.icon');
+      const title = heading.querySelector('h1');
+      title.style.width = '18rem';
+      const iconRect = icon.getBoundingClientRect();
+      const titleRect = title.getBoundingClientRect();
+      return {
+        alignSelf: getComputedStyle(icon).alignSelf,
+        topDifference: Math.abs(iconRect.top - titleRect.top),
+        titleIsMultiLine: titleRect.height > parseFloat(getComputedStyle(title).lineHeight) * 1.5,
+      };
+    });
+
+    expect(result.alignSelf).toBe('flex-start');
+    expect(result.topDifference).toBeLessThanOrEqual(1);
+    expect(result.titleIsMultiLine).toBe(true);
+  });
+
   test('CONFIG.layout.align = "center" applies no align-left modifier', async ({ page }) => {
     await gotoPresentation(page);
     // Forced explicitly rather than assumed from this deck's own

@@ -509,6 +509,10 @@ button {
   padding-bottom: 1.5rem;
 }
 .slide-heading .icon {
+  /* Keep the icon anchored to the title's first line. With the heading
+     container centered, multi-line titles otherwise pull the icon down to
+     the vertical midpoint of the complete title block. */
+  align-self: flex-start;
   width: 2.8rem;
   height: 2.8rem;
   padding: 0.6rem;
