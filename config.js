@@ -35,6 +35,8 @@ const CONFIG = {
   timer: {
     defaultMinutes: 20,
     addMinutes: 5,
+    warningMinutes: 5,
+    warningDurationMs: 5000,
   },
 
   // Slide transition timing (button/keyboard nav only). outMs/inMs must stay

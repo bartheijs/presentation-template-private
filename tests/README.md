@@ -60,6 +60,9 @@ npx playwright test
   back), PageDown/PageUp presentation-clicker navigation, and both overlays
   opening/closing, asserting zero console/page errors, plus malformed-slide-
   data resilience checks.
+- `timer-warning.spec.js` — the one-shot five-minute warning, its exact
+  duration and rearming via `+5 min`, silent expiry at `00:00`, and persistent
+  manual finish celebrations via both supported finish paths.
 
 If a future change breaks one of these, the failing spec file name points
 directly at which part of the engine to look at — no need to re-derive

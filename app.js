@@ -18,7 +18,7 @@ const CONFIG_DEFAULTS = {
   toc: { heading: 'Inhoud' },
   layout: { align: 'center' },
   disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
-  timer: { defaultMinutes: 30, addMinutes: 5 },
+  timer: { defaultMinutes: 30, addMinutes: 5, warningMinutes: 5, warningDurationMs: 5000 },
   transitions: { outMs: 280, inMs: 420, discoRevealDelayMs: 90, discoHideLeadMs: 260 },
   confettiColors: ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'],
   templateOverlay: { enabled: true },
@@ -699,13 +699,14 @@ tocListEl.addEventListener('click', (e) => {
 
 const THIRTY_MIN_MS = CONFIG.timer.defaultMinutes * 60 * 1000;
 const FIVE_MIN_MS = CONFIG.timer.addMinutes * 60 * 1000;
+const TIMER_WARNING_MS = CONFIG.timer.warningMinutes * 60 * 1000;
 
 const timer = {
   remainingMs: THIRTY_MIN_MS,
   running: false,
   endAt: null,
   intervalId: null,
-  firedZero: false,
+  warningShown: false,
 };
 
 const timerDisplayEl = document.getElementById('timer-display');
@@ -748,25 +749,35 @@ function timerPause() {
 function timerAddFive() {
   if (timer.running) {
     const remaining = Math.max(0, timer.endAt - Date.now());
-    timer.endAt = Date.now() + Math.min(THIRTY_MIN_MS, remaining + FIVE_MIN_MS);
+    timer.remainingMs = Math.min(THIRTY_MIN_MS, remaining + FIVE_MIN_MS);
+    timer.endAt = Date.now() + timer.remainingMs;
   } else {
     timer.remainingMs = Math.min(THIRTY_MIN_MS, timer.remainingMs + FIVE_MIN_MS);
   }
-  timer.firedZero = false;
+  if (timer.remainingMs > TIMER_WARNING_MS) timer.warningShown = false;
   renderTimerDisplay();
 }
 
 function timerTick() {
+  const previousRemainingMs = timer.remainingMs;
   timer.remainingMs = Math.max(0, timer.endAt - Date.now());
   renderTimerDisplay();
+
+  if (
+    !timer.warningShown &&
+    previousRemainingMs > TIMER_WARNING_MS &&
+    timer.remainingMs <= TIMER_WARNING_MS &&
+    timer.remainingMs > 0
+  ) {
+    timer.warningShown = true;
+    launchTemporaryConfetti();
+  }
+
   if (timer.remainingMs <= 0) {
     clearInterval(timer.intervalId);
+    timer.intervalId = null;
     timer.running = false;
     setTimerToggleUI(false);
-    if (!timer.firedZero) {
-      timer.firedZero = true;
-      launchConfetti();
-    }
   }
 }
 
@@ -793,8 +804,10 @@ const CONFETTI_GRAVITY = 0.025;
 const CONFETTI_MAX_VY = 2.2;
 
 let confettiActive = false;
+let confettiPersistent = false;
 let confettiSpawnIntervalId = null;
 let confettiRafId = null;
+let temporaryConfettiStopTimerId = null;
 let fallingParticles = [];
 let pileHeights = null;
 let settledCanvas = null;
@@ -877,7 +890,13 @@ function spawnConfettiBatch(count) {
   for (let i = 0; i < count; i++) fallingParticles.push(makeConfettiParticle());
 }
 
-function launchConfetti(burstCount = 60) {
+function clearTemporaryConfettiStopTimer() {
+  if (temporaryConfettiStopTimerId === null) return;
+  clearTimeout(temporaryConfettiStopTimerId);
+  temporaryConfettiStopTimerId = null;
+}
+
+function startConfetti(burstCount) {
   if (!settledCanvas) ensureConfettiBuffers();
   spawnConfettiBatch(burstCount);
   if (!confettiActive) {
@@ -888,6 +907,25 @@ function launchConfetti(burstCount = 60) {
     }, SPAWN_INTERVAL_MS);
   }
   if (!confettiRafId) confettiRafId = requestAnimationFrame(confettiLoop);
+}
+
+function launchConfetti(burstCount = 60) {
+  clearTemporaryConfettiStopTimer();
+  confettiPersistent = true;
+  startConfetti(burstCount);
+}
+
+function launchTemporaryConfetti(
+  durationMs = CONFIG.timer.warningDurationMs,
+  burstCount = 60
+) {
+  if (confettiPersistent) return;
+  clearTemporaryConfettiStopTimer();
+  startConfetti(burstCount);
+  temporaryConfettiStopTimerId = setTimeout(() => {
+    temporaryConfettiStopTimerId = null;
+    stopConfetti();
+  }, durationMs);
 }
 
 function confettiLoop() {
@@ -919,7 +957,9 @@ function confettiLoop() {
 }
 
 function stopConfetti() {
+  clearTemporaryConfettiStopTimer();
   confettiActive = false;
+  confettiPersistent = false;
   if (confettiSpawnIntervalId) {
     clearInterval(confettiSpawnIntervalId);
     confettiSpawnIntervalId = null;
