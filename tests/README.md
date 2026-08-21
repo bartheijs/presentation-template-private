@@ -40,7 +40,8 @@ npx playwright test
 - `config-and-ui.spec.js` — `config.js` values applied to the DOM at
   startup (`applyConfigStrings()`), and the `templateOverlay.enabled`
   toggle (button visibility + `ArrowDown` shortcut).
-- `disco-and-pause.spec.js` — global/per-slide `disco` enable, `auto` vs
+- `disco-and-pause.spec.js` — global/per-slide `disco` enable, per-slide
+  auto-mode hold timing, `auto` vs
   `pause` transition mode, and the pause state machine: freeze, resume on a
   matching click, cancel on the opposite direction or any TOC click
   (distant or the current row), and the rapid-double-click guard.

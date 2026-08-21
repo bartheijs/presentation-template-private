@@ -13,6 +13,7 @@
  * - disco: enables/disables the flashy transition for this slide
  * - discoMode: 'auto' or 'pause'
  * - discoTitleLines: per-slide transition copy
+ * - discoHoldMs: extra fully-visible time in auto mode after panels leave
  * - isTemplateAnchor / templateSection: show or highlight the reference
  *   overlay. These legacy internal names implement the generic overlay.
  * - bullets may be strings or { text, subtext } objects
@@ -182,12 +183,13 @@ const SLIDES = [
     title: 'Auto-modus speelt de transition in één keer af',
     disco: true,
     discoMode: 'auto',
+    discoHoldMs: 800,
     discoTitleLines: ['AUTO', 'MODE'],
     bullets: [
       'Eén klik is genoeg',
       'De volgende slide verschijnt automatisch na de animatie',
     ],
-    notes: `Deze slide demonstreert disco: true, discoMode: 'auto' en eigen discoTitleLines.`,
+    notes: `Deze slide demonstreert disco: true, discoMode: 'auto', een extra discoHoldMs van 800 ms en eigen discoTitleLines.`,
   },
   {
     id: 10,

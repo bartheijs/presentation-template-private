@@ -26,6 +26,7 @@ uitlijning standaard: center
 Icon: [optioneel: iconnaam, anders kiest de skill er zelf een]
 Disco: [optioneel: ja/nee]
 Disco modus: [optioneel: auto/pause]
+Disco wachttijd ms: [optioneel: extra zichtbare tijd in auto-modus]
 Uitlijning: [optioneel: center/left]
 
 - [Eerste bullet]

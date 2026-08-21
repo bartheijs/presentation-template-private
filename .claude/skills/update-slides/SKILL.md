@@ -21,9 +21,10 @@ hun `isTemplateAnchor`/`templateSection`-velden, of ongerelateerde
 
 - Het (deel-)content-document van de gebruiker.
 - De bestaande `slides-data.js` in deze repo (`SLIDES`-array, vorm:
-  `{ id, title, icon, bullets, notes, disco?, discoMode?, discoTitleLines?, align?, isTemplateAnchor?, templateSection? }`.
+  `{ id, title, icon, bullets, notes, disco?, discoMode?, discoHoldMs?, discoTitleLines?, align?, isTemplateAnchor?, templateSection? }`.
   `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
-  slide aan staat. `discoTitleLines` (array van strings) overschrijft
+  slide aan staat. `discoHoldMs` voegt in auto-modus extra volledig zichtbare
+  tijd toe na de uitgaande animatie. `discoTitleLines` (array van strings) overschrijft
   `CONFIG.disco.titleLines` voor alléén de overgang die op die ene slide
   landt — zeldzaam gebruik, alleen zetten als expliciet gevraagd. `align`
   (`'center'`/`'left'`) overschrijft `CONFIG.layout.align` voor die ene
@@ -45,7 +46,7 @@ hun `isTemplateAnchor`/`templateSection`-velden, of ongerelateerde
 
 Zelfde formaat als bij `scaffold-presentation`: optionele `---`-frontmatter
 met document-brede instellingen, gevolgd door `##`-koppen per slide met
-optionele `Icon:`/`Disco:`/`Disco modus:`/`Uitlijning:`-regels, een
+optionele `Icon:`/`Disco:`/`Disco modus:`/`Disco wachttijd ms:`/`Uitlijning:`-regels, een
 bullet-lijst (met optionele ingesprongen `subtext:`-vervolgregels) en een
 `Notes:`-sectie. Hier mag het document echter **een deelverzameling** van de
 slides bevatten — alleen de slides die je wilt toevoegen of wijzigen.
@@ -74,8 +75,9 @@ sub-agents of code execution.
      bestaande `SLIDES`-array.
      - Bestaat de titel al → overschrijf alleen die entry's `title`, `icon`
        (als opgegeven), `bullets`, `notes`, `disco` (als opgegeven),
-       `discoMode` (als opgegeven), `align` (als opgegeven). Laat bestaande
-       `isTemplateAnchor`/`templateSection`/`discoTitleLines`-velden van díe
+       `discoMode` (als opgegeven), `discoHoldMs` (uit `Disco wachttijd ms:`,
+       als opgegeven), `align` (als opgegeven). Laat bestaande
+       `isTemplateAnchor`/`templateSection`/`discoHoldMs`/`discoTitleLines`-velden van díe
        entry ongemoeid tenzij het document ze expliciet aanpast — dit
        content-formaat heeft geen frontmatter-regel voor `discoTitleLines`,
        dus een bestaande waarde alleen laten staan, nooit stilzwijgend
@@ -133,7 +135,7 @@ sub-agents of code execution.
 - ALTIJD kiezen tussen icoon + volledig links uitgelijnd, of gecentreerde
   titel zonder icoon + links uitgelijnde bullets. NOOIT een icoon naast een
   gecentreerde titel plaatsen.
-- ALTIJD `isTemplateAnchor`/`templateSection`/`discoTitleLines` van
+- ALTIJD `isTemplateAnchor`/`templateSection`/`discoHoldMs`/`discoTitleLines` van
   bestaande slides bewaren tenzij het content-document ze expliciet noemt.
 - NOOIT `config.js`-sleutels aanpassen die niet in de frontmatter van het
   document voorkomen.

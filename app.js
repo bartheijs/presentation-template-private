@@ -349,7 +349,8 @@ function updateTocActiveState() {
 // click/arrow can finish it. Any non-matching navigation cancels it.
 let pendingPause = null; // { toIndex, dir } | null
 
-// Handles for the "out"-phase timer/listener currently in flight, so
+// Handles for the "out"-phase timer/listener and optional auto-mode hold
+// currently in flight, so
 // resetAnimationState() can reach and tear them down if a TOC click
 // interrupts a transition before they fire on their own. Both functions
 // that start an "out" phase (animateTransition/beginPausedTransition) must
@@ -357,6 +358,7 @@ let pendingPause = null; // { toIndex, dir } | null
 // completes normally.
 let pendingRevealTimer = null;
 let pendingOutListener = null;
+let pendingHoldTimer = null;
 
 function goTo(index, { animate = false, direction = null } = {}) {
   if (index < 0 || index >= SLIDES.length) return;
@@ -397,7 +399,7 @@ function goTo(index, { animate = false, direction = null } = {}) {
     beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
   } else {
     state.currentIndex = index;
-    animateTransition(dir, renderSlide);
+    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide));
   }
   updateTocActiveState();
 }
@@ -444,6 +446,15 @@ function isDiscoPauseFor(slide) {
   return (slide.discoMode || CONFIG.disco.mode || 'auto') === 'pause';
 }
 
+// Optional per-slide hold for an auto-mode disco transition. It begins
+// after the outgoing panels have left and keeps the background fully
+// visible before the destination panels enter. Invalid/negative values are
+// ignored so malformed content cannot stall navigation.
+function resolveDiscoHoldMsFor(slide) {
+  const holdMs = Number(slide.discoHoldMs);
+  return Number.isFinite(holdMs) && holdMs > 0 ? holdMs : 0;
+}
+
 // A slide's own `discoTitleLines` overrides CONFIG.disco.titleLines just
 // for the transition landing on it. #disco-title is a single shared
 // element (see index.html) re-rendered right before that one transition
@@ -454,7 +465,7 @@ function renderDiscoTitle(lines) {
     .join('');
 }
 
-function animateTransition(dir, applyFn) {
+function animateTransition(dir, applyFn, holdMs = 0) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
@@ -469,34 +480,43 @@ function animateTransition(dir, applyFn) {
     clearTimeout(pendingRevealTimer);
     pendingRevealTimer = null;
     pendingOutListener = null;
-    // Swap in the new slide's content WHILE still hidden by the "out"
-    // classes (which hold the panel off-screen via animation-fill-mode:
-    // forwards). renderSlide() forces a synchronous reflow (scrollTop),
-    // so if we removed the "out" classes first, that reflow could catch
-    // the panel mid-snap-back to its normal (visible, in-place) resting
-    // style and paint a one-frame flash before the "in" class re-hides
-    // it. Doing the swap first, then flipping classes back-to-back with
-    // nothing forcing a reflow in between, avoids that flash entirely.
-    applyFn();
-    slideContentEl.classList.remove('content-anim-out');
-    slideNotesEl.classList.remove('notes-anim-out');
-    slideContentEl.classList.add('content-anim-in');
-    if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+    const finishOut = () => {
+      pendingHoldTimer = null;
+      // Swap in the new slide's content WHILE still hidden by the "out"
+      // classes (which hold the panel off-screen via animation-fill-mode:
+      // forwards). renderSlide() forces a synchronous reflow (scrollTop),
+      // so if we removed the "out" classes first, that reflow could catch
+      // the panel mid-snap-back to its normal (visible, in-place) resting
+      // style and paint a one-frame flash before the "in" class re-hides
+      // it. Doing the swap first, then flipping classes back-to-back with
+      // nothing forcing a reflow in between, avoids that flash entirely.
+      applyFn();
+      slideContentEl.classList.remove('content-anim-out');
+      slideNotesEl.classList.remove('notes-anim-out');
+      slideContentEl.classList.add('content-anim-in');
+      if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
 
-    if (discoOn) {
-      const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
-      setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+      if (discoOn) {
+        const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+        setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+      }
+
+      slideContentEl.addEventListener(
+        'animationend',
+        () => {
+          slideContentEl.classList.remove('content-anim-in');
+          slideNotesEl.classList.remove('notes-anim-in');
+          isAnimatingSlide = false;
+        },
+        { once: true }
+      );
+    };
+
+    if (discoOn && holdMs > 0) {
+      pendingHoldTimer = setTimeout(finishOut, holdMs);
+    } else {
+      finishOut();
     }
-
-    slideContentEl.addEventListener(
-      'animationend',
-      () => {
-        slideContentEl.classList.remove('content-anim-in');
-        slideNotesEl.classList.remove('notes-anim-in');
-        isAnimatingSlide = false;
-      },
-      { once: true }
-    );
   }
   pendingOutListener = onOut;
   slideContentEl.addEventListener('animationend', onOut, { once: true });
@@ -615,6 +635,10 @@ function resetAnimationState() {
   if (pendingOutListener) {
     slideContentEl.removeEventListener('animationend', pendingOutListener);
     pendingOutListener = null;
+  }
+  if (pendingHoldTimer) {
+    clearTimeout(pendingHoldTimer);
+    pendingHoldTimer = null;
   }
   slideContentEl.classList.remove('content-anim-out', 'content-anim-in');
   slideNotesEl.classList.remove('notes-anim-out', 'notes-anim-in');

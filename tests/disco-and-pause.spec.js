@@ -80,6 +80,29 @@ test.describe('disco enable/disable', () => {
     const restoredHtml = await page.evaluate(() => document.getElementById('disco-title').innerHTML);
     expect(restoredHtml).toBe(defaultHtml);
   });
+
+  test('per-slide discoHoldMs keeps an auto transition visible longer', async ({ page }) => {
+    await gotoPresentation(page);
+    const { outgoingTitle, targetTitle } = await page.evaluate(() => {
+      CONFIG.disco.enabled = false;
+      SLIDES[1].disco = true;
+      SLIDES[1].discoMode = 'auto';
+      SLIDES[1].discoHoldMs = 700;
+      state.currentIndex = 0;
+      renderSlide();
+      return { outgoingTitle: SLIDES[0].title, targetTitle: SLIDES[1].title };
+    });
+
+    await page.click('#btn-next');
+    await page.waitForTimeout(500); // out animation is done; hold is active
+
+    await expect(page.locator('#slide-stage')).toHaveClass(/is-transitioning/);
+    await expect(page.locator('.slide-heading h1')).toHaveText(outgoingTitle);
+
+    await waitIdle(page);
+    await expect(page.locator('#slide-stage')).not.toHaveClass(/is-transitioning/);
+    await expect(page.locator('.slide-heading h1')).toHaveText(targetTitle);
+  });
 });
 
 test.describe('pause-mode transition', () => {

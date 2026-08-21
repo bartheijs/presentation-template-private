@@ -83,6 +83,8 @@ Ondersteunde optionele velden:
 - `disco: true | false` — flashy transition per slide aan of uit.
 - `discoMode: 'auto' | 'pause'` — automatisch afspelen of halverwege
   bevriezen tot een tweede navigatieactie.
+- `discoHoldMs` — extra volledig zichtbare tijd voor één auto-transition;
+  handig wanneer een effect in een demo bewust langer leesbaar moet blijven.
 - `discoTitleLines` — eigen transitiontekst voor één slide.
 - `image: { src, alt }` of een array daarvan — afbeeldingen rechts naast de
   bullets.

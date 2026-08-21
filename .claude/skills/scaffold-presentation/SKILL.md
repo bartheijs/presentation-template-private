@@ -30,10 +30,12 @@ uitzonderingsgeval van een ontbrekend icoon (zie stap 5).
   het referentie-`config.js`), `confettiColors`, `templateOverlay.enabled`,
   `ui.*`).
 - `slides-data.js` in deze repo als referentie voor de exacte `SLIDES`-vorm:
-  `{ id, title, icon, bullets, notes, disco?, discoMode?, discoTitleLines?, align?, isTemplateAnchor?, templateSection? }`.
+  `{ id, title, icon, bullets, notes, disco?, discoMode?, discoHoldMs?, discoTitleLines?, align?, isTemplateAnchor?, templateSection? }`.
   `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
   slide aan staat — `'pause'` bevriest de disco-overgang volledig zichtbaar
-  tot een tweede, bijpassende klik op Volgende/Vorige. `discoTitleLines`
+  tot een tweede, bijpassende klik op Volgende/Vorige. `discoHoldMs` voegt
+  in auto-modus na de uitgaande animatie extra volledig zichtbare tijd toe
+  voordat de nieuwe slide binnenkomt. `discoTitleLines`
   (array van strings) overschrijft `CONFIG.disco.titleLines` voor alléén de
   overgang die op die slide landt — geen frontmatter-veld in het content-
   document (zeldzaam gebruik), dus alleen zetten als de gebruiker expliciet
@@ -92,6 +94,13 @@ Disco modus: pause
 - Deze overgang stopt halverwege, bevroren op de disco-achtergrond,
   tot de presenter nogmaals op Volgende/Vorige klikt
 
+## Een auto-overgang die langer zichtbaar blijft
+Disco: ja
+Disco modus: auto
+Disco wachttijd ms: 800
+
+- Alleen deze transition krijgt een extra hold
+
 ## Een linksuitgelijnde slide
 Uitlijning: left
 
@@ -106,13 +115,15 @@ Regels voor het parsen:
   één regel op de disco-achtergrond (`CONFIG.disco.titleLines`).
 - Elke `##`-kop wordt één slide, in documentvolgorde, met oplopende `id`
   vanaf 1.
-- Optionele `Icon:`/`Disco:`/`Disco modus:`/`Uitlijning:`-regels staan direct
+- Optionele `Icon:`/`Disco:`/`Disco modus:`/`Disco wachttijd ms:`/`Uitlijning:`-regels staan direct
   onder de kop, vóór de bullet-lijst. Ontbreekt `Icon:`, kies dan het best
   passende icoon uit de lijst hierboven op basis van de inhoud van de slide
   (bijv. een waarschuwing → `alert`, een vraag → `question`, een stappenplan
   → `steps`), maar alleen wanneer de effectieve uitlijning `left` is. Laat
-  bij `center` het `icon`-veld weg. Ontbreekt `Disco:`/`Disco modus:`/`Uitlijning:`, laat het
-  bijbehorende veld (`disco`/`discoMode`/`align`) dan gewoon weg (het
+  bij `center` het `icon`-veld weg. `Disco wachttijd ms:` wordt als
+  niet-negatief getal naar `discoHoldMs` vertaald en is alleen zinvol in
+  auto-modus. Ontbreekt `Disco:`/`Disco modus:`/`Disco wachttijd ms:`/`Uitlijning:`, laat het
+  bijbehorende veld (`disco`/`discoMode`/`discoHoldMs`/`align`) dan gewoon weg (het
   slide-object erft dan de document-brede default) — voeg het veld niet
   expliciet toe met dezelfde waarde als de default, dat is ruis. `Disco
   modus: pause` heeft alleen effect als disco voor die slide ook
