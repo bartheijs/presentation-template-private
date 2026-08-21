@@ -141,15 +141,15 @@ const SLIDES = [
   },
   {
     id: 6,
-    title: 'Links uitlijnen werkt beter voor uitleg',
+    title: 'Goede uitleg blijft makkelijk te volgen',
     icon: 'book',
     align: 'left',
     bullets: [
-      'Langere uitleg is makkelijker te scannen',
-      'Opsommingen krijgen een duidelijk beginpunt',
-      'De compositie blijft rustig en overzichtelijk',
+      'Elke slide heeft één duidelijke boodschap',
+      'De belangrijkste punten staan in een logische volgorde',
+      'Verdieping verhuist naar de sprekersnotities',
     ],
-    notes: `Vergelijk de positie van deze inhoud met de vorige slide. AI kiest per slide de compositie die het best bij de boodschap past.`,
+    notes: `AI verdeelt de aangeleverde tekst over begrijpelijke stappen en bewaart extra uitleg voor de presentator.`,
   },
   {
     id: 7,
