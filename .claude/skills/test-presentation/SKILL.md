@@ -1,6 +1,6 @@
 ---
 name: test-presentation
-description: Run and interpret the Playwright test suite for this skill-workshop-presentation repo. Use after any change to app.js, styles.css, config.js, or slides-data.js, or when the user asks to test/verify/check that a change didn't break the presentation.
+description: Run and interpret the Playwright test suite for this reusable presentation template. Use after changes to app.js, styles.css, config.js or slides-data.js, or when asked to verify presentation behavior.
 ---
 
 # Testsuite draaien en interpreteren

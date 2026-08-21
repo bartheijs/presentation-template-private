@@ -4,6 +4,10 @@
   skill (of update-slides voor een bestaande presentatie), of vul het zelf
   in en laat de skill het verwerken.
 
+  Werk op een nieuwe onderwerpbranch vanaf main. Gebruik nooit
+  skill-workshop-presentation als schrijfdoel: die branch bewaart de
+  bestaande workshopdeck ongewijzigd.
+
   Alle regels/velden zijn optioneel — laat weg wat niet van toepassing is,
   de skill valt dan terug op de defaults uit config.js.
 -->

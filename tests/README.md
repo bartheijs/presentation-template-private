@@ -69,8 +69,8 @@ Most tests only assume "at least a handful of slides exist" and mutate
 `SLIDES`/`CONFIG` in-page, so they work regardless of what the actual
 content is. One exception: `layout.spec.js`'s `isTemplateAnchor` test
 assumes slide index 8 (the 9th slide) is a `isTemplateAnchor: true` slide
-with an inline `.slide-template-code` block — that's specific to this
-workshop's own "skill.md template" teaching device (see
+with an inline `.slide-template-code` block — in the demo this is used for
+the generic Presentation brief reference (see
 `scaffold-presentation`/`update-slides`'s skill docs). A presentation forked
 for a different topic that doesn't use that concept should remove or adapt
 that one test; it isn't testing generic engine behavior.

@@ -58,6 +58,9 @@ test.describe('content alignment', () => {
       // with whatever the ambient global default happens to be.
       CONFIG.layout.align = 'center';
       SLIDES[2].align = 'left';
+      // The demo is free to give the comparison slide its own alignment.
+      // Remove that content choice so this test isolates inheritance.
+      delete SLIDES[3].align;
       state.currentIndex = 2;
       renderSlide();
     });
@@ -161,7 +164,7 @@ test.describe('malformed bullet entries', () => {
 });
 
 test.describe('isTemplateAnchor slides', () => {
-  test('an isTemplateAnchor slide renders compact with the inline skill.md code block', async ({ page }) => {
+  test('an isTemplateAnchor slide renders compact with the inline reference block', async ({ page }) => {
     await gotoPresentation(page);
     // Looked up by the isTemplateAnchor flag rather than a fixed index —
     // this deck's content is edited often and slide positions shift.

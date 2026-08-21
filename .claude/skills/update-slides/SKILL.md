@@ -1,6 +1,6 @@
 ---
 name: update-slides
-description: Add or edit slides in an existing skill-workshop-presentation deck from a Markdown content document, without touching unrelated slides or config. Use when the user wants to tweak, add, or replace some or all slides of a presentation that already has a config.js/slides-data.js, via a content document (title, bullets, speaker notes, disco yes/no).
+description: Add or edit slides in an existing presentation built from this template, using a Markdown content document without touching unrelated slides or configuration. Do not use to modify the protected skill-workshop-presentation branch.
 ---
 
 # Slides bijwerken vanuit een content-document
@@ -55,6 +55,9 @@ sub-agents of code execution.
 
 ## Process
 
+0. Controleer de actieve Git-branch en stop als dit
+   `skill-workshop-presentation` is, tenzij de gebruiker in dezelfde opdracht
+   expliciet vraagt die productiepresentatie te wijzigen.
 1. Lees het bestaande `slides-data.js` (en `config.js` als het document een
    frontmatter-blok bevat) om te weten wat er al staat.
 2. Lees het content-document.
@@ -134,3 +137,5 @@ sub-agents of code execution.
   zonder `bullets` (array, mag leeg zijn). `app.js` degradeert dit
   tegenwoordig defensief (lege titel/geen bullets i.p.v. een crash), maar
   dat is een vangnet — geen excuus om deze velden achterwege te laten.
+- NOOIT onderwerpcontent vanuit een presentatiebranch terugschrijven naar
+  `main` of `develop`; alleen herbruikbare engineverbeteringen horen daar.

@@ -6,9 +6,13 @@ Toekomstig werk dat bewust nog niet is uitgevoerd. Zie per item de reden.
 
 ## Branch-strategie: engine-template vs. persoonlijke presentaties
 
-**Status:** gepland, nog niet uitgevoerd. Uit te voeren ná de live-presentatie
-van de gebruiker (huidige workshop), in een nieuwe sessie — niet nu, om niets
-te riskeren vlak voor het optreden.
+**Status:** uitgevoerd. De branch `skill-workshop-presentation` bewaart de
+oorspronkelijke productiepresentatie op commit `794f8fe`; `main` bevat de
+generieke demo/template en `develop` wordt vanaf die versie aangemaakt.
+
+> De onderstaande context en migratiestappen zijn een historisch
+> ontwerpverslag. De actuele workflow staat in `README.md`; gebruik die als
+> bron voor nieuw werk.
 
 ### Context
 
@@ -28,7 +32,7 @@ De gebruiker wil de repo opsplitsen in drie rollen:
   specifieke presentatie-content.
 - **`presentation-<naam>`** — één branch per echte presentatie, vanaf
   `main` getakt, met eigen content. Vrije naam na de prefix. De huidige
-  content van de gebruiker wordt `presentation-skill-workshop`.
+  content van de gebruiker wordt `skill-workshop-presentation`.
 
 ### Doelstructuur
 
@@ -41,7 +45,7 @@ develop                      zelfde engine + voorbeeld-content, hier komen
                              nieuwe features eerst binnen vóór ze naar main
                              gepromoveerd worden
 
-presentation-skill-workshop  huidige echte content (de workshop van de
+skill-workshop-presentation  huidige echte content (de workshop van de
                              gebruiker) + de nieuwste engine op het moment
                              van aftakken
 
@@ -51,7 +55,7 @@ presentation-<naam>          toekomstige presentaties, elk vanaf main
 
 ### Migratiestappen (uit te voeren in een latere sessie, ná de presentatie)
 
-1. **`presentation-skill-workshop` aanmaken** vanaf de huidige stand van
+1. **`skill-workshop-presentation` aanmaken** vanaf de huidige stand van
    `claude/project-overview-dpv3l1` (engine + echte content) — dit wordt
    direct de branch om vanaf te presenteren, heeft geen verdere wijziging
    nodig.
@@ -105,7 +109,7 @@ eerste opzet voor (één of enkele slides per punt), gebruiker schaaft bij:
 
 - `slides-data.js`/`config.js` op `main` — nieuwe voorbeeld-content.
 - `README.md` (of nieuw `CONTRIBUTING.md`) — branch-workflow.
-- Git-branches zelf (`presentation-skill-workshop`, `develop`) — geen
+- Git-branches zelf (`skill-workshop-presentation`, `develop`) — geen
   bestandswijzigingen, wel merge-/aftak-operaties.
 
 ### Bekend aandachtspunt voor de testsuite — en waarom dit juist goed uitkomt
@@ -126,11 +130,11 @@ de testsuite straks tegen die rijke content kan draaien in plaats van tegen
 de persoonlijke workshop-content van de gebruiker. `presentation-*`-branches
 (met echte, mogelijk kortere content) blijven dan de enige plek waar de
 testsuite bewust wat minder dekking heeft — precies zoals nu al voor
-`presentation-skill-workshop` het geval zou zijn.
+`skill-workshop-presentation` het geval zou zijn.
 
 ### Verificatie (bij uitvoering)
 
-1. `presentation-skill-workshop`: `index.html` openen, bevestigen dat dit
+1. `skill-workshop-presentation`: `index.html` openen, bevestigen dat dit
    exact de huidige, volledig werkende presentatie is (engine + echte
    content) — workshop-klaar zonder verdere wijziging.
 2. `main`: `index.html` openen, de voorbeeld-deck doorlopen, bevestigen dat

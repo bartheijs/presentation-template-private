@@ -11,21 +11,21 @@
 
 const CONFIG = {
   lang: 'nl',
-  title: 'Wat Skillen We Vandaag?',
+  title: 'Presentation Template Demo',
 
   toc: {
     heading: 'Inhoud',
   },
 
   layout: {
-    align: 'left', // 'center' (default) | 'left' — global default for the
+    align: 'center', // 'center' (default) | 'left' — global default for the
     // slide-content block (heading + bullets); a slide's own `align`
     // overrides this just for that slide.
   },
 
   disco: {
     enabled: false, // global default; a slide's own `disco: true/false` overrides this
-    titleLines: ['SKILL', 'THRILL'], // one <span> per entry on the disco background
+    titleLines: ['DEMO', 'MODE'], // one <span> per entry on the disco background
     mode: 'auto', // 'auto' (default, single click plays the whole flash) | 'pause'
     // (freezes fully visible after the outgoing slide leaves; a second
     // matching click/arrow finishes landing on the next slide). A slide's
@@ -33,8 +33,7 @@ const CONFIG = {
   },
 
   timer: {
-    defaultMinutes: 30, // presenter's live-build timer; started for the
-    // whole 45-min slot, leaving >=15 min free for the live build itself
+    defaultMinutes: 20,
     addMinutes: 5,
   },
 
@@ -54,14 +53,14 @@ const CONFIG = {
   // back into JS would add a getComputedStyle round trip for no benefit.
   confettiColors: ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'],
 
-  // Hides the "Skill Template" button + its ArrowDown shortcut entirely for
-  // presentations that don't use the skill.md-template concept.
+  // Hides the generic reference-overlay button + its ArrowDown shortcut
+  // entirely for presentations that do not need supporting reference text.
   templateOverlay: {
     enabled: true,
   },
 
   ui: {
-    templateButton: 'Skill Template',
+    templateButton: 'Presentation brief',
     notesToggleHide: 'Notities verbergen', // shown while notes are visible (clicking hides them)
     notesToggleShow: 'Notities tonen', // shown while notes are hidden (clicking shows them)
     timerStart: 'Start',
@@ -74,10 +73,10 @@ const CONFIG = {
     controlsCollapseHide: 'Bediening inklappen', // shown while the controls pane is open
     controlsCollapseShow: 'Bediening uitklappen', // shown while the controls pane is collapsed
     overlayCloseLabel: 'Sluiten',
-    overlayTitle: 'skill.md template',
+    overlayTitle: 'Presentation brief',
     backToDeckLabel: 'Terug naar de presentatie',
-    finishTitle: 'Eindelijk kunnen we aan de slag!',
+    finishTitle: 'Klaar om te presenteren!',
     // Set via innerHTML at startup — trusted local config, not user input.
-    finishBodyHtml: 'Laten we samen een skill bouwen!',
+    finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
   },
 };

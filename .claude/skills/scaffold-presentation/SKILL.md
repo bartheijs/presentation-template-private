@@ -1,6 +1,6 @@
 ---
 name: scaffold-presentation
-description: Build a brand-new skill-workshop-presentation deck (config.js + slides-data.js) from a Markdown content document. Use when the user hands over a content document (title, per-slide bullets, speaker notes, disco yes/no, disco text) and wants a fresh presentation set up from scratch — typically right after branching this repo for a new topic.
+description: Build a brand-new presentation from this reusable template by translating a Markdown content document into config.js and slides-data.js. Use on a new topic branch created from main; do not use to modify the protected skill-workshop-presentation branch.
 ---
 
 # Nieuwe presentatie opzetten vanuit een content-document
@@ -43,8 +43,9 @@ uitzonderingsgeval van een ontbrekend icoon (zie stap 5).
   is een plain string, óf `{ text, subtext }` voor een kleinere, gedempte
   regel onder de hoofdtekst.
   `isTemplateAnchor`/`templateSection`/`SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS`
-  horen bij het "skill.md-sjabloon"-concept van *deze* workshop — een nieuw
-  onderwerp heeft dat vrijwel nooit nodig.
+  zijn legacy technische namen voor de optionele, generieke reference-
+  overlay. Een nieuw onderwerp gebruikt die alleen wanneer ondersteunende
+  Markdown-content tijdens de presentatie zichtbaar moet zijn.
 - Beschikbare iconen (`<symbol id="icon-...">` in `index.html`), te gebruiken
   voor het `icon`-veld van een slide:
   `spark, bulb, book, alert, compare, bolt, repeat, folder, template, chat,
@@ -131,7 +132,10 @@ sub-agents of code execution.
 
 ## Process
 
-0. Heeft de gebruiker nog geen content-document aangeleverd? Verwijs dan
+0. Controleer eerst de actieve Git-branch. Werk alleen op een nieuwe
+   onderwerpbranch vanaf `main`; wijzig `main`, `develop` of
+   `skill-workshop-presentation` niet stilzwijgend. Als de gebruiker nog
+   geen content-document heeft aangeleverd, verwijs dan
    naar `content-template.md` in de repo-root (of bied aan om er een kopie
    van te maken/in te vullen op basis van een korte beschrijving) in plaats
    van simpelweg te wachten — dat sjabloon volgt exact het hieronder
@@ -141,11 +145,9 @@ sub-agents of code execution.
    het bestaande `config.js` in deze repo (classic script, `const CONFIG =
    {...}`, geladen vóór `slides-data.js`/`app.js`), inclusief
    `layout.align` uit `uitlijning standaard`. Zet
-   `templateOverlay.enabled: false`, tenzij het document zelf expliciet
-   sjabloon-secties beschrijft (zeldzaam — dat concept hoort bij déze
-   workshop, niet bij een generiek nieuw onderwerp). → CHECKPOINT: als
-   twijfelachtig, vraag de gebruiker expliciet of de skill.md-sjabloon-
-   overlay nodig is voor deze presentatie.
+   `templateOverlay.enabled: false`, tenzij het document expliciet
+   reference-secties beschrijft. → CHECKPOINT: vraag bij twijfel of de
+   reference-overlay nodig is en welke Markdown-content hij moet tonen.
 3. Vertaal elke `##`-sectie naar een `SLIDES`-object zoals hierboven
    beschreven, inclusief `align` (indien opgegeven) en `{ text, subtext }`-
    bullets waar een `subtext:`-regel staat. Sla het resultaat op als de
@@ -188,9 +190,11 @@ sub-agents of code execution.
 - NOOIT `app.js`/`styles.css` structureel wijzigen voor deze skill — alleen
   `index.html`'s iconen-sprite mag uitgebreid worden, en alleen als stap 5
   dat noodzakelijk maakt.
-- NOOIT het skill.md-sjabloonconcept (`isTemplateAnchor`, `templateSection`,
+- NOOIT de reference-overlay (`isTemplateAnchor`, `templateSection`,
   `SKILL_TEMPLATE_MD`/`SECTIONS`) toevoegen tenzij het content-document dat
   expliciet beschrijft.
+- NOOIT schrijven naar `skill-workshop-presentation`; die branch bewaart de
+  onderwerp-specifieke workshopdeck ongewijzigd.
 - NOOIT een slide-object opleveren zonder `title` (niet-lege string) of
   zonder `bullets` (array, mag leeg zijn). `app.js` degradeert dit
   tegenwoordig defensief (lege titel/geen bullets i.p.v. een crash), maar

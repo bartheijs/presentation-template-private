@@ -1,76 +1,139 @@
-# Skill Engineering Workshop — presentatie
+# Presentation Template
 
-Interactieve, lokale workshop-presentatie. Geen build, geen server, geen dependencies.
+Interactieve, lokale presentatie-engine met een zelf-documenterende demo.
+De presentatie heeft geen build, server of runtime-dependencies nodig: open
+`index.html` rechtstreeks in een browser.
 
-## Gebruiken
+## Branchmodel
 
-Dubbelklik `index.html` (of open het via je browser). Dat is alles.
+Deze repository heeft drie vaste branches met elk één duidelijke rol:
+
+- `main` — de stabiele productieversie van het template: engine, werkende
+  demo, tests en AI-instructies. Begin elke nieuwe presentatie vanaf deze
+  branch.
+- `develop` — begint als kopie van `main`. Nieuwe enginefeatures worden hier
+  ontwikkeld en getest en gaan pas na goedkeuring naar `main`.
+- `skill-workshop-presentation` — de bevroren, onderwerp-specifieke Skill
+  Workshop-presentatie. Deze branch is geen ontwikkelbasis en blijft
+  inhoudelijk ongemoeid.
+
+Een nieuwe presentatie starten:
+
+```bash
+git switch main
+git pull --ff-only
+git switch -c presentation-<onderwerp>
+```
+
+Vervang op die nieuwe branch de demo-inhoud door de echte inhoud. Merge
+onderwerpcontent nooit terug naar `main` of `develop`. Een herbruikbare
+engineverbetering hoort op `develop`; na review kan `develop` naar `main`
+worden gepromoveerd.
+
+## Wat je voor een presentatie aanpast
+
+Normaal hoeven maar twee bestanden te veranderen:
+
+- `config.js` — presentatiebrede instellingen: titel, taal, timer,
+  uitlijning, flashy transition, confetti, reference-overlay en UI-teksten.
+- `slides-data.js` — alle zichtbare slides en speaker notes.
+
+Themakleuren en fonts zijn de bewuste uitzondering: die staan als CSS custom
+properties bovenaan `styles.css`. `index.html`, `app.js` en de overige CSS
+vormen de gedeelde engine en horen niet aangepast te worden voor gewone
+contentwijzigingen.
+
+## Werken met AI
+
+`main` bevat alles wat een coding agent nodig heeft om op dit template voort
+te bouwen:
+
+- `content-template.md` — invulbaar contentdocument voor een nieuwe deck.
+- `.claude/skills/scaffold-presentation/SKILL.md` — vervangt de demo door een
+  volledige presentatie vanuit zo'n contentdocument.
+- `.claude/skills/update-slides/SKILL.md` — wijzigt of voegt gericht slides
+  toe zonder ongerelateerde inhoud te raken.
+- `.claude/skills/test-presentation/SKILL.md` — voert de Playwright-suite uit
+  en helpt fouten aan de juiste enginefunctie te koppelen.
+
+Geef een agent bij een nieuwe presentatie minimaal onderwerp, publiek en
+doel. Een ingevulde `content-template.md` maakt de overdracht voorspelbaar.
+De agent moet eerst bevestigen dat hij op een onderwerpbranch vanaf `main`
+werkt en mag `skill-workshop-presentation` nooit als schrijfdoel gebruiken.
+
+## Slidegegevens
+
+Elk object in `SLIDES` heeft minimaal:
+
+```js
+{
+  id: 1,
+  title: 'Titel',
+  bullets: ['Eerste punt'],
+  notes: 'Speaker notes',
+}
+```
+
+Ondersteunde optionele velden:
+
+- `icon` — naam van een SVG-symbol uit `index.html`.
+- `subtitle` en `meta` — aanvullende tekst voor een titelslide.
+- `align: 'center' | 'left'` — override van `CONFIG.layout.align`.
+- `disco: true | false` — flashy transition per slide aan of uit.
+- `discoMode: 'auto' | 'pause'` — automatisch afspelen of halverwege
+  bevriezen tot een tweede navigatieactie.
+- `discoTitleLines` — eigen transitiontekst voor één slide.
+- `image: { src, alt }` of een array daarvan — afbeeldingen rechts naast de
+  bullets.
+- `isTemplateAnchor` en `templateSection` — legacy interne veldnamen voor de
+  generieke reference-overlay.
+
+Een bullet is een string of een object met extra subtekst:
+
+```js
+{ text: 'Scanbare hoofdregel', subtext: 'Kleinere toelichting.' }
+```
 
 ## Bediening
 
-- **Volgende / Vorige knop** (rechts) of **pijltjestoetsen ←/→**: navigeer met animatie. Slides met `discoMode: 'pause'` (zie `slides-data.js`) laten de overgang halverwege stoppen — volledig zichtbaar bevroren op de disco-achtergrond — tot je nogmaals dezelfde knop/toets gebruikt; tussentijds tonen teller en inhoudsopgave nog de vorige slide (bv. `"3,5 / 31"`).
-- **Linker inhoudsopgave**: klik direct naar een slide (geen animatie, springt meteen).
-- **Skill Template**-knop (boven de inhoudsopgave): opent het skill.md-skelet als overlay. Op elke slide met een `templateSection`-veld wordt de bijpassende sectie gehighlight. Sluiten met de kruis-knop, klik naast het paneel, of `Esc`. Zet `templateOverlay.enabled` in `config.js` op `false` om deze knop helemaal te verbergen.
-- **Notities verbergen/tonen-knop**: verbergt de speaker-notes voor de hele sessie (bv. tijdens het delen van dit scherm met publiek), ongeacht welke slide je bekijkt. Blijft aan/uit staan tot je 'm weer omzet, ook bij het wisselen van slide. De content-kolom vult de vrijgekomen ruimte soepel (dezelfde overgang als bij slides zonder notes) — de titel/bullets zelf verschuiven niet, alleen de ruimte eronder past zich aan. Werkt niet tijdens een lopende overgang of bevroren disco-pauze (klik wordt dan genegeerd).
-- **Timer**: Start/Pause telt af vanaf 30:00. **+5 min** verlengt de resterende tijd, in elke stand (lopend, gepauzeerd, of al op 0:00). Bij het bereiken van 0:00 verschijnt confetti.
-- **Klaar!**-knop: vuurt confetti af wanneer jij dat wilt, los van de klok — handig als je eerder klaar bent dan gepland.
+- Volgende/Vorige of `←`/`→` navigeert door de slides.
+- De inhoudsopgave springt direct naar een slide.
+- Presentation brief opent de configureerbare reference-overlay; `Esc` sluit
+  hem.
+- Notities tonen/verbergen geldt voor de hele sessie.
+- De timer kan starten, pauzeren en worden verlengd.
+- Klaar! toont de afsluitoverlay en confetti.
+- Beide zijpanelen kunnen worden ingeklapt.
 
-## Structuur
+## Configuratie
 
-- `index.html` — layout-skelet en de icon-sprite (alle iconen als inline SVG, geen externe library).
-- `config.js` — presentatie-brede instellingen: titel, taal, timerduur, disco aan/uit + tekst, confetti-kleuren, UI-teksten. Zie hieronder.
-- `slides-data.js` — alle slides (`SLIDES`) plus het gedeelde `SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS` skelet dat zowel in de notes van slide 9/30 als in de overlay wordt gebruikt.
-- `app.js` — rendering, navigatie, timer en confetti.
-- `styles.css` — layout (CSS grid, 70/30-split via flex-ratio's), kleurenpalet + fonts (via CSS-variabelen in `:root`), animaties.
-- `tests/` — optionele Playwright-testsuite (zie `tests/README.md`); vereist alleen dependencies als je 'm wilt draaien, niet om de presentatie te bekijken.
+`CONFIG` is gegroepeerd per functie:
 
-## Een slide bewerken of toevoegen
+- `toc` — titel van de inhoudsopgave.
+- `layout` — standaarduitlijning.
+- `disco` — transition aan/uit, tekst en modus. De technische naam bestaat
+  nog voor backwards compatibility; zichtbaar wordt dit als een flashy
+  transition gepresenteerd.
+- `timer` — standaardduur en aantal extra minuten.
+- `transitions` — timing in milliseconden.
+- `confettiColors` — canvas-kleuren.
+- `templateOverlay` — reference-overlay zichtbaar of verborgen.
+- `ui` — alle zichtbare knoppen en overlayteksten.
 
-Open `slides-data.js` en pas het `SLIDES`-array aan. Elk object heeft `{ id, title, icon, bullets, notes }`, optioneel `templateSection` (voor de overlay-highlight bij de sjabloon-slides), optioneel `disco: true/false` om de disco-achtergrond voor de overgang náár die slide af te wijken van de instelling in `config.js`, optioneel `discoMode: 'auto'/'pause'` (alleen relevant als disco voor die slide aan staat) — `'pause'` laat de overgang halverwege stoppen, volledig zichtbaar bevroren op de disco-achtergrond, tot een tweede, bijpassende klik op Volgende/Vorige — en optioneel `align: 'center'/'left'` om de uitlijning van het content-blok (heading + bullets) voor die ene slide af te wijken van `config.js`. Beschikbare icoon-namen staan als `<symbol id="icon-...">` in `index.html`.
+De pagina werkt via `file://`. Daarom zijn `config.js`, `slides-data.js` en
+`app.js` bewust classic scripts in die volgorde, zonder modules of `fetch()`.
 
-Elke bullet in `bullets` is een plain string, óf `{ text: '...', subtext: '...' }` voor een kleinere, gedempte regel onder de hoofdtekst — beide vormen mogen door elkaar in dezelfde array staan.
+## Testen
 
-## Een nieuwe presentatie maken (branchen vanaf deze repo)
+De presentatie zelf heeft geen dependencies. Alleen de optionele testsuite
+gebruikt Node en Playwright:
 
-Een nieuwe presentatie hoeft in principe alleen twee bestanden aan te passen:
+```bash
+npm install
+npx playwright test
+```
 
-- `config.js` — titel, taal, timerduur, disco-instellingen (aan/uit + tekst op de achtergrond + `mode: 'auto'/'pause'`), `layout.align` (`'center'`/`'left'`, default voor het content-blok), confetti-kleuren, `templateOverlay.enabled` (verberg de "Skill Template"-knop als je dat concept niet gebruikt), en alle knop-/overlay-teksten (`ui.*`).
-- `slides-data.js` — de content zelf, inclusief per-slide `disco`-/`discoMode`-/`align`-override en optionele bullet-subtekst.
-
-`index.html`, `app.js` en `styles.css` (op het `:root`-kleurenpalet na) horen niet aangepast te hoeven worden.
-
-In plaats van deze bestanden met de hand te bewerken, kun je ook een Markdown
-content-document aanleveren (titel, bullets, speaker notes, disco ja/nee, en
-de tekst voor de disco-achtergrond) en Claude Code het laten verwerken via
-twee projectskills:
-
-- `.claude/skills/scaffold-presentation` — zet een hele nieuwe presentatie op vanuit een content-document.
-- `.claude/skills/update-slides` — werkt slides in een bestaande presentatie bij (toevoegen/wijzigen), zonder de rest te raken.
-
-Zie die `SKILL.md`-bestanden voor het exacte documentformaat, of gebruik
-`content-template.md` in de repo-root als leeg invul-sjabloon.
-
-Na een wijziging aan de engine (`app.js`/`styles.css`/`config.js`/
-`slides-data.js`) kan `.claude/skills/test-presentation` de ingecheckte
-Playwright-testsuite (`tests/`, zie `tests/README.md`) draaien en
-interpreteren.
-
-### Bekende grenzen
-
-- Thema-kleuren, inclusief de disco-kleuren (`--disco-*`), blijven in het `:root`-blok van `styles.css` staan — dat is de bewust toegestane uitzondering; er hoeven nooit CSS-*regels* aangepast te worden, alleen de variabelen.
-- Confetti-kleuren (`config.js`) en thema/disco-kleuren (`styles.css`) zijn niet aan elkaar gekoppeld — pas ze allebei apart aan voor visuele consistentie.
-
-## Waarom geen modules of fetch()
-
-De pagina wordt via `file://` geopend (dubbelklikken), en browsers blokkeren `fetch()` en `<script type="module">` in die context. Daarom zijn `config.js`, `slides-data.js` en `app.js` bewust **classic scripts**, in die laadvolgorde: ze delen top-level scope, dus `app.js` kan `CONFIG`/`SLIDES` gewoon direct gebruiken.
-
-## Kleuren en fonts aanpassen
-
-Alle kleuren staan als CSS custom properties bovenaan `styles.css` (`--accent`, `--accent-2`, ... `--bg`, `--surface`, plus `--disco-*` voor de disco-achtergrond). Wijzig die om het palet aan te passen; de site ondersteunt ook een donker `prefers-color-scheme`-thema (de disco-kleuren blijven bewust hetzelfde in light/dark). Confetti-kleuren staan los daarvan in `config.js` (`confettiColors`).
-
-Fonts staan om dezelfde reden ook in `styles.css`, niet in `config.js`: `--font-heading` (slide-titels), `--font-bullet` (bullet-tekst) en `--font-body` (alle overige tekst) staan elk standaard op `--font-sans`, en kunnen onafhankelijk van elkaar overschreven worden. `--font-mono` (code, timer, TOC-nummers) blijft ongemoeid.
-
-## Sneltoetsen
-
-- `→` / `←`: volgende / vorige slide
-- `Esc`: sluit de Skill Template-overlay
+Zie `tests/README.md` voor scenario's en installatievoorwaarden. Pas tests
+die echte demo-eigenschappen controleren mee aan wanneer de demo bewust
+verandert; enginegedrag moet zo veel mogelijk onafhankelijk van specifieke
+slide-indexen worden getest.
