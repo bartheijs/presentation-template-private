@@ -147,6 +147,29 @@ test.describe('pause-mode transition', () => {
     expect(finalIndex).toBe(3);
   });
 
+  test('going back skips pause mode and lands in one click', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      SLIDES[3].disco = true;
+      SLIDES[3].discoMode = 'pause';
+      state.currentIndex = 4;
+      renderSlide();
+      updateTocActiveState();
+    });
+
+    await page.click('#btn-prev'); // 4 -> 3: pause destination, but backwards
+    await waitIdle(page);
+
+    const result = await page.evaluate(() => ({
+      currentIndex: state.currentIndex,
+      pendingPause,
+      isTransitioning: document.getElementById('slide-stage').classList.contains('is-transitioning'),
+    }));
+    expect(result.currentIndex).toBe(3);
+    expect(result.pendingPause).toBeNull();
+    expect(result.isTransitioning).toBe(false);
+  });
+
   test('cancels cleanly when the opposite direction is pressed', async ({ page }) => {
     await setupPauseOnSlide3(page);
     await page.click('#btn-next');

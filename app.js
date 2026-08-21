@@ -391,7 +391,10 @@ function goTo(index, { animate = false, direction = null } = {}) {
 
   const destSlide = SLIDES[index];
   const discoOn = isDiscoEnabledFor(destSlide);
-  const pauseOn = discoOn && isDiscoPauseFor(destSlide);
+  // Pause reveals are a forward-presenting device. Going back should stay
+  // corrective and immediate: keep the visual transition, but never freeze
+  // halfway and require a second click.
+  const pauseOn = dir === 'next' && discoOn && isDiscoPauseFor(destSlide);
 
   if (discoOn) renderDiscoTitle(destSlide.discoTitleLines || CONFIG.disco.titleLines);
 

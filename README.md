@@ -92,8 +92,9 @@ Ondersteunde optionele velden:
 - `subtitle` en `meta` — aanvullende tekst voor een titelslide.
 - `align: 'center' | 'left'` — override van `CONFIG.layout.align`.
 - `disco: true | false` — flashy transition per slide aan of uit.
-- `discoMode: 'auto' | 'pause'` — automatisch afspelen of halverwege
-  bevriezen tot een tweede navigatieactie.
+- `discoMode: 'auto' | 'pause'` — automatisch afspelen of bij vooruit
+  navigeren halverwege bevriezen tot een tweede navigatieactie. Teruggaan
+  slaat de pauze altijd over.
 - `discoHoldMs` — extra volledig zichtbare tijd voor één auto-transition;
   handig wanneer een effect in een demo bewust langer leesbaar moet blijven.
 - `discoTitleLines` — eigen transitiontekst voor één slide.
