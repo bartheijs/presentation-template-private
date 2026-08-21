@@ -1,219 +1,89 @@
 ---
 name: scaffold-presentation
-description: Build a brand-new presentation from this reusable template by translating a Markdown content document into config.js and slides-data.js. Use on a new topic branch created from main; do not use to modify the protected skill-workshop-presentation branch.
+description: Build a complete new presentation in this reusable template from ordinary user-provided text, notes, an outline, or a document. Use on a new topic branch from main; never use to modify the protected skill-workshop-presentation branch.
 ---
 
-# Nieuwe presentatie opzetten vanuit een content-document
+# Nieuwe presentatie maken vanuit tekst
 
-Deze skill vertaalt één Markdown content-document naar een compleet
-`config.js` + `slides-data.js`-paar voor deze presentatie-engine
-(`index.html`/`app.js`/`styles.css`). Gebruik hem meteen na het aanmaken van
-een nieuwe branch voor een nieuwe presentatie, zodat de gebruiker zelf geen
-JavaScript hoeft te schrijven.
+Maak van de inhoud die de gebruiker al heeft een complete, werkende
+presentatie. De gebruiker hoeft geen technisch format, veldnamen of bestanden
+in deze repository te kennen.
 
-## Goal
+## Input
 
-Een content-document (titel, per-slide bullets/speaker notes/disco-keuze)
-omzetten in een werkende presentatie, zonder de render-/animatie-/timer-/
-confetti-engine (`app.js`, `styles.css`) aan te raken — behalve het
-uitzonderingsgeval van een ontbrekend icoon (zie stap 5).
+Accepteer de inhoud in iedere bruikbare tekstvorm, bijvoorbeeld:
 
-## Inputs & context
+- ruwe notities, een e-mail of een document;
+- een lijst met ideeën of hoofdstukken;
+- een bestaande slide-opzet;
+- een ingevulde `content-template.md`;
+- feedback en aanvullende aanwijzingen in gewone taal.
 
-- Het content-document van de gebruiker (vraag erom als het niet is
-  meegegeven — pad of geplakte tekst).
-- `config.js` in deze repo als referentie voor de exacte `CONFIG`-vorm
-  (`lang`, `title`, `toc.heading`, `layout.align`,
-  `disco.enabled`/`disco.titleLines`/`disco.mode`,
-  `timer.defaultMinutes`/`addMinutes`, `transitions.*` (slide-overgang-
-  timing in ms — geen frontmatter-veld, gewoon ongewijzigd overnemen uit
-  het referentie-`config.js`), `confettiColors`, `templateOverlay.enabled`,
-  `ui.*`).
-- `slides-data.js` in deze repo als referentie voor de exacte `SLIDES`-vorm:
-  `{ id, title, icon, bullets, notes, disco?, discoMode?, discoHoldMs?, discoTitleLines?, align?, isTemplateAnchor?, templateSection? }`.
-  `discoMode` (`'auto'`/`'pause'`) is alleen relevant als disco voor die
-  slide aan staat — `'pause'` bevriest de disco-overgang volledig zichtbaar
-  tot een tweede, bijpassende klik op Volgende/Vorige. `discoHoldMs` voegt
-  in auto-modus na de uitgaande animatie extra volledig zichtbare tijd toe
-  voordat de nieuwe slide binnenkomt. `discoTitleLines`
-  (array van strings) overschrijft `CONFIG.disco.titleLines` voor alléén de
-  overgang die op die slide landt — geen frontmatter-veld in het content-
-  document (zeldzaam gebruik), dus alleen zetten als de gebruiker expliciet
-  andere disco-tekst voor die ene overgang vraagt. `align`
-  (`'center'`/`'left'`) overschrijft `CONFIG.layout.align` voor het
-  content-blok (heading + bullets) van die ene slide. Een item in `bullets`
-  is een plain string, óf `{ text, subtext }` voor een kleinere, gedempte
-  regel onder de hoofdtekst.
-  `isTemplateAnchor`/`templateSection`/`SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS`
-  zijn legacy technische namen voor de optionele, generieke reference-
-  overlay. Een nieuw onderwerp gebruikt die alleen wanneer ondersteunende
-  Markdown-content tijdens de presentatie zichtbaar moet zijn.
-- Beschikbare iconen (`<symbol id="icon-...">` in `index.html`), te gebruiken
-  voor het `icon`-veld van een slide:
-  `spark, bulb, book, alert, compare, bolt, repeat, folder, template, chat,
-  seed, pause, question, checklist, target, layers, tag, inbox, wrench,
-  steps, checkpoint, check, output, rules, swap, ruler, flag`.
-  (`clock, close, arrow-left, arrow-right, party` zijn vaste UI-chrome-iconen
-  — gebruik die niet voor slide-content tenzij de gebruiker dat expliciet vraagt.)
-- Vaste compositieregel: een slide met `icon` moet links uitgelijnd zijn.
-  Een gecentreerde slide krijgt geen `icon`; de bullets blijven wel links
-  uitgelijnd binnen de gecentreerde contentkolom.
+Leid onderwerp, publiek, doel, taal, toon en gewenste volgorde af uit de
+tekst. Vraag alleen door wanneer essentiële context niet redelijk is af te
+leiden en de ontbrekende keuze het resultaat wezenlijk verandert. Een exacte
+slidevolgorde of technische presentatie-instellingen zijn niet vereist.
 
-## Content-document formaat
+## Werkwijze
 
-Eén Markdown-bestand: een `---`-frontmatter-blok met document-brede
-instellingen, gevolgd door één `##`-kop per slide.
+1. Controleer de actieve Git-branch. Werk alleen op een nieuwe onderwerpbranch
+   vanaf `main`. Schrijf nooit naar `skill-workshop-presentation`; die branch
+   bewaart de bestaande workshopdeck ongewijzigd. Verwijs naar
+   `content-template.md` als optioneel hulpmiddel wanneer de gebruiker nog
+   nauwelijks inhoud heeft, maar maak het nooit verplicht.
+2. Lees alle aangeleverde inhoud. Bepaal de centrale boodschap en maak een
+   logische verhaallijn met een opening, inhoudelijke opbouw en afsluiting.
+   Behoud een expliciet opgegeven volgorde, tenzij de gebruiker ruimte geeft
+   om die te verbeteren.
+3. Verdeel de inhoud over slides. Schrijf bondige titels en scanbare bullets;
+   verplaats verdieping naar speaker notes. Behoud bronnen, voorbeelden,
+   waarschuwingen en expliciete formuleringen die inhoudelijk belangrijk zijn.
+4. Lees `config.js`, `slides-data.js`, `index.html` en de README als technische
+   referentie. Kies zelf verstandige presentatiebrede defaults en passende
+   opties per slide. Zet de reference-overlay alleen aan wanneer de gebruiker
+   ondersteunende bron- of briefingtekst tijdens de presentatie nodig heeft.
+5. Schrijf de presentatie naar `config.js` en `slides-data.js`, als classic
+   scripts zonder `import`/`export`. Laat `app.js` en `styles.css` intact voor
+   gewone inhoudswijzigingen.
+6. Gebruik alleen iconen die als `<symbol id="icon-...">` in `index.html`
+   bestaan. Ontbreekt een inhoudelijk noodzakelijk icoon, voeg dan één nieuw
+   symbol aan die sprite toe en meld dit. Gebruik altijd één van deze
+   composities: icoon met volledig links uitgelijnde inhoud, of een
+   gecentreerde titel zonder icoon met links uitgelijnde bullets.
+7. Controleer iedere slide op een unieke oplopende `id`, een niet-lege
+   `title`, een `bullets`-array en een `notes`-string. Test daarna de volledige
+   presentatie volgens `.claude/skills/test-presentation/SKILL.md` en bekijk
+   de relevante slides visueel.
 
-```markdown
----
-titel: Naam van de presentatie
-taal: nl
-timer minuten: 30
-disco standaard: ja
-disco tekst: SKILLS, THRILLS
-disco modus: auto
-uitlijning standaard: center
----
+## Technische datavorm
 
-## Titel van de slide
-Icon: bulb
-Disco: nee
+Gebruik de bestaande bestanden als actuele bron voor alle opties. Een slide
+heeft minimaal:
 
-- Eerste bullet, ondersteunt **vet** en `code`
-- Tweede bullet
-  subtext: Kleinere, gedempte tekst die onder deze bullet komt
-
-Notes:
-Vrije tekst voor de speaker notes. Lege regel = nieuwe paragraaf.
-- Lijstjes met - of * werken
-1. Genummerde lijstjes ook
-
-## Een andere slide, met een bevroren disco-overgang
-Disco modus: pause
-
-- Deze overgang stopt halverwege, bevroren op de disco-achtergrond,
-  tot de presenter nogmaals op Volgende/Vorige klikt
-
-## Een auto-overgang die langer zichtbaar blijft
-Disco: ja
-Disco modus: auto
-Disco wachttijd ms: 800
-
-- Alleen deze transition krijgt een extra hold
-
-## Een linksuitgelijnde slide
-Uitlijning: left
-
-- Deze slide wijkt af van de document-brede uitlijning
+```js
+{ id, title, bullets, notes }
 ```
 
-Regels voor het parsen:
-- Frontmatter-velden zijn allemaal optioneel; ontbreekt een veld, gebruik dan
-  het bijbehorende default uit `config.js` (`timer minuten` → 30, `disco
-  standaard` → ja, `disco modus` → auto, `uitlijning standaard` → center,
-  `taal` → nl). `disco tekst` is een kommagescheiden lijst; elk item wordt
-  één regel op de disco-achtergrond (`CONFIG.disco.titleLines`).
-- Elke `##`-kop wordt één slide, in documentvolgorde, met oplopende `id`
-  vanaf 1.
-- Optionele `Icon:`/`Disco:`/`Disco modus:`/`Disco wachttijd ms:`/`Uitlijning:`-regels staan direct
-  onder de kop, vóór de bullet-lijst. Ontbreekt `Icon:`, kies dan het best
-  passende icoon uit de lijst hierboven op basis van de inhoud van de slide
-  (bijv. een waarschuwing → `alert`, een vraag → `question`, een stappenplan
-  → `steps`), maar alleen wanneer de effectieve uitlijning `left` is. Laat
-  bij `center` het `icon`-veld weg. `Disco wachttijd ms:` wordt als
-  niet-negatief getal naar `discoHoldMs` vertaald en is alleen zinvol in
-  auto-modus. Ontbreekt `Disco:`/`Disco modus:`/`Disco wachttijd ms:`/`Uitlijning:`, laat het
-  bijbehorende veld (`disco`/`discoMode`/`discoHoldMs`/`align`) dan gewoon weg (het
-  slide-object erft dan de document-brede default) — voeg het veld niet
-  expliciet toe met dezelfde waarde als de default, dat is ruis. `Disco
-  modus: pause` heeft alleen effect als disco voor die slide ook
-  daadwerkelijk aan staat (globaal of via `Disco: ja`).
-- De bullet-lijst wordt `slide.bullets` — elk item is een plain string
-  (markdown `**bold**`/`` `code` `` blijft behouden, dat rendert `app.js`
-  al), tenzij er direct onder die bullet een verder-ingesprongen regel staat
-  die begint met `subtext:` (zie het voorbeeld hierboven) — dan wordt het
-  `{ text, subtext }`, waarbij `subtext` ook markdown ondersteunt. Geen
-  `subtext:`-regel? Dan blijft de bullet een plain string.
-- Alles ná een regel die begint met `Notes:` (tot de volgende `##`-kop) wordt
-  ongewijzigd `slide.notes` — geen extra parsing nodig, `renderNotesHTML()`
-  in `app.js` kan paragrafen, `-`/`*`-lijstjes, `1.`-lijstjes en
-  ```` ``` ````-codeblokken al aan.
-- Ontbreekt een `Notes:`-sectie, dan is `slide.notes` een lege string.
+Ondersteunde opties zijn onder meer `icon`, `subtitle`, `meta`, `align`,
+`disco`, `discoMode`, `discoHoldMs`, `discoTitleLines`,
+`isTemplateAnchor` en `templateSection`. Bullets mogen strings zijn of
+`{ text, subtext }`-objecten. Voeg alleen opties toe die het verhaal of de
+presentatie daadwerkelijk helpen; stel de technische keuzes niet als vragen
+aan de gebruiker wanneer een verstandige default volstaat.
 
-## Tools
+## Oplevering
 
-Alleen bestandslezen/schrijven nodig (Read/Write/Edit) — geen MCP,
-sub-agents of code execution.
+Meld kort hoeveel slides zijn gemaakt, welke inhoudelijke structuur is
+gekozen, of de reference-overlay wordt gebruikt, welke bestanden zijn
+gewijzigd en hoe de presentatie is gecontroleerd. Beschrijf technische
+details alleen wanneer ze relevant zijn voor een keuze of uitzondering.
 
-## Process
+## Grenzen
 
-0. Controleer eerst de actieve Git-branch. Werk alleen op een nieuwe
-   onderwerpbranch vanaf `main`; wijzig `main`, `develop` of
-   `skill-workshop-presentation` niet stilzwijgend. Als de gebruiker nog
-   geen content-document heeft aangeleverd, verwijs dan
-   naar `content-template.md` in de repo-root (of bied aan om er een kopie
-   van te maken/in te vullen op basis van een korte beschrijving) in plaats
-   van simpelweg te wachten — dat sjabloon volgt exact het hieronder
-   beschreven formaat.
-1. Lees het volledige content-document.
-2. Vertaal de frontmatter naar een `config.js`, in exact dezelfde vorm als
-   het bestaande `config.js` in deze repo (classic script, `const CONFIG =
-   {...}`, geladen vóór `slides-data.js`/`app.js`), inclusief
-   `layout.align` uit `uitlijning standaard`. Zet
-   `templateOverlay.enabled: false`, tenzij het document expliciet
-   reference-secties beschrijft. → CHECKPOINT: vraag bij twijfel of de
-   reference-overlay nodig is en welke Markdown-content hij moet tonen.
-3. Vertaal elke `##`-sectie naar een `SLIDES`-object zoals hierboven
-   beschreven, inclusief `align` (indien opgegeven) en `{ text, subtext }`-
-   bullets waar een `subtext:`-regel staat. Sla het resultaat op als de
-   volledige `SLIDES`-array in `slides-data.js` (overschrijft de bestaande
-   inhoud; laat `SKILL_TEMPLATE_MD`/`SKILL_TEMPLATE_SECTIONS` weg als ze
-   niet gebruikt worden).
-4. Schrijf `config.js` en `slides-data.js` weg.
-5. Ontbreekt er een passend icoon voor een slide in de vaste lijst (zeldzaam
-   — de lijst dekt de meeste onderwerpen), voeg dan één nieuwe
-   `<symbol id="icon-...">` toe aan de bestaande sprite in `index.html`
-   (regels 13-44) — dit is de enige toegestane wijziging buiten
-   `config.js`/`slides-data.js`. Meld dit expliciet in de samenvatting.
-6. Update naar gebruiker: geef een korte samenvatting — aantal slides,
-   gebruikte `CONFIG`-waarden, of `templateOverlay` aan/uit staat, en of er
-   nieuwe iconen zijn toegevoegd.
-7. Controleer of alle `##`-secties uit het document zijn verwerkt en of elk
-   slide-object een geldig `icon` heeft (bestaat als `<symbol>` in
-   `index.html`). **Controleer ook expliciet dat elk slide-object een
-   niet-lege `title` (string) heeft en een `bullets`-veld dat een array is
-   (`[]` is prima, `undefined`/ontbrekend niet)** — één slide zonder deze
-   twee velden breekt de hele presentatie bij het opstarten, niet alleen die
-   ene slide (zie Rules). Ontbreekt er iets of is een sectie onduidelijk
-   (bijv. geen enkele bullet én geen notes), stel dan eerst een vraag voordat
-   je oplevert.
-
-## Output
-
-- Nieuw/overschreven `config.js` en `slides-data.js`.
-- Eventueel een nieuw `<symbol>` in `index.html` (alleen indien nodig, zie
-  stap 5).
-- Een korte chat-samenvatting + de instructie om `index.html` in de browser
-  te openen ter controle.
-
-## Rules
-
-- ALTIJD `config.js`/`slides-data.js` als classic scripts schrijven (geen
-  `import`/`export`), consistent met de rest van deze repo.
-- ALTIJD Nederlandse UI-teksten/inhoud aanhouden, tenzij het content-document
-  een andere `taal` opgeeft.
-- ALTIJD kiezen tussen: icoon + volledig links uitgelijnd, of gecentreerde
-  titel zonder icoon + links uitgelijnde bullets. NOOIT een icoon naast een
-  gecentreerde titel plaatsen.
-- NOOIT `app.js`/`styles.css` structureel wijzigen voor deze skill — alleen
-  `index.html`'s iconen-sprite mag uitgebreid worden, en alleen als stap 5
-  dat noodzakelijk maakt.
-- NOOIT de reference-overlay (`isTemplateAnchor`, `templateSection`,
-  `SKILL_TEMPLATE_MD`/`SECTIONS`) toevoegen tenzij het content-document dat
-  expliciet beschrijft.
-- NOOIT schrijven naar `skill-workshop-presentation`; die branch bewaart de
-  onderwerp-specifieke workshopdeck ongewijzigd.
-- NOOIT een slide-object opleveren zonder `title` (niet-lege string) of
-  zonder `bullets` (array, mag leeg zijn). `app.js` degradeert dit
-  tegenwoordig defensief (lege titel/geen bullets i.p.v. een crash), maar
-  dat is een vangnet — geen excuus om deze velden achterwege te laten.
+- Wijzig nooit onderwerpcontent op `main`, `develop` of
+  `skill-workshop-presentation` zonder expliciete opdracht; nieuwe
+  presentaties horen op een onderwerpbranch vanaf `main`.
+- Schrijf onderwerpcontent nooit terug naar `main` of `develop`.
+- Verander de gedeelde engine alleen wanneer de gebruiker expliciet om een
+  herbruikbare engineverbetering vraagt.
+- Lever nooit een slide zonder geldige `title`, `bullets` en `notes` op.

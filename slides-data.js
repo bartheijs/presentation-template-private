@@ -19,115 +19,115 @@
  * - bullets may be strings or { text, subtext } objects
  */
 
-// Generic reference content shown by the "Presentation brief" overlay.
+// Generic reference content shown by the "Presentatiebrief" overlay.
 // The variable names are retained for backwards compatibility with app.js.
-const SKILL_TEMPLATE_MD = `# Presentation brief
+const SKILL_TEMPLATE_MD = `PRESENTATIEBRIEF
 
-## Purpose
-[What should this presentation achieve?]
+DOEL
+Wat moet deze presentatie bereiken?
 
-## Audience
-[Who is in the room, and what do they already know?]
+PUBLIEK
+Wie zit er in de zaal en wat weten zij al?
 
-## Takeaway
-[What is the one thing the audience should remember or do?]
+KERNBOODSCHAP
+Wat moet het publiek vooral onthouden of doen?
 
-## Outline
-1. [Opening: why this matters]
-2. [Core argument or learning progression]
-3. [Evidence, example or demonstration]
-4. [Closing: decision, action or application]
+OPBOUW
+1. Opening: waarom dit belangrijk is
+2. Kernargument of leeropbouw
+3. Bewijs, voorbeeld of demonstratie
+4. Afsluiting: besluit, actie of toepassing
 
-## Delivery
-[Duration, language, tone and presenter notes.]`;
+UITVOERING
+Duur, taal, toon en aanwijzingen voor de presentator.`;
 
 const SKILL_TEMPLATE_SECTIONS = [
   {
     id: 'purpose',
-    label: 'Purpose',
+    label: 'Doel',
     icon: 'target',
-    body: `## Purpose\n[What should this presentation achieve?]`,
+    body: `## Doel\n[Wat moet deze presentatie bereiken?]`,
   },
   {
     id: 'audience',
-    label: 'Audience',
+    label: 'Publiek',
     icon: 'chat',
-    body: `## Audience\n[Who is in the room, and what do they already know?]`,
+    body: `## Publiek\n[Wie zit er in de zaal en wat weten zij al?]`,
   },
   {
     id: 'takeaway',
-    label: 'Takeaway',
+    label: 'Kernboodschap',
     icon: 'flag',
-    body: `## Takeaway\n[What is the one thing the audience should remember or do?]`,
+    body: `## Kernboodschap\n[Wat moet het publiek vooral onthouden of doen?]`,
   },
   {
     id: 'outline',
-    label: 'Outline',
+    label: 'Opbouw',
     icon: 'steps',
-    body: `## Outline\n1. [Opening: why this matters]\n2. [Core argument or learning progression]\n3. [Evidence, example or demonstration]\n4. [Closing: decision, action or application]`,
+    body: `## Opbouw\n1. [Opening: waarom dit belangrijk is]\n2. [Kernargument of leeropbouw]\n3. [Bewijs, voorbeeld of demonstratie]\n4. [Afsluiting: besluit, actie of toepassing]`,
   },
   {
     id: 'delivery',
-    label: 'Delivery',
+    label: 'Uitvoering',
     icon: 'clock',
-    body: `## Delivery\n[Duration, language, tone and presenter notes.]`,
+    body: `## Uitvoering\n[Duur, taal, toon en aanwijzingen voor de presentator.]`,
   },
 ];
 
 const SLIDES = [
   {
     id: 1,
-    title: 'Presentation Template',
-    subtitle: 'Een werkende demo én het startpunt voor je volgende verhaal',
+    title: 'Van tekst naar presentatie',
+    subtitle: 'Lever je verhaal aan als tekst. AI doet de rest.',
     bullets: [],
-    meta: ['main · stabiel template', 'develop · nieuwe features'],
-    notes: `Deze demo legt zichzelf uit. Doorloop hem één keer voordat je een nieuwe onderwerpbranch maakt.`,
+    meta: ['Van ruwe inhoud', 'naar een werkende presentatie'],
+    notes: `Deze demo laat zien wat het template kan. Voor een nieuwe presentatie hoeft de gebruiker alleen de inhoud en context aan te leveren.`,
   },
   {
     id: 2,
-    title: 'Begin elke presentatie vanaf main',
-    icon: 'folder',
+    title: 'Begin met drie dingen',
+    icon: 'target',
     align: 'left',
     bullets: [
-      '`main` bevat de stabiele engine, demo en AI-instructies',
-      '`develop` is de kandidaatversie voor nieuwe enginefeatures',
-      'Elke echte presentatie krijgt een eigen branch vanaf `main`',
+      'Waar gaat de presentatie over?',
+      'Voor wie is hij bedoeld?',
+      'Wat moet het publiek na afloop begrijpen, voelen of doen?',
     ],
-    notes: `Maak onderwerpbranches nooit vanaf develop. Zo begin je altijd met de laatst goedgekeurde templateversie.`,
+    notes: `Meer hoeft niet om te beginnen. Als duur, taal of toon belangrijk zijn, kunnen die er gewoon in normale taal bij.`,
   },
   {
     id: 3,
-    title: 'Voor een nieuw onderwerp wijzig je vooral twee bestanden',
-    icon: 'wrench',
+    title: 'Lever je verhaal aan zoals het er nu ligt',
+    icon: 'inbox',
     align: 'left',
     bullets: [
       {
-        text: '`config.js` bepaalt het gedrag van de hele presentatie',
-        subtext: 'Titel, taal, timer, uitlijning, transitions, overlay en UI-teksten.',
+        text: 'Plak een ruwe opzet, document of lijst met ideeën',
+        subtext: 'De tekst hoeft nog niet kort, compleet of netjes gestructureerd te zijn.',
       },
       {
-        text: '`slides-data.js` bevat het verhaal',
-        subtext: 'Titels, bullets, notities en eventuele overrides per slide.',
+        text: 'Geef een gewenste volgorde mee als je die al hebt',
+        subtext: 'AI kan hem behouden of een betere verhaallijn voorstellen.',
       },
       {
-        text: '`content-template.md` is het invulformulier voor AI',
-        subtext: 'Lever het ingevuld aan om de demo-inhoud gericht te vervangen.',
+        text: 'Voeg notities, bronnen of voorbeelden toe waar relevant',
+        subtext: 'Ook losse aanwijzingen en feedback in gewone taal zijn voldoende.',
       },
     ],
-    notes: `De enginebestanden horen bij normaal presentatiewerk niet aangepast te worden. Daarmee blijven latere engine-updates makkelijker te integreren.`,
+    notes: `content-template.md is alleen een optioneel hulpmiddel. Een e-mail, outline, document of geplakte tekst werkt net zo goed.`,
   },
   {
     id: 4,
-    title: 'Config groepeert instellingen per functie',
-    icon: 'layers',
+    title: 'AI maakt er een complete presentatie van',
+    icon: 'spark',
     align: 'left',
     bullets: [
-      '`layout` — standaarduitlijning van de slide-inhoud',
-      '`disco` — flashy transition, tekst en auto/pause-modus',
-      '`timer` en `transitions` — presentatietempo en animatieduur',
-      '`templateOverlay` en `ui` — reference-paneel en zichtbare labels',
+      'Brengt structuur en een heldere verhaallijn aan',
+      'Schrijft compacte titels en scanbare bullets',
+      'Kiest passende layouts en overgangen',
+      'Voegt speaker notes toe en controleert het resultaat',
     ],
-    notes: `Open config.js tijdens de demo. De comments in het bestand beschrijven de ondersteunde waarden en uitzonderingen.`,
+    notes: `AI verwerkt de inhoud achter de schermen in het template. De gebruiker hoeft de technische bestanden of instellingen niet te kennen.`,
   },
   {
     id: 5,
@@ -137,7 +137,7 @@ const SLIDES = [
       'Rustige compositie',
       'Korte, krachtige copy',
     ],
-    notes: `Deze slide overschrijft de globale uitlijning expliciet met align: 'center'.`,
+    notes: `Een rustige, gecentreerde compositie helpt wanneer één boodschap alle aandacht verdient.`,
   },
   {
     id: 6,
@@ -145,11 +145,11 @@ const SLIDES = [
     icon: 'book',
     align: 'left',
     bullets: [
-      'Gebruik `CONFIG.layout.align` als standaard voor de hele deck',
-      'Gebruik `slide.align` alleen wanneer één slide bewust afwijkt',
-      'De binnenkolom blijft in beide gevallen netjes gecentreerd',
+      'Langere uitleg is makkelijker te scannen',
+      'Opsommingen krijgen een duidelijk beginpunt',
+      'De compositie blijft rustig en overzichtelijk',
     ],
-    notes: `Vergelijk de positie van deze inhoud met de vorige slide. Alleen de tekstuitlijning verandert; de vaste contentkolom blijft behouden.`,
+    notes: `Vergelijk de positie van deze inhoud met de vorige slide. AI kiest per slide de compositie die het best bij de boodschap past.`,
   },
   {
     id: 7,
@@ -159,69 +159,73 @@ const SLIDES = [
     bullets: [
       {
         text: 'Houd de hoofdregel scanbaar',
-        subtext: 'Plaats de toelichting in het subtext-veld van hetzelfde bulletobject.',
+        subtext: 'Zet de nuance eronder in een rustiger formaat.',
       },
       {
-        text: 'Markdown blijft beschikbaar',
-        subtext: 'Gebruik bijvoorbeeld **vet** of `code` waar dat betekenis toevoegt.',
+        text: 'Benadruk alleen wat echt belangrijk is',
+        subtext: 'Zo blijft de hoofdboodschap helder voor het publiek.',
       },
     ],
-    notes: `In slides-data.js zie je dat deze bullets objecten zijn met text en subtext, terwijl gewone bullets alleen strings zijn.`,
+    notes: `AI kan toelichting visueel ondergeschikt maken, zodat de slide snel te begrijpen blijft.`,
   },
   {
     id: 8,
-    title: 'Een overgang kan per slide uit staan',
+    title: 'Sommige overgangen mogen rustig blijven',
     disco: false,
     bullets: [
-      'Deze slide landt zonder flashy transition',
-      'Een per-slide instelling overschrijft de globale default',
+      'Deze slide verschijnt zonder extra effect',
+      'AI stemt het tempo af op het moment in het verhaal',
     ],
-    notes: `Ook als CONFIG.disco.enabled later op true wordt gezet, blijft deze slide de transition onderdrukken door disco: false.`,
+    notes: `Niet iedere stap in een verhaal heeft nadruk nodig. Een rustige overgang helpt het publiek de inhoud te blijven volgen.`,
   },
   {
     id: 9,
-    title: 'Auto-modus speelt de transition in één keer af',
+    title: 'Een automatische overgang geeft kort extra energie',
     disco: true,
     discoMode: 'auto',
     discoHoldMs: 800,
-    discoTitleLines: ['AUTO', 'MODE'],
+    discoTitleLines: ['KORTE', 'ENERGIE'],
     bullets: [
       'Eén klik is genoeg',
-      'De volgende slide verschijnt automatisch na de animatie',
+      'De overgang speelt af en de volgende slide verschijnt vanzelf',
     ],
-    notes: `Deze slide demonstreert disco: true, discoMode: 'auto', een extra discoHoldMs van 800 ms en eigen discoTitleLines.`,
+    notes: `Deze overgang blijft bewust iets langer zichtbaar dan de overgang ervoor. Dat maakt het verschil in tempo goed merkbaar.`,
   },
   {
     id: 10,
-    title: 'Pause-modus maakt ruimte voor een live moment',
+    title: 'Een pauze-overgang maakt ruimte voor een live moment',
     disco: true,
     discoMode: 'pause',
     discoTitleLines: ['PAUSE', 'EN', 'VERVOLG'],
     bullets: [
-      'De eerste klik bevriest de transition halverwege',
+      'De eerste klik bevriest de overgang halverwege',
       'De tweede klik landt op deze slide',
     ],
-    notes: `Gebruik dit voor een reveal, publieksvraag of live demonstratie. De teller toont tijdens de pauze een halve slidepositie.`,
+    notes: `Gebruik dit bijvoorbeeld voor een reveal, publieksvraag of live demonstratie.`,
   },
   {
     id: 11,
-    title: 'De reference-overlay houdt context binnen bereik',
+    title: 'Achtergrondinformatie blijft binnen bereik',
     isTemplateAnchor: true,
-    bullets: [],
-    notes: `Open de knop “Presentation brief”. Deze anchor-slide toont dezelfde bron ook direct in de slide. De interne veldnaam isTemplateAnchor is om compatibiliteitsredenen behouden.`,
+    bullets: [
+      'Open de presentatiebrief wanneer je extra context nodig hebt',
+      'De slide blijft zichtbaar terwijl je de briefing raadpleegt',
+      'Sluit het paneel en ga direct verder met presenteren',
+    ],
+    notes: `Open de knop “Presentatiebrief”. De briefing kan tijdens het presenteren naast de slides worden geraadpleegd.`,
   },
   {
     id: 12,
-    title: 'Highlights verbinden de uitleg aan de bron',
+    title: 'De juiste achtergrond verschijnt op het juiste moment',
     icon: 'target',
     templateSection: 'takeaway',
     align: 'left',
     bullets: [
-      'Open de Presentation brief-overlay',
-      'Deze slide highlight automatisch de sectie “Takeaway”',
-      'Gebruik `templateSection` om andere secties te koppelen',
+      'Open de Presentatiebrief',
+      'De relevante sectie “Kernboodschap” wordt automatisch gemarkeerd',
+      'AI koppelt ondersteunende context aan de juiste slide',
     ],
-    notes: `De overlay kan elke vrije Markdown-referentie bevatten. Zet templateOverlay.enabled op false wanneer een presentatie dit mechanisme niet nodig heeft.`,
+    notes: `De briefing is een voorbeeld van ondersteunende context. AI gebruikt dit alleen wanneer het iets toevoegt aan de presentatie.`,
   },
   {
     id: 13,
@@ -250,26 +254,26 @@ const SLIDES = [
   },
   {
     id: 15,
-    title: 'AI kan vanuit een contentdocument de demo vervangen',
+    title: 'Je hoeft geen technisch format te leren',
     icon: 'spark',
     align: 'left',
     bullets: [
-      'Vul `content-template.md` in met onderwerp, slides en notities',
-      'Gebruik `scaffold-presentation` voor een volledige nieuwe deck',
-      'Gebruik `update-slides` voor gerichte inhoudelijke wijzigingen',
-      'Gebruik `test-presentation` om de engine en demo te verifiëren',
+      'Plak of voeg tekst toe in de vorm die je al hebt',
+      'AI vraagt alleen door als essentiële context echt ontbreekt',
+      'Bekijk het resultaat en geef feedback in gewone taal',
+      'AI verwerkt de feedback en controleert de presentatie opnieuw',
     ],
-    notes: `De projectspecifieke skills staan in .claude/skills. De README beschrijft dezelfde workflow voor mensen en andere coding agents.`,
+    notes: `content-template.md is beschikbaar als eenvoudig startpunt, maar is nooit verplicht.`,
   },
   {
     id: 16,
-    title: 'Maak nu je eigen presentatiebranch',
+    title: 'Begin gewoon met je verhaal',
     bullets: [
-      '`git switch main`',
-      '`git switch -c presentation-<onderwerp>`',
-      'Vervang de demo-inhoud en laat de engine intact',
-      'Test, presenteer en merge onderwerpcontent niet terug naar `main`',
+      '`Maak een presentatie over [onderwerp] voor [publiek]`',
+      '`Na afloop moeten zij [gewenste uitkomst]`',
+      '`Gebruik onderstaande tekst als inhoud: …`',
+      'AI regelt structuur, vormgeving en techniek',
     ],
-    notes: `De demo eindigt met de concrete vervolgstap. Engineverbeteringen horen via develop terug te vloeien; onderwerpcontent blijft op de eigen branch.`,
+    notes: `Dit is voldoende om te starten. Extra wensen kunnen vooraf of als feedback op het eerste resultaat worden toegevoegd.`,
   },
 ];

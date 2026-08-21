@@ -60,7 +60,7 @@ const CONFIG = {
   },
 
   ui: {
-    templateButton: 'Presentation brief',
+    templateButton: 'Presentatiebrief',
     notesToggleHide: 'Notities verbergen', // shown while notes are visible (clicking hides them)
     notesToggleShow: 'Notities tonen', // shown while notes are hidden (clicking shows them)
     timerStart: 'Start',
@@ -73,7 +73,7 @@ const CONFIG = {
     controlsCollapseHide: 'Bediening inklappen', // shown while the controls pane is open
     controlsCollapseShow: 'Bediening uitklappen', // shown while the controls pane is collapsed
     overlayCloseLabel: 'Sluiten',
-    overlayTitle: 'Presentation brief',
+    overlayTitle: 'Presentatiebrief',
     backToDeckLabel: 'Terug naar de presentatie',
     finishTitle: 'Klaar om te presenteren!',
     // Set via innerHTML at startup — trusted local config, not user input.

@@ -1,48 +1,37 @@
-<!--
-  Invul-sjabloon voor een nieuwe presentatie op basis van deze repo.
-  Vul dit aan en geef het aan Claude Code samen met de scaffold-presentation-
-  skill (of update-slides voor een bestaande presentatie), of vul het zelf
-  in en laat de skill het verwerken.
+# Inhoud voor mijn presentatie
 
-  Werk op een nieuwe onderwerpbranch vanaf main. Gebruik nooit
-  skill-workshop-presentation als schrijfdoel: die branch bewaart de
-  bestaande workshopdeck ongewijzigd.
+Gebruik dit bestand alleen als het je helpt. Er is geen verplicht format.
+Je kunt AI ook rechtstreeks een ruwe tekst, document, e-mail, lijst met
+ideeën of bestaande slide-opzet geven.
 
-  Alle regels/velden zijn optioneel — laat weg wat niet van toepassing is,
-  de skill valt dan terug op de defaults uit config.js.
--->
+## Korte briefing
 
----
-titel: [Naam van je presentatie]
-taal: nl
-timer minuten: 30
-disco standaard: ja
-disco tekst: [Tekst op de disco-achtergrond, komma-gescheiden voor meerdere regels]
-disco modus: auto
-uitlijning standaard: center
----
+- Onderwerp: [waar gaat de presentatie over?]
+- Publiek: [voor wie is de presentatie?]
+- Doel: [wat moet het publiek na afloop begrijpen, voelen of doen?]
+- Duur: [optioneel]
+- Taal en toon: [optioneel]
 
-## [Titel van de eerste slide]
-Icon: [optioneel: iconnaam, anders kiest de skill er zelf een]
-Disco: [optioneel: ja/nee]
-Disco modus: [optioneel: auto/pause]
-Disco wachttijd ms: [optioneel: extra zichtbare tijd in auto-modus]
-Uitlijning: [optioneel: center/left]
+## Mijn inhoud
 
-- [Eerste bullet]
-- [Tweede bullet]
-  subtext: [optioneel: kleinere tekst onder deze bullet]
+[Plak hier alle beschikbare tekst. Dat mag onaf, ongestructureerd of veel te
+lang zijn. AI brengt er een verhaallijn en slidevolgorde in aan.]
 
-Notes:
-[Vrije tekst voor de speaker notes van deze slide. Leeg laten voor een
-full-bleed/titel-slide zonder notes.]
+## Gewenste opbouw
 
-## [Titel van de tweede slide]
+[Optioneel: beschrijf slides, hoofdstukken of een volgorde die behouden moet
+blijven. Bijvoorbeeld: eerst het probleem, dan een praktijkvoorbeeld en tot
+slot drie concrete acties.]
 
-- [Bullet]
-- [Bullet]
+## Notities, bronnen en beeld
 
-Notes:
-[...]
+[Optioneel: voeg sprekersnotities, links, bronvermeldingen, voorbeelden of
+wensen voor afbeeldingen toe.]
 
-<!-- Herhaal een ##-kop per slide, in de volgorde waarin ze moeten verschijnen. -->
+## Opdracht aan AI
+
+Maak van bovenstaande inhoud een complete presentatie met dit template.
+Bepaal zelf een heldere structuur, bondige slidecopy, passende layouts,
+overgangen en speaker notes. Controleer daarna of de presentatie visueel en
+technisch goed werkt. Stel alleen een vraag wanneer onderwerp, publiek of doel
+niet uit de tekst is af te leiden en dit het resultaat wezenlijk verandert.

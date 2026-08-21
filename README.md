@@ -30,36 +30,47 @@ onderwerpcontent nooit terug naar `main` of `develop`. Een herbruikbare
 engineverbetering hoort op `develop`; na review kan `develop` naar `main`
 worden gepromoveerd.
 
-## Wat je voor een presentatie aanpast
+## Een presentatie maken
 
-Normaal hoeven maar twee bestanden te veranderen:
+Lever AI de inhoud aan in de vorm die je al hebt: een ruwe tekst, document,
+e-mail, lijst met ideeën of bestaande slide-opzet. Geef waar mogelijk drie
+dingen mee: het onderwerp, het publiek en wat de presentatie moet bereiken.
+Een technisch format of kennis van deze repository is niet nodig.
 
-- `config.js` — presentatiebrede instellingen: titel, taal, timer,
-  uitlijning, flashy transition, confetti, reference-overlay en UI-teksten.
-- `slides-data.js` — alle zichtbare slides en speaker notes.
-
-Themakleuren en fonts zijn de bewuste uitzondering: die staan als CSS custom
-properties bovenaan `styles.css`. `index.html`, `app.js` en de overige CSS
-vormen de gedeelde engine en horen niet aangepast te worden voor gewone
-contentwijzigingen.
+AI maakt de verhaallijn en slidevolgorde, schrijft bondige slidecopy, kiest
+passende layouts en overgangen, voegt speaker notes toe en controleert het
+resultaat. Als je al een gewenste volgorde, bronnen of visuele wensen hebt,
+kun je die gewoon in normale taal toevoegen.
 
 ## Werken met AI
 
-`main` bevat alles wat een coding agent nodig heeft om op dit template voort
-te bouwen:
+De kortste opdracht kan bijvoorbeeld zijn:
 
-- `content-template.md` — invulbaar contentdocument voor een nieuwe deck.
-- `.claude/skills/scaffold-presentation/SKILL.md` — vervangt de demo door een
-  volledige presentatie vanuit zo'n contentdocument.
+> Maak een presentatie over [onderwerp] voor [publiek]. Na afloop moeten zij
+> [gewenste uitkomst]. Gebruik onderstaande tekst als inhoud: …
+
+`content-template.md` is een optioneel hulpmiddel voor wie graag met een
+korte briefing begint; alle kopjes en velden daarin zijn vrij. AI mag ook
+rechtstreeks met aangeleverde tekst werken.
+
+Onder de motorkap bevat `main` alles wat een coding agent nodig heeft:
+
+- `.claude/skills/scaffold-presentation/SKILL.md` — maakt van vrije tekst een
+  volledige presentatie.
 - `.claude/skills/update-slides/SKILL.md` — wijzigt of voegt gericht slides
-  toe zonder ongerelateerde inhoud te raken.
+  toe op basis van feedback in gewone taal.
 - `.claude/skills/test-presentation/SKILL.md` — voert de Playwright-suite uit
   en helpt fouten aan de juiste enginefunctie te koppelen.
 
-Geef een agent bij een nieuwe presentatie minimaal onderwerp, publiek en
-doel. Een ingevulde `content-template.md` maakt de overdracht voorspelbaar.
 De agent moet eerst bevestigen dat hij op een onderwerpbranch vanaf `main`
 werkt en mag `skill-workshop-presentation` nooit als schrijfdoel gebruiken.
+
+### Technische referentie
+
+AI verwerkt de inhoud uiteindelijk in `config.js` en `slides-data.js`.
+Themakleuren en fonts staan als CSS custom properties bovenaan `styles.css`.
+`index.html`, `app.js` en de overige CSS vormen de gedeelde engine en horen
+bij gewone inhoudswijzigingen intact te blijven.
 
 ## Slidegegevens
 
@@ -112,7 +123,7 @@ Combineer nooit een icoon met een gecentreerde titel.
 - Volgende/Vorige, `←`/`→` of een presentatieklikker navigeert door de
   slides. Gangbare `PageDown`/`PageUp`-signalen worden ook ondersteund.
 - De inhoudsopgave springt direct naar een slide.
-- Presentation brief opent de configureerbare reference-overlay; `Esc` sluit
+- Presentatiebrief opent het configureerbare achtergrondpaneel; `Esc` sluit
   hem.
 - Notities tonen/verbergen geldt voor de hele sessie.
 - De timer kan starten, pauzeren en worden verlengd.
