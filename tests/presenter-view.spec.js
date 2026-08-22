@@ -128,3 +128,42 @@ test.describe('command whitelist and state broadcast', () => {
     expect(await page.evaluate(() => state.currentIndex)).toBe(0);
   });
 });
+
+test.describe('reconnect resilience', () => {
+  test('reloading the Presenter View re-syncs via window.opener + REQUEST_STATE', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await page.click('#btn-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+
+    await presenter.reload();
+    await expect(presenter.locator('[data-connection-status]')).toHaveText('Verbonden');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+  });
+
+  test('reloading the Presentation View lets it re-learn presenterRef from the next REQUEST_STATE', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    await page.reload();
+    await presenter.evaluate(() => requestState());
+    await presenter.click('#btn-presenter-next');
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(1);
+  });
+
+  test('closing the Presenter View stops the Presentation View from erroring, and reopening starts a fresh handshake', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err));
+
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await presenter.close();
+    await page.click('#btn-next'); // must not throw despite the stale presenterRef
+    expect(errors).toEqual([]);
+
+    const presenter2 = await openPresenterView(page);
+    await expect(presenter2.locator('[data-connection-status]')).toHaveText('Verbonden');
+    await expect(presenter2.locator('[data-current-slide]')).toHaveText('2');
+  });
+});
