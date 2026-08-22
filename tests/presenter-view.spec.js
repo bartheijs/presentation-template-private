@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { gotoPresentation, openPresenterView } = require('./helpers');
+const { gotoPresentation, openPresenterView, waitIdle } = require('./helpers');
 
 test.describe('pause overlay engine feature', () => {
   test('showPauseOverlay/hidePauseOverlay toggle the overlay and do not change the current slide', async ({ page }) => {
@@ -63,5 +63,68 @@ test.describe('launch mechanism and connection status', () => {
     await page.goto('file://' + path.resolve(__dirname, '..', 'presenter.html'));
     await expect(page.locator('[data-connection-status]')).toHaveText('Niet verbonden');
     await expect(page.locator('[data-connection-hint]')).toContainText('Open deze pagina via de Presentatieweergave');
+  });
+});
+
+test.describe('command whitelist and state broadcast', () => {
+  test('NEXT_SLIDE/PREVIOUS_SLIDE/GO_TO_SLIDE move the real presentation and update the presenter', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(1);
+    // PREVIOUS_SLIDE below is itself an animated nav, so let the NEXT_SLIDE
+    // animation above finish first — otherwise goTo()'s
+    // `if (animate && isAnimatingSlide) return;` guard silently drops it
+    // (see helpers.js's waitIdle for why this is needed between animated
+    // navigations in tests).
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-prev');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
+
+    await presenter.fill('#presenter-goto-input', '3');
+    await presenter.click('#btn-presenter-goto');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
+  });
+
+  test('overlay/aside/pause toggles from the presenter reflect back as confirmed state', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    await presenter.click('#btn-toggle-context-overlay');
+    await expect(page.locator('#template-overlay')).toBeVisible();
+    await expect(presenter.locator('[data-context-overlay]')).toHaveText('Aan');
+
+    await presenter.click('#btn-toggle-left-aside');
+    await expect(presenter.locator('[data-left-aside]')).toHaveText('Uit');
+
+    await presenter.click('#btn-toggle-pause-overlay');
+    await expect(page.locator('#pause-overlay')).toBeVisible();
+    await expect(presenter.locator('[data-pause-overlay]')).toHaveText('Aan');
+  });
+
+  test('a real button click in the Presentation View also updates the presenter', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await page.click('#btn-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+  });
+
+  test('an unknown command is ignored without throwing', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err));
+    await page.evaluate(() => {
+      window.postMessage({ type: 'command', command: 'DELETE_EVERYTHING' }, '*');
+    });
+    await page.waitForTimeout(50);
+    expect(errors).toEqual([]);
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(0);
   });
 });

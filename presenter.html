@@ -14,6 +14,18 @@
   <p data-connection-hint>Open deze pagina via de Presentatieweergave (de Presenter View-knop of Shift+P), niet rechtstreeks.</p>
 </div>
 
+<div id="presenter-main" hidden>
+  <p>Slide <span data-current-slide></span> / <span data-total-slides></span></p>
+  <button id="btn-presenter-prev" type="button">Vorige</button>
+  <button id="btn-presenter-next" type="button">Volgende</button>
+  <input id="presenter-goto-input" type="number" min="1">
+  <button id="btn-presenter-goto" type="button">Ga naar</button>
+  <p>Context overlay: <span data-context-overlay></span> <button id="btn-toggle-context-overlay" type="button">Wissel</button></p>
+  <p>Linker aside: <span data-left-aside></span> <button id="btn-toggle-left-aside" type="button">Wissel</button></p>
+  <p>Rechter aside: <span data-right-aside></span> <button id="btn-toggle-right-aside" type="button">Wissel</button></p>
+  <p>Pauze-overlay: <span data-pause-overlay></span> <button id="btn-toggle-pause-overlay" type="button">Wissel</button></p>
+</div>
+
 <script src="config.js"></script>
 <script src="slides-data.js"></script>
 <script src="presenter.js"></script>

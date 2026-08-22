@@ -301,6 +301,7 @@ function toggleTocCollapse() {
     'aria-label',
     tocCollapsed ? CONFIG.ui.tocCollapseShow : CONFIG.ui.tocCollapseHide
   );
+  sendStateToPresenter();
 }
 
 function toggleNextCollapse() {
@@ -311,6 +312,7 @@ function toggleNextCollapse() {
     'aria-label',
     nextCollapsed ? CONFIG.ui.controlsCollapseShow : CONFIG.ui.controlsCollapseHide
   );
+  sendStateToPresenter();
 }
 
 window.addEventListener('resize', () => {
@@ -395,6 +397,7 @@ function goTo(index, { animate = false, direction = null } = {}) {
     state.currentIndex = index;
     renderSlide();
     updateTocActiveState();
+    sendStateToPresenter();
     return;
   }
 
@@ -414,6 +417,7 @@ function goTo(index, { animate = false, direction = null } = {}) {
     animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide));
   }
   updateTocActiveState();
+  sendStateToPresenter();
 }
 
 // Shared by the Next button, ArrowRight and Space: goTo() itself just
@@ -602,6 +606,7 @@ function resumePausedTransition() {
   );
 
   updateTocActiveState();
+  sendStateToPresenter();
 }
 
 // Any non-matching navigation while frozen cancels the pause: snap the
@@ -1000,10 +1005,12 @@ function openTemplateOverlay() {
   const slide = SLIDES[state.currentIndex];
   renderTemplateOverlay(slide.templateSection || null);
   overlayEl.hidden = false;
+  sendStateToPresenter();
 }
 
 function closeTemplateOverlay() {
   overlayEl.hidden = true;
+  sendStateToPresenter();
 }
 
 document.getElementById('btn-template').addEventListener('click', openTemplateOverlay);
@@ -1034,10 +1041,12 @@ function closeFinishOverlay() {
 function showPauseOverlay() {
   document.getElementById('pause-overlay-text').textContent = CONFIG.ui.pauseOverlayText;
   pauseOverlayEl.hidden = false;
+  sendStateToPresenter();
 }
 
 function hidePauseOverlay() {
   pauseOverlayEl.hidden = true;
+  sendStateToPresenter();
 }
 
 function isPauseOverlayVisible() {
@@ -1115,21 +1124,51 @@ if (!isEmbedPreview) {
   });
 }
 
+// Whitelisted commands a connected Presenter View may send. Each handler
+// takes the full message payload (only GO_TO_SLIDE uses it) and is trusted
+// to leave state consistent — the listener below broadcasts once after
+// every successful dispatch, so handlers never need to call
+// sendStateToPresenter() themselves.
+const COMMAND_HANDLERS = {
+  NEXT_SLIDE: () => goNext(),
+  PREVIOUS_SLIDE: () => goTo(state.currentIndex - 1, { animate: true, direction: 'prev' }),
+  GO_TO_SLIDE: (data) => {
+    const slide = Number(data.slide);
+    if (Number.isInteger(slide)) goTo(slide, { animate: false });
+  },
+  TOGGLE_CONTEXT_OVERLAY: () => (overlayEl.hidden ? openTemplateOverlay() : closeTemplateOverlay()),
+  SHOW_CONTEXT_OVERLAY: () => openTemplateOverlay(),
+  HIDE_CONTEXT_OVERLAY: () => closeTemplateOverlay(),
+  TOGGLE_LEFT_ASIDE: () => toggleTocCollapse(),
+  SHOW_LEFT_ASIDE: () => { if (tocCollapsed) toggleTocCollapse(); },
+  HIDE_LEFT_ASIDE: () => { if (!tocCollapsed) toggleTocCollapse(); },
+  TOGGLE_RIGHT_ASIDE: () => toggleNextCollapse(),
+  SHOW_RIGHT_ASIDE: () => { if (nextCollapsed) toggleNextCollapse(); },
+  HIDE_RIGHT_ASIDE: () => { if (!nextCollapsed) toggleNextCollapse(); },
+  TOGGLE_PAUSE_OVERLAY: () => (isPauseOverlayVisible() ? hidePauseOverlay() : showPauseOverlay()),
+  SHOW_PAUSE_OVERLAY: () => showPauseOverlay(),
+  HIDE_PAUSE_OVERLAY: () => hidePauseOverlay(),
+  REQUEST_STATE: () => {}, // no-op handler: the broadcast below every dispatch is what answers it
+};
+
 // Message listener is registered unconditionally (not gated on
 // isEmbedPreview): a Task 6 preview iframe (isEmbedPreview === true) still
 // needs to receive and act on messages — it just never opens its own
 // Presenter View or navigates on its own (that's what the guard above is
 // for).
 window.addEventListener('message', (e) => {
+  if (!e.data || e.data.type !== 'command') return; // schema check, done once
   if (presenterRef && !presenterRef.closed) {
     if (e.source !== presenterRef) return;
-  } else if (!e.data || e.data.type !== 'command' || e.data.command !== 'REQUEST_STATE') {
+  } else if (e.data.command !== 'REQUEST_STATE') {
     return; // bootstrap gate: only a REQUEST_STATE may establish presenterRef
   } else {
     presenterRef = e.source;
   }
-  if (!e.data || e.data.type !== 'command') return;
-  if (e.data.command === 'REQUEST_STATE') sendStateToPresenter();
+  const handler = COMMAND_HANDLERS[e.data.command];
+  if (!handler) return; // unknown command: ignored, never executed
+  handler(e.data);
+  sendStateToPresenter();
 });
 
 function sendStateToPresenter() {
