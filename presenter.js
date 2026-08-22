@@ -32,6 +32,7 @@ function sendCommand(command, extra) {
     setConnected(false);
     return;
   }
+  // targetOrigin '*' is deliberate: see requestState() above for rationale.
   presentationRef.postMessage(Object.assign({ type: 'command', command }, extra), '*');
 }
 
