@@ -54,8 +54,13 @@ van inhoud kan leiden.
 
 - Laat niet-genoemde slides en hun positie ongemoeid bij een gerichte update.
 - Bewaar bestaande specialistische velden zoals `isTemplateAnchor`,
-  `templateSection`, `discoHoldMs` en `discoTitleLines`, tenzij de feedback ze
-  daadwerkelijk raakt.
+  `templateSection`, `discoHoldMs`, `discoTitleLines` en `duration`, tenzij
+  de feedback ze daadwerkelijk raakt.
+- Pas `duration` (seconden, presenter-only) aan wanneer de gebruiker een
+  tijd voor een slide noemt of vraagt een eerdere schatting te corrigeren
+  (bijv. na een droogloop met de presentatietimer in de Presenter View) —
+  dit raakt alleen de schema-indicatie daar, nooit de zichtbare
+  presentatie.
 - Pas ongerelateerde sleutels in `config.js` niet aan.
 - Schrijf onderwerpcontent nooit terug naar `main` of `develop`; alleen
   herbruikbare engineverbeteringen horen daar.

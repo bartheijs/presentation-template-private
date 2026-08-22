@@ -66,17 +66,31 @@ heeft minimaal:
 
 Ondersteunde opties zijn onder meer `icon`, `subtitle`, `meta`, `align`,
 `disco`, `discoMode`, `discoHoldMs`, `discoTitleLines`,
-`isTemplateAnchor` en `templateSection`. Bullets mogen strings zijn of
-`{ text, subtext }`-objecten. Voeg alleen opties toe die het verhaal of de
-presentatie daadwerkelijk helpen; stel de technische keuzes niet als vragen
-aan de gebruiker wanneer een verstandige default volstaat.
+`isTemplateAnchor`, `templateSection` en `duration`. Bullets mogen strings
+zijn of `{ text, subtext }`-objecten. Voeg alleen opties toe die het
+verhaal of de presentatie daadwerkelijk helpen; stel de technische keuzes
+niet als vragen aan de gebruiker wanneer een verstandige default volstaat.
+
+Schat voor iedere slide ook een `duration` (seconden, presenter-only) in —
+gebaseerd op het aantal woorden in bullets plus notes en een spreektempo
+van ongeveer 130 woorden per minuut, met een kleine marge voor een titel-
+of overgangsslide met weinig tekst. Dit voedt uitsluitend de
+schema-indicatie in de Presenter View (zie
+`docs/superpowers/specs/2026-08-22-presenter-view-design.md`); het heeft
+geen enkel effect op de zichtbare presentatie. Het zijn bewust eerste
+inschattingen, geen vaste tijden — noem in de oplevering dat de gebruiker
+ze na een droogloop met de presentatietimer in de Presenter View kan
+verfijnen.
 
 ## Oplevering
 
 Meld kort hoeveel slides zijn gemaakt, welke inhoudelijke structuur is
 gekozen, of de reference-overlay wordt gebruikt, welke bestanden zijn
-gewijzigd en hoe de presentatie is gecontroleerd. Beschrijf technische
-details alleen wanneer ze relevant zijn voor een keuze of uitzondering.
+gewijzigd en hoe de presentatie is gecontroleerd. Vermeld dat elke slide
+een geschatte `duration` heeft gekregen voor de Presenter View's
+schema-indicatie, en dat de gebruiker die na een droogloop kan aanpassen.
+Beschrijf technische details alleen wanneer ze relevant zijn voor een
+keuze of uitzondering.
 
 ## Grenzen
 
