@@ -1134,6 +1134,9 @@ window.addEventListener('message', (e) => {
 
 function sendStateToPresenter() {
   if (!presenterRef || presenterRef.closed) return;
+  // targetOrigin '*' is deliberate: file:// pages have opaque origins, so
+  // event.origin can't be checked meaningfully. Sender identity is verified
+  // instead via e.source === presenterRef in the message listener above.
   presenterRef.postMessage(
     {
       type: 'state',
