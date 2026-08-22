@@ -19,3 +19,11 @@ body {
 .connection-banner[data-connected="true"] {
   display: none;
 }
+.preview-frame {
+  width: 1280px;
+  height: 800px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transform: scale(0.28);
+  transform-origin: top left;
+}

@@ -214,3 +214,32 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
     expect(await page.evaluate(() => state.currentIndex)).toBe(0);
   });
 });
+
+test.describe('preview iframes', () => {
+  test('current-preview mirrors the real slide/overlay state; next-preview shows pendingNextSlide', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    const currentPreviewFrame = presenter.frameLocator('#current-preview');
+    const nextPreviewFrame = presenter.frameLocator('#next-preview');
+
+    await expect(currentPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('01');
+    await expect(nextPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('02');
+
+    await presenter.click('#btn-toggle-context-overlay');
+    await expect(currentPreviewFrame.locator('#template-overlay')).toBeVisible();
+    await expect(nextPreviewFrame.locator('#template-overlay')).toBeHidden();
+
+    await presenter.click('#btn-presenter-skip');
+    await expect(nextPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('03');
+  });
+
+  test('preview iframes do not navigate on their own keyboard/click input', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    const currentPreviewFrame = presenter.frameLocator('#current-preview');
+    await currentPreviewFrame.locator('body').click();
+    await currentPreviewFrame.locator('body').press('ArrowRight');
+    await expect(currentPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('01');
+  });
+});

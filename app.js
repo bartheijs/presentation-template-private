@@ -667,47 +667,53 @@ document.getElementById('btn-prev').addEventListener('click', () =>
   goTo(state.currentIndex - 1, { animate: true, direction: 'prev' })
 );
 
-document.addEventListener('keydown', (e) => {
-  if (!finishOverlayEl.hidden) return;
-  if (e.key === 'ArrowDown') {
-    if (!CONFIG.templateOverlay.enabled) return;
-    e.preventDefault();
-    if (overlayEl.hidden) openTemplateOverlay();
-    return;
-  }
-  if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    if (!overlayEl.hidden) closeTemplateOverlay();
-    return;
-  }
-  if (!overlayEl.hidden) return;
-  // Presentation clickers commonly emit PageDown/PageUp rather than arrow
-  // keys, so support both pairs as equivalent navigation controls.
-  if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-    e.preventDefault();
-    goNext();
-    return;
-  }
-  if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-    e.preventDefault();
-    goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
-    return;
-  }
-  if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
-    // Skipped when a <button> is focused (Next itself, a TOC row, ...) —
-    // space already natively activates that button on its own, so also
-    // advancing here would double-fire (or fire a jarring extra "next"
-    // while e.g. the timer's Start button happens to have focus).
-    e.preventDefault(); // space's native behavior scrolls the page otherwise
-    goNext();
-  }
-});
+// Both listeners below drive the real presentation's own navigation from
+// its own keyboard/click input. A preview iframe (?embed=preview) must stay
+// passive — it only renders what the message listener below tells it to —
+// so these are skipped entirely there (see isEmbedPreview, defined above).
+if (!isEmbedPreview) {
+  document.addEventListener('keydown', (e) => {
+    if (!finishOverlayEl.hidden) return;
+    if (e.key === 'ArrowDown') {
+      if (!CONFIG.templateOverlay.enabled) return;
+      e.preventDefault();
+      if (overlayEl.hidden) openTemplateOverlay();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!overlayEl.hidden) closeTemplateOverlay();
+      return;
+    }
+    if (!overlayEl.hidden) return;
+    // Presentation clickers commonly emit PageDown/PageUp rather than arrow
+    // keys, so support both pairs as equivalent navigation controls.
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      e.preventDefault();
+      goNext();
+      return;
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+      return;
+    }
+    if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
+      // Skipped when a <button> is focused (Next itself, a TOC row, ...) —
+      // space already natively activates that button on its own, so also
+      // advancing here would double-fire (or fire a jarring extra "next"
+      // while e.g. the timer's Start button happens to have focus).
+      e.preventDefault(); // space's native behavior scrolls the page otherwise
+      goNext();
+    }
+  });
 
-tocListEl.addEventListener('click', (e) => {
-  const item = e.target.closest('.toc-item');
-  if (!item) return;
-  goTo(Number(item.dataset.index), { animate: false });
-});
+  tocListEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.toc-item');
+    if (!item) return;
+    goTo(Number(item.dataset.index), { animate: false });
+  });
+}
 
 /* ---------- Timer ---------- */
 
@@ -1157,6 +1163,31 @@ const COMMAND_HANDLERS = {
 // Presenter View or navigates on its own (that's what the guard above is
 // for).
 window.addEventListener('message', (e) => {
+  // Preview iframes (?embed=preview) are driven exclusively by
+  // presenter.js's syncPreview() via `window.parent`: a preview-state
+  // snapshot (asides/overlays) plus a GO_TO_SLIDE command for the slide
+  // index. They never establish a presenterRef of their own and never fall
+  // through to the ordinary command dispatch below.
+  if (isEmbedPreview) {
+    if (e.source !== window.parent) return;
+    if (!e.data) return;
+    if (e.data.type === 'preview-state') {
+      if (!overlayEl.hidden !== e.data.contextOverlayVisible) {
+        e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
+      }
+      if (tocCollapsed !== !e.data.leftAsideVisible) toggleTocCollapse();
+      if (nextCollapsed !== !e.data.rightAsideVisible) toggleNextCollapse();
+      if (isPauseOverlayVisible() !== e.data.pauseOverlayVisible) {
+        e.data.pauseOverlayVisible ? showPauseOverlay() : hidePauseOverlay();
+      }
+      return;
+    }
+    if (e.data.type === 'command' && e.data.command === 'GO_TO_SLIDE') {
+      const slide = Number(e.data.slide);
+      if (Number.isInteger(slide)) goTo(slide, { animate: false });
+    }
+    return;
+  }
   if (!e.data || e.data.type !== 'command') return; // schema check, done once
   if (presenterRef && !presenterRef.closed) {
     if (e.source !== presenterRef) return;
