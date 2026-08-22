@@ -9,12 +9,12 @@
  * scheduleDelta = elapsedMs/1000 - plannedStartOfCurrentSlide.
  * Negative = ahead of schedule, positive = behind. */
 
-function totalPlannedMs() {
+function configuredTotalMs() {
   return CONFIG.timer.defaultMinutes * 60 * 1000;
 }
 
 function averageSlideDurationSeconds() {
-  return totalPlannedMs() / 1000 / SLIDES.length;
+  return configuredTotalMs() / 1000 / SLIDES.length;
 }
 
 function plannedStartOfSlide(index) {
@@ -28,6 +28,15 @@ function plannedStartOfSlide(index) {
 
 function scheduleDelta(elapsedSeconds, currentSlideIndex) {
   return elapsedSeconds - plannedStartOfSlide(currentSlideIndex);
+}
+
+// Actual sum of every slide's effective planned duration (explicit `duration`
+// where set, averageSlideDurationSeconds() fallback share otherwise) —
+// self-consistent with plannedStartOfSlide/scheduleDelta. Not the same as
+// configuredTotalMs(), which is the raw config value used only as the basis
+// for the fallback's even split (spec §9).
+function totalPlannedMs() {
+  return plannedStartOfSlide(SLIDES.length) * 1000;
 }
 
 let presentationRef = window.opener || null;
