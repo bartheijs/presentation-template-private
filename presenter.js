@@ -36,7 +36,11 @@ function sendCommand(command, extra) {
   presentationRef.postMessage(Object.assign({ type: 'command', command }, extra), '*');
 }
 
+let pendingNextSlide = 1; // 0-based index; defaults to currentSlide + 1
+let lastJumpOriginIndex = null;
+
 function renderState(newState) {
+  const isFirstState = latestState === null;
   latestState = newState;
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
@@ -45,6 +49,10 @@ function renderState(newState) {
   document.querySelector('[data-left-aside]').textContent = newState.leftAsideVisible ? 'Aan' : 'Uit';
   document.querySelector('[data-right-aside]').textContent = newState.rightAsideVisible ? 'Aan' : 'Uit';
   document.querySelector('[data-pause-overlay]').textContent = newState.pauseOverlayVisible ? 'Aan' : 'Uit';
+  if (isFirstState || pendingNextSlide <= newState.currentSlide) {
+    pendingNextSlide = newState.currentSlide + 1;
+  }
+  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
 }
 
 window.addEventListener('message', (e) => {
@@ -55,8 +63,33 @@ window.addEventListener('message', (e) => {
   renderState(e.data);
 });
 
-document.getElementById('btn-presenter-next').addEventListener('click', () => sendCommand('NEXT_SLIDE'));
-document.getElementById('btn-presenter-prev').addEventListener('click', () => sendCommand('PREVIOUS_SLIDE'));
+document.getElementById('btn-presenter-skip').addEventListener('click', () => {
+  pendingNextSlide += 1;
+  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
+});
+
+document.getElementById('btn-presenter-herstel').addEventListener('click', () => {
+  if (!latestState) return;
+  pendingNextSlide = latestState.currentSlide + 1;
+  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
+});
+
+document.getElementById('btn-presenter-next').addEventListener('click', () => {
+  if (!latestState) return;
+  const isSkipJump = pendingNextSlide !== latestState.currentSlide + 1;
+  lastJumpOriginIndex = isSkipJump ? latestState.currentSlide : null;
+  sendCommand('GO_TO_SLIDE', { slide: pendingNextSlide });
+});
+
+document.getElementById('btn-presenter-prev').addEventListener('click', () => {
+  if (lastJumpOriginIndex !== null) {
+    sendCommand('GO_TO_SLIDE', { slide: lastJumpOriginIndex });
+    lastJumpOriginIndex = null;
+  } else {
+    sendCommand('PREVIOUS_SLIDE');
+  }
+});
+
 document.getElementById('btn-presenter-goto').addEventListener('click', () => {
   const slide = Number(document.getElementById('presenter-goto-input').value) - 1;
   if (Number.isInteger(slide)) sendCommand('GO_TO_SLIDE', { slide });
