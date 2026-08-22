@@ -163,7 +163,7 @@ function renderState(newState) {
   document.querySelector('[data-slides-progress]').textContent =
     `${newState.currentSlide + 1} / ${newState.totalSlides} (${slidesProgressPct}%)`;
 
-  const elapsedSeconds = getElapsedSeconds(); // implemented in Task 8; stub returning 0 until then
+  const elapsedSeconds = getElapsedSeconds();
   const delta = scheduleDelta(elapsedSeconds, newState.currentSlide);
   const deltaAbsMin = Math.floor(Math.abs(delta) / 60);
   const deltaAbsSec = String(Math.abs(delta) % 60).padStart(2, '0');
@@ -177,9 +177,72 @@ function renderState(newState) {
   document.querySelector('[data-time-progress]').textContent = `${timeProgressPct}%`;
 }
 
-function getElapsedSeconds() {
-  return 0;
+/* ---------- Presentation timer (presenter-only; separate from the
+ * existing countdown timer widget in app.js's right column) ----------
+ * Timestamp-based, not a per-second +1 counter, so browser throttling of
+ * a backgrounded tab can't drift it — matches app.js's own timer pattern.
+ * Persisted to sessionStorage so a refresh of THIS tab doesn't lose
+ * elapsed time; sessionStorage itself clears on a real close, so
+ * close+reopen correctly starts fresh (see spec §10). */
+
+const TIMER_STORAGE_KEY = 'presenterView.timer';
+
+function loadTimerState() {
+  try {
+    const raw = sessionStorage.getItem(TIMER_STORAGE_KEY);
+    if (!raw) return { accumulatedMs: 0, running: false, startEpoch: null };
+    return JSON.parse(raw);
+  } catch {
+    return { accumulatedMs: 0, running: false, startEpoch: null };
+  }
 }
+
+function saveTimerState(timerState) {
+  sessionStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timerState));
+}
+
+let timerState = loadTimerState();
+
+function getElapsedSeconds() {
+  const runningMs = timerState.running ? Date.now() - timerState.startEpoch : 0;
+  return Math.floor((timerState.accumulatedMs + runningMs) / 1000);
+}
+
+function startPresenterTimer() {
+  if (timerState.running) return;
+  timerState = { accumulatedMs: timerState.accumulatedMs, running: true, startEpoch: Date.now() };
+  saveTimerState(timerState);
+}
+
+function pausePresenterTimer() {
+  if (!timerState.running) return;
+  timerState = {
+    accumulatedMs: timerState.accumulatedMs + (Date.now() - timerState.startEpoch),
+    running: false,
+    startEpoch: null,
+  };
+  saveTimerState(timerState);
+}
+
+function resetPresenterTimer() {
+  timerState = { accumulatedMs: 0, running: false, startEpoch: null };
+  saveTimerState(timerState);
+}
+
+document.getElementById('btn-presenter-timer-start').addEventListener('click', startPresenterTimer);
+document.getElementById('btn-presenter-timer-pause').addEventListener('click', pausePresenterTimer);
+document.getElementById('btn-presenter-timer-reset').addEventListener('click', resetPresenterTimer);
+
+function renderClockAndElapsed() {
+  const now = new Date();
+  document.querySelector('[data-clock]').textContent =
+    `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const elapsed = getElapsedSeconds();
+  document.querySelector('[data-elapsed]').textContent =
+    `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')} verstreken`;
+}
+setInterval(renderClockAndElapsed, 250);
+renderClockAndElapsed();
 
 window.addEventListener('message', (e) => {
   if (!presentationRef) return; // no opener at all — see §3 scenario 6
