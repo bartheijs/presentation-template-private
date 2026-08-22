@@ -10,9 +10,10 @@ source of truth voor wat het publiek daadwerkelijk ziet.
 
 ## Niet-onderhandelbare uitgangspunten
 
-- De bestaande presentatie blijft visueel en functioneel ongewijzigd. Geen
-  nieuwe zichtbare knoppen, klok, progress bars, notities-paneel of andere
-  UI-elementen in `index.html`.
+- De bestaande presentatie blijft visueel en functioneel ongewijzigd, met
+  één bewuste, expliciet goedgekeurde uitzondering: één knop om de
+  Presenter View te openen (§1). Geen klok, progress bars,
+  notities-paneel of andere presenter-UI in `index.html` daarbuiten.
 - De Presenter View is een apart browservenster, altijd geopend vanuit de
   Presentation View (nooit los, onafhankelijk geopend als primaire flow).
 - Geen lokale webserver, geen build-stap. Werkt rechtstreeks via `file://`,
@@ -36,13 +37,23 @@ teruggestuurde state.
 
 ## 1. Launch-mechanisme
 
-Een verborgen keyboard shortcut in `app.js` — voorstel **`Shift+P`** — roept
-`window.open('presenter.html', 'presenterView')` aan vanuit de Presentation
-View. Dit is geen zichtbaar element: er verschijnt niets op het scherm, en
-alle bestaande navigatie/interactie blijft ongewijzigd. De shortcut werkt op
-elk moment tijdens de presentatie (slide 1, slide 8, ongeacht), wat direct
-het scenario "Presenter View wordt later geopend" dekt. Zonder ooit op de
-shortcut te drukken gedraagt `index.html` zich exact zoals vandaag.
+Twee gelijkwaardige manieren om `window.open('presenter.html',
+'presenterView')` vanuit de Presentation View aan te roepen:
+
+- Een **knop** in de rechter controls-column (`next-column`), naast de
+  bestaande Presentatiebrief-/notities-/timer-knoppen: zelfde
+  `.btn-floating`/`.btn-compact-collapsible`-stijl, dus icon-only zodra die
+  kolom wordt ingeklapt, net als de andere knoppen daar. Dit is een
+  bewuste, expliciet goedgekeurde uitzondering op het "geen extra
+  controls"-uitgangspunt uit de eerste briefing.
+- Een verborgen keyboard shortcut — voorstel **`Shift+P`** — die dezelfde
+  `window.open()`-aanroep doet, voor wie liever geen muis gebruikt.
+
+Beide routes werken op elk moment tijdens de presentatie (slide 1, slide 8,
+ongeacht), wat het scenario "Presenter View wordt later geopend" dekt.
+Zonder op de knop of shortcut te drukken blijft de rest van `index.html`
+ongewijzigd — dit voegt precies één nieuw, klein element toe, verder
+raakt niets aan bestaande layout of interactie.
 
 Presenter.html wordt **niet** ondersteund als rechtstreeks, onafhankelijk
 geopende primaire flow. Wordt het toch rechtstreeks geopend (geen
@@ -233,8 +244,8 @@ context-overlay, beide asides, pauze-overlay en Vorige/Volgende.
 
 | Bestand | Wijziging |
 |---|---|
-| `app.js` | + keyboard shortcut (§1), + command-listener/state-broadcaster (§3–4), + `history`-array (§5), + pauze-overlay show/hide-functies (§6), + `?embed=preview`-navigatie-suppressie (§7). Verder ongewijzigd. |
-| `index.html` | + verborgen pauze-overlay markup. Verder ongewijzigd. |
+| `app.js` | + knop-clickhandler en keyboard shortcut om Presenter View te openen (§1), + command-listener/state-broadcaster (§3–4), + `history`-array (§5), + pauze-overlay show/hide-functies (§6), + `?embed=preview`-navigatie-suppressie (§7). Verder ongewijzigd. |
+| `index.html` | + "Open Presenter View"-knop in de rechter controls-column (§1), + verborgen pauze-overlay markup (§6). Verder ongewijzigd. |
 | `styles.css` | + pauze-overlay stijl. Verder ongewijzigd. |
 | `slides-data.js` | + optioneel `duration`-veld per slide. Verder ongewijzigd. |
 | `config.js` | + optioneel `ui.pauseOverlayText`, + optionele timing-fallback-instelling. |
