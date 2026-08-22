@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { gotoPresentation } = require('./helpers');
+const { gotoPresentation, openPresenterView } = require('./helpers');
 
 test.describe('pause overlay engine feature', () => {
   test('showPauseOverlay/hidePauseOverlay toggle the overlay and do not change the current slide', async ({ page }) => {
@@ -38,5 +38,30 @@ test.describe('pause overlay engine feature', () => {
     // Pause overlay is untouched by this first Escape — matches the
     // existing precedence (finish > template) the new branch is appended to.
     await expect(page.locator('#pause-overlay')).toBeVisible();
+  });
+});
+
+test.describe('launch mechanism and connection status', () => {
+  test('clicking the button opens presenter.html and shows connected', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    expect(presenter.url()).toMatch(/presenter\.html$/);
+    await expect(presenter.locator('[data-connection-status]')).toHaveText('Verbonden');
+  });
+
+  test('Shift+P also opens presenter.html', async ({ page }) => {
+    await gotoPresentation(page);
+    const popupPromise = page.waitForEvent('popup');
+    await page.keyboard.press('Shift+P');
+    const presenter = await popupPromise;
+    await presenter.waitForLoadState();
+    expect(presenter.url()).toMatch(/presenter\.html$/);
+  });
+
+  test('presenter.html opened directly, with no opener, shows disconnected', async ({ page }) => {
+    const path = require('path');
+    await page.goto('file://' + path.resolve(__dirname, '..', 'presenter.html'));
+    await expect(page.locator('[data-connection-status]')).toHaveText('Niet verbonden');
+    await expect(page.locator('[data-connection-hint]')).toContainText('Open deze pagina via de Presentatieweergave');
   });
 });

@@ -20,4 +20,15 @@ async function waitIdle(page) {
   await page.waitForFunction(() => typeof isAnimatingSlide !== 'undefined' && !isAnimatingSlide);
 }
 
-module.exports = { FILE_URL, gotoPresentation, waitIdle };
+// Opens the Presenter View the same way a real presenter would: clicking
+// the button in the Presentation View, which is what actually establishes
+// the window.open()/postMessage relationship the spec's §2 relies on.
+async function openPresenterView(page) {
+  const popupPromise = page.waitForEvent('popup');
+  await page.click('#btn-presenter-view');
+  const popup = await popupPromise;
+  await popup.waitForLoadState();
+  return popup;
+}
+
+module.exports = { FILE_URL, gotoPresentation, waitIdle, openPresenterView };

@@ -77,6 +77,7 @@ const CONFIG = {
     overlayCloseLabel: 'Sluiten',
     overlayTitle: 'Presentatiebrief',
     backToDeckLabel: 'Terug naar de presentatie',
+    presenterViewButton: 'Presenter View',
     finishTitle: 'Klaar om te presenteren!',
     // Set via innerHTML at startup — trusted local config, not user input.
     finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',

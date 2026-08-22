@@ -38,6 +38,7 @@ const CONFIG_DEFAULTS = {
     overlayCloseLabel: 'Sluiten',
     overlayTitle: 'Template',
     backToDeckLabel: 'Terug naar de presentatie',
+    presenterViewButton: 'Presenter View',
     finishTitle: 'Klaar!',
     finishBodyHtml: '',
     pauseOverlayText: '',
@@ -63,6 +64,12 @@ function normalizeConfig(cfg, defaults) {
 }
 
 normalizeConfig(CONFIG, CONFIG_DEFAULTS);
+
+// ?embed=preview marks this document as a passive preview iframe inside
+// presenter.html (see docs/superpowers/specs/2026-08-22-presenter-view-design.md
+// §7): it must not navigate/launch on its own, only render commands it
+// receives.
+const isEmbedPreview = new URLSearchParams(location.search).get('embed') === 'preview';
 
 /* ---------- Small helpers ---------- */
 
@@ -1068,6 +1075,8 @@ function applyConfigStrings() {
   document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
   document.getElementById('btn-template').setAttribute('aria-label', CONFIG.ui.templateButton);
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
+  document.getElementById('btn-presenter-view-label').textContent = CONFIG.ui.presenterViewButton;
+  document.getElementById('btn-presenter-view').setAttribute('aria-label', CONFIG.ui.presenterViewButton);
   updateNotesToggleLabel();
   document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
   document.getElementById('btn-next-collapse').setAttribute('aria-label', CONFIG.ui.controlsCollapseHide);
@@ -1089,6 +1098,54 @@ function applyConfigStrings() {
   document.getElementById('finish-title').textContent = CONFIG.ui.finishTitle;
   document.getElementById('finish-body').innerHTML = CONFIG.ui.finishBodyHtml;
   document.getElementById('finish-back-label').textContent = CONFIG.ui.backToDeckLabel;
+}
+
+/* ---------- Presenter View launch (skipped entirely in preview iframes) ---------- */
+
+let presenterRef = null;
+
+function openPresenterView() {
+  presenterRef = window.open('presenter.html', 'presenterView');
+}
+
+if (!isEmbedPreview) {
+  document.getElementById('btn-presenter-view').addEventListener('click', openPresenterView);
+  document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.key === 'P') openPresenterView();
+  });
+}
+
+// Message listener is registered unconditionally (not gated on
+// isEmbedPreview): a Task 6 preview iframe (isEmbedPreview === true) still
+// needs to receive and act on messages — it just never opens its own
+// Presenter View or navigates on its own (that's what the guard above is
+// for).
+window.addEventListener('message', (e) => {
+  if (presenterRef && !presenterRef.closed) {
+    if (e.source !== presenterRef) return;
+  } else if (!e.data || e.data.type !== 'command' || e.data.command !== 'REQUEST_STATE') {
+    return; // bootstrap gate: only a REQUEST_STATE may establish presenterRef
+  } else {
+    presenterRef = e.source;
+  }
+  if (!e.data || e.data.type !== 'command') return;
+  if (e.data.command === 'REQUEST_STATE') sendStateToPresenter();
+});
+
+function sendStateToPresenter() {
+  if (!presenterRef || presenterRef.closed) return;
+  presenterRef.postMessage(
+    {
+      type: 'state',
+      currentSlide: state.currentIndex,
+      totalSlides: SLIDES.length,
+      contextOverlayVisible: !overlayEl.hidden,
+      leftAsideVisible: !tocCollapsed,
+      rightAsideVisible: !nextCollapsed,
+      pauseOverlayVisible: isPauseOverlayVisible(),
+    },
+    '*'
+  );
 }
 
 /* ---------- Init ---------- */
