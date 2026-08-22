@@ -198,7 +198,12 @@ function loadTimerState() {
 }
 
 function saveTimerState(timerState) {
-  sessionStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timerState));
+  try {
+    sessionStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timerState));
+  } catch {
+    // sessionStorage write failed (storage disabled, quota exceeded, etc.) —
+    // silently ignore, matching loadTimerState's error-handling style.
+  }
 }
 
 let timerState = loadTimerState();
