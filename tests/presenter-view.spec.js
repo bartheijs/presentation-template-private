@@ -207,11 +207,48 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
   test('Vorige with no pending jump uses ordinary PREVIOUS_SLIDE, unchanged', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
-    await presenter.click('#btn-presenter-next'); // slide 2, no skip involved
+    await presenter.click('#btn-presenter-next'); // slide 2, no skip involved — now an animated NEXT_SLIDE
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+    // Volgende above now plays a real animated transition (finding 1's fix),
+    // so wait for it to finish before the next animated nav — otherwise
+    // goTo()'s `if (animate && isAnimatingSlide) return;` guard silently
+    // drops PREVIOUS_SLIDE below (see helpers.js's waitIdle).
+    await waitIdle(page);
     await presenter.click('#btn-presenter-prev');
     await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
     // eslint-disable-next-line no-undef
     expect(await page.evaluate(() => state.currentIndex)).toBe(0);
+  });
+
+  test('Volgende with no skip pending sends NEXT_SLIDE and plays the real transition', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    // eslint-disable-next-line no-undef
+    const wasAnimatingPromise = page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          // eslint-disable-next-line no-undef
+          const check = setInterval(() => {
+            // eslint-disable-next-line no-undef
+            if (isAnimatingSlide) {
+              clearInterval(check);
+              resolve(true);
+            }
+          }, 5);
+          setTimeout(() => {
+            clearInterval(check);
+            resolve(false);
+          }, 2000);
+        })
+    );
+
+    await presenter.click('#btn-presenter-next'); // ordinary one-step advance, no skip pending
+    expect(await wasAnimatingPromise).toBe(true);
+
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(1);
   });
 });
 
@@ -241,5 +278,22 @@ test.describe('preview iframes', () => {
     await currentPreviewFrame.locator('body').click();
     await currentPreviewFrame.locator('body').press('ArrowRight');
     await expect(currentPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('01');
+  });
+
+  test('clicking a real button inside the current-preview iframe does not navigate the preview or the real presentation', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    const currentPreviewFrame = presenter.frameLocator('#current-preview');
+
+    // pointer-events: none on .preview-frame (presenter.css) means this click
+    // never actually reaches the iframe's own #btn-next — { force: true }
+    // bypasses Playwright's actionability check that would otherwise fail on
+    // an unclickable element, so the assertions below are testing the real
+    // browser behavior, not merely a Playwright click failure.
+    await currentPreviewFrame.locator('#btn-next').click({ force: true });
+
+    await expect(currentPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('01');
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(0);
   });
 });

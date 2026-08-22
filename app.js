@@ -1135,7 +1135,11 @@ if (!isEmbedPreview) {
 // to leave state consistent — the listener below broadcasts once after
 // every successful dispatch, so handlers never need to call
 // sendStateToPresenter() themselves.
-const COMMAND_HANDLERS = {
+// Object.create(null) as the prototype means a command name that collides
+// with an inherited Object.prototype member (e.g. "toString") looks up to
+// undefined instead of resolving to a truthy inherited function, so the
+// `if (!handler) return;` check below correctly rejects it.
+const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   NEXT_SLIDE: () => goNext(),
   PREVIOUS_SLIDE: () => goTo(state.currentIndex - 1, { animate: true, direction: 'prev' }),
   GO_TO_SLIDE: (data) => {
@@ -1155,7 +1159,7 @@ const COMMAND_HANDLERS = {
   SHOW_PAUSE_OVERLAY: () => showPauseOverlay(),
   HIDE_PAUSE_OVERLAY: () => hidePauseOverlay(),
   REQUEST_STATE: () => {}, // no-op handler: the broadcast below every dispatch is what answers it
-};
+});
 
 // Message listener is registered unconditionally (not gated on
 // isEmbedPreview): a Task 6 preview iframe (isEmbedPreview === true) still

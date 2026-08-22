@@ -163,14 +163,26 @@ function renderState(newState) {
   document.querySelector('[data-slides-progress]').textContent =
     `${newState.currentSlide + 1} / ${newState.totalSlides} (${slidesProgressPct}%)`;
 
+  renderTiming();
+}
+
+// Schedule-delta and time-progress depend on the clock (elapsedSeconds), not
+// just on the latest confirmed state, so this is called both from
+// renderState() (on navigation) and from renderClockAndElapsed() (every
+// 250ms) so the text keeps updating between navigations too.
+function renderTiming() {
+  if (!latestState) return;
+
   const elapsedSeconds = getElapsedSeconds();
-  const delta = scheduleDelta(elapsedSeconds, newState.currentSlide);
+  const delta = scheduleDelta(elapsedSeconds, latestState.currentSlide);
   const deltaAbsMin = Math.floor(Math.abs(delta) / 60);
   const deltaAbsSec = String(Math.abs(delta) % 60).padStart(2, '0');
   document.querySelector('[data-schedule-delta]').textContent =
     delta < 0
       ? `${deltaAbsMin}:${deltaAbsSec} voor op schema`
-      : `${deltaAbsMin}:${deltaAbsSec} achter op schema`;
+      : delta > 0
+        ? `${deltaAbsMin}:${deltaAbsSec} achter op schema`
+        : 'Op schema';
 
   const totalPlannedSeconds = totalPlannedMs() / 1000;
   const timeProgressPct = Math.min(100, Math.round((elapsedSeconds / totalPlannedSeconds) * 100));
@@ -245,6 +257,7 @@ function renderClockAndElapsed() {
   const elapsed = getElapsedSeconds();
   document.querySelector('[data-elapsed]').textContent =
     `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')} verstreken`;
+  renderTiming();
 }
 setInterval(renderClockAndElapsed, 250);
 renderClockAndElapsed();
@@ -275,7 +288,16 @@ document.getElementById('btn-presenter-next').addEventListener('click', () => {
   if (!latestState) return;
   const isSkipJump = pendingNextSlide !== latestState.currentSlide + 1;
   lastJumpOriginIndex = isSkipJump ? latestState.currentSlide : null;
-  sendCommand('GO_TO_SLIDE', { slide: pendingNextSlide });
+  if (isSkipJump) {
+    // Skip-jumps must land directly on pendingNextSlide with no intermediate
+    // slides shown, so keep using GO_TO_SLIDE.
+    sendCommand('GO_TO_SLIDE', { slide: pendingNextSlide });
+  } else {
+    // Ordinary one-step advance: use NEXT_SLIDE so the real goNext() plays
+    // the normal transition/disco effect and can reach the finish overlay
+    // on the last slide, exactly like the physical Next button.
+    sendCommand('NEXT_SLIDE');
+  }
 });
 
 document.getElementById('btn-presenter-prev').addEventListener('click', () => {

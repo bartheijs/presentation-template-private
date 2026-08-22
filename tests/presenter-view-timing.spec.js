@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
+const { gotoPresentation, openPresenterView } = require('./helpers');
 
 const PRESENTER_URL = 'file://' + path.resolve(__dirname, '..', 'presenter.html');
 
@@ -132,5 +133,45 @@ test.describe('presentation timer persistence', () => {
   test('the clock renders and updates', async ({ page }) => {
     await page.goto(PRESENTER_URL);
     await expect(page.locator('[data-clock]')).not.toHaveText('');
+  });
+});
+
+test.describe('continuous timing updates (renderTiming)', () => {
+  test('schedule-delta keeps updating every tick, not just on navigation/state broadcast', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await presenter.click('#btn-presenter-timer-start');
+
+    // Let the presenter timer accumulate a bit before the first sample, so
+    // the very first reading isn't still "0:00 achter op schema" for both
+    // samples by coincidence.
+    await presenter.waitForTimeout(1200);
+    const first = await presenter.locator('[data-schedule-delta]').textContent();
+
+    // No navigation happens here — renderState() is not re-invoked. If the
+    // schedule-delta/time-progress text only updated inside renderState(),
+    // it would stay frozen at `first` despite the clock/elapsed ticking.
+    await presenter.waitForTimeout(1500);
+    const second = await presenter.locator('[data-schedule-delta]').textContent();
+
+    expect(second).not.toBe(first);
+    // Sanity check on the underlying clock too.
+    const elapsedAfter = await presenter.evaluate(() => getElapsedSeconds());
+    expect(elapsedAfter).toBeGreaterThanOrEqual(2);
+  });
+
+  test('delta === 0 renders a neutral "Op schema" state, not "achter"', async ({ page }) => {
+    await page.goto(PRESENTER_URL);
+    await page.evaluate(() => {
+      // eslint-disable-next-line no-undef
+      SLIDES.length = 0;
+      // eslint-disable-next-line no-undef
+      SLIDES.push({ id: 1, title: 'A', bullets: [], notes: '', duration: 100 });
+      // eslint-disable-next-line no-undef
+      latestState = { currentSlide: 0, totalSlides: 1 };
+      // eslint-disable-next-line no-undef
+      renderTiming();
+    });
+    await expect(page.locator('[data-schedule-delta]')).toHaveText('Op schema');
   });
 });

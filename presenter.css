@@ -26,4 +26,7 @@ body {
   border-radius: var(--radius-md);
   transform: scale(0.28);
   transform-origin: top left;
+  /* Previews are pure passive derivatives of the real presentation state —
+   * they must never self-navigate from a click inside the iframe. */
+  pointer-events: none;
 }
