@@ -3,6 +3,33 @@
  * as app.js. See docs/superpowers/specs/2026-08-22-presenter-view-design.md.
  */
 
+/* ---------- Timing math ----------
+ * See docs/superpowers/specs/2026-08-22-presenter-view-design.md §9:
+ * plannedStartOfCurrentSlide = sum of duration of all slides BEFORE it;
+ * scheduleDelta = elapsedMs/1000 - plannedStartOfCurrentSlide.
+ * Negative = ahead of schedule, positive = behind. */
+
+function totalPlannedMs() {
+  return CONFIG.timer.defaultMinutes * 60 * 1000;
+}
+
+function averageSlideDurationSeconds() {
+  return totalPlannedMs() / 1000 / SLIDES.length;
+}
+
+function plannedStartOfSlide(index) {
+  let total = 0;
+  for (let i = 0; i < index; i++) {
+    const d = SLIDES[i].duration;
+    total += typeof d === 'number' ? d : averageSlideDurationSeconds();
+  }
+  return total;
+}
+
+function scheduleDelta(elapsedSeconds, currentSlideIndex) {
+  return elapsedSeconds - plannedStartOfSlide(currentSlideIndex);
+}
+
 let presentationRef = window.opener || null;
 
 const connectionBannerEl = document.getElementById('connection-banner');
@@ -120,6 +147,29 @@ function renderState(newState) {
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());
   syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
+
+  document.getElementById('presenter-notes').textContent = SLIDES[newState.currentSlide].notes || '';
+
+  const slidesProgressPct = Math.round(((newState.currentSlide + 1) / newState.totalSlides) * 100);
+  document.querySelector('[data-slides-progress]').textContent =
+    `${newState.currentSlide + 1} / ${newState.totalSlides} (${slidesProgressPct}%)`;
+
+  const elapsedSeconds = getElapsedSeconds(); // implemented in Task 8; stub returning 0 until then
+  const delta = scheduleDelta(elapsedSeconds, newState.currentSlide);
+  const deltaAbsMin = Math.floor(Math.abs(delta) / 60);
+  const deltaAbsSec = String(Math.abs(delta) % 60).padStart(2, '0');
+  document.querySelector('[data-schedule-delta]').textContent =
+    delta < 0
+      ? `${deltaAbsMin}:${deltaAbsSec} voor op schema`
+      : `${deltaAbsMin}:${deltaAbsSec} achter op schema`;
+
+  const totalPlannedSeconds = totalPlannedMs() / 1000;
+  const timeProgressPct = Math.min(100, Math.round((elapsedSeconds / totalPlannedSeconds) * 100));
+  document.querySelector('[data-time-progress]').textContent = `${timeProgressPct}%`;
+}
+
+function getElapsedSeconds() {
+  return 0;
 }
 
 window.addEventListener('message', (e) => {
