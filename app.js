@@ -40,6 +40,7 @@ const CONFIG_DEFAULTS = {
     backToDeckLabel: 'Terug naar de presentatie',
     finishTitle: 'Klaar!',
     finishBodyHtml: '',
+    pauseOverlayText: '',
   },
 };
 
@@ -116,6 +117,7 @@ const tocListEl = document.getElementById('toc-list');
 const overlayEl = document.getElementById('template-overlay');
 const overlayBodyEl = document.getElementById('overlay-body');
 const finishOverlayEl = document.getElementById('finish-overlay');
+const pauseOverlayEl = document.getElementById('pause-overlay');
 
 /* ---------- Rendering ---------- */
 
@@ -1017,6 +1019,24 @@ function closeFinishOverlay() {
   stopConfetti();
 }
 
+/* ---------- Pause overlay (presenter-triggered cutaway) ---------- */
+
+// Presenter-only cutaway: covers the whole viewport without touching
+// currentIndex, any overlay, or either aside's own state — see
+// docs/superpowers/specs/2026-08-22-presenter-view-design.md §6.
+function showPauseOverlay() {
+  document.getElementById('pause-overlay-text').textContent = CONFIG.ui.pauseOverlayText;
+  pauseOverlayEl.hidden = false;
+}
+
+function hidePauseOverlay() {
+  pauseOverlayEl.hidden = true;
+}
+
+function isPauseOverlayVisible() {
+  return !pauseOverlayEl.hidden;
+}
+
 document.getElementById('btn-timer-finish').addEventListener('click', () => {
   launchConfetti();
   openFinishOverlay();
@@ -1031,6 +1051,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!finishOverlayEl.hidden) closeFinishOverlay();
   else if (!overlayEl.hidden) closeTemplateOverlay();
+  else if (isPauseOverlayVisible()) hidePauseOverlay();
 });
 
 /* ---------- Apply config-driven strings/toggles ---------- */

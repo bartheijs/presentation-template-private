@@ -1020,6 +1020,22 @@ button {
   z-index: 2000;
 }
 
+/* ---------- Pause overlay (presenter-triggered cutaway) ---------- */
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500; /* above #confetti-canvas (2000); finish-overlay is 1500 */
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pause-overlay-text {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
 /* ---------- Responsive fallback ---------- */
 @media (max-width: 900px) {
   /* Pane collapse is a desktop-rail concept, and below this width (must
