@@ -81,6 +81,6 @@ const CONFIG = {
     finishTitle: 'Klaar om te presenteren!',
     // Set via innerHTML at startup — trusted local config, not user input.
     finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
-    pauseOverlayText: 'Even een zijstap',
+    pauseOverlayText: '...',
   },
 };

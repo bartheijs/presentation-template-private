@@ -9,6 +9,7 @@ test.describe('pause overlay engine feature', () => {
 
     await page.evaluate(() => showPauseOverlay());
     await expect(page.locator('#pause-overlay')).toBeVisible();
+    await expect(page.locator('#pause-overlay-text')).toHaveText('...');
 
     // eslint-disable-next-line no-undef
     const during = await page.evaluate(() => state.currentIndex);
@@ -67,6 +68,29 @@ test.describe('launch mechanism and connection status', () => {
 });
 
 test.describe('command whitelist and state broadcast', () => {
+  test('arrow keys in Presenter View control slides and the Presentatiebrief', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    await presenter.keyboard.press('ArrowRight');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+    await waitIdle(page);
+
+    await presenter.keyboard.press('ArrowLeft');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
+
+    await presenter.keyboard.press('ArrowDown');
+    await expect(page.locator('#template-overlay')).toBeVisible();
+    await expect(presenter.locator('#btn-toggle-context-overlay')).toHaveAttribute('aria-pressed', 'true');
+
+    await presenter.keyboard.press('ArrowRight');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
+
+    await presenter.keyboard.press('ArrowUp');
+    await expect(page.locator('#template-overlay')).toBeHidden();
+    await expect(presenter.locator('#btn-toggle-context-overlay')).toHaveAttribute('aria-pressed', 'false');
+  });
+
   test('NEXT_SLIDE/PREVIOUS_SLIDE/GO_TO_SLIDE move the real presentation and update the presenter', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
@@ -86,8 +110,9 @@ test.describe('command whitelist and state broadcast', () => {
     await presenter.click('#btn-presenter-prev');
     await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
 
-    await presenter.fill('#presenter-goto-input', '3');
-    await presenter.click('#btn-presenter-goto');
+    // GO_TO_SLIDE remains part of the command protocol even though the
+    // Presenter View no longer exposes a dedicated "Ga naar slide" field.
+    await presenter.evaluate(() => sendCommand('GO_TO_SLIDE', { slide: 2 }));
     await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
   });
 
@@ -98,13 +123,16 @@ test.describe('command whitelist and state broadcast', () => {
     await presenter.click('#btn-toggle-context-overlay');
     await expect(page.locator('#template-overlay')).toBeVisible();
     await expect(presenter.locator('[data-context-overlay]')).toHaveText('Aan');
+    await expect(presenter.locator('#btn-toggle-context-overlay')).toHaveAttribute('aria-pressed', 'true');
 
     await presenter.click('#btn-toggle-left-aside');
     await expect(presenter.locator('[data-left-aside]')).toHaveText('Uit');
+    await expect(presenter.locator('#btn-toggle-left-aside')).toHaveAttribute('aria-pressed', 'false');
 
     await presenter.click('#btn-toggle-pause-overlay');
     await expect(page.locator('#pause-overlay')).toBeVisible();
     await expect(presenter.locator('[data-pause-overlay]')).toHaveText('Aan');
+    await expect(presenter.locator('#btn-toggle-pause-overlay')).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('a real button click in the Presentation View also updates the presenter', async ({ page }) => {

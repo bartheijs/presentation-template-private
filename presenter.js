@@ -65,6 +65,30 @@ const presenterMainEl = document.getElementById('presenter-main');
 const currentPreviewEl = document.getElementById('current-preview');
 const nextPreviewEl = document.getElementById('next-preview');
 
+// Keep the embedded presentation at its native 1280 x 800 canvas and scale
+// that canvas to the responsive viewport around it. A transform on the
+// iframe alone only changes its paint size, leaving an 800px layout box and
+// creating the large gaps that the original Presenter View showed.
+function resizePreview(iframeEl) {
+  const viewport = iframeEl.parentElement;
+  const scale = viewport.clientWidth / 1280;
+  iframeEl.style.setProperty('--preview-scale', String(scale));
+}
+
+function resizePreviews() {
+  resizePreview(currentPreviewEl);
+  resizePreview(nextPreviewEl);
+}
+
+if (typeof ResizeObserver === 'function') {
+  const previewResizeObserver = new ResizeObserver(resizePreviews);
+  previewResizeObserver.observe(currentPreviewEl.parentElement);
+  previewResizeObserver.observe(nextPreviewEl.parentElement);
+} else {
+  window.addEventListener('resize', resizePreviews);
+}
+requestAnimationFrame(resizePreviews);
+
 // Drives one preview iframe (?embed=preview) to mirror a given slide index
 // plus overlay/aside flags: a GO_TO_SLIDE command for the slide, and a
 // preview-state snapshot for everything else. targetOrigin '*' matches the
@@ -136,6 +160,12 @@ function sendCommand(command, extra) {
 let pendingNextSlide = 1; // 0-based index; defaults to currentSlide + 1
 let lastJumpOriginIndex = null;
 
+function renderToggleState(buttonId, statusSelector, active) {
+  const button = document.getElementById(buttonId);
+  button.setAttribute('aria-pressed', String(active));
+  document.querySelector(statusSelector).textContent = active ? 'Aan' : 'Uit';
+}
+
 function renderState(newState) {
   const isFirstState = latestState === null;
   latestState = newState;
@@ -148,10 +178,10 @@ function renderState(newState) {
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
   document.querySelector('[data-total-slides]').textContent = String(newState.totalSlides);
-  document.querySelector('[data-context-overlay]').textContent = newState.contextOverlayVisible ? 'Aan' : 'Uit';
-  document.querySelector('[data-left-aside]').textContent = newState.leftAsideVisible ? 'Aan' : 'Uit';
-  document.querySelector('[data-right-aside]').textContent = newState.rightAsideVisible ? 'Aan' : 'Uit';
-  document.querySelector('[data-pause-overlay]').textContent = newState.pauseOverlayVisible ? 'Aan' : 'Uit';
+  renderToggleState('btn-toggle-left-aside', '[data-left-aside]', newState.leftAsideVisible);
+  renderToggleState('btn-toggle-right-aside', '[data-right-aside]', newState.rightAsideVisible);
+  renderToggleState('btn-toggle-pause-overlay', '[data-pause-overlay]', newState.pauseOverlayVisible);
+  renderToggleState('btn-toggle-context-overlay', '[data-context-overlay]', newState.contextOverlayVisible);
   document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());
@@ -162,6 +192,8 @@ function renderState(newState) {
   const slidesProgressPct = Math.round(((newState.currentSlide + 1) / newState.totalSlides) * 100);
   document.querySelector('[data-slides-progress]').textContent =
     `${newState.currentSlide + 1} / ${newState.totalSlides} (${slidesProgressPct}%)`;
+  document.querySelector('[data-slides-progress-fill]').style.width = `${slidesProgressPct}%`;
+  document.querySelector('[data-slides-progressbar]').setAttribute('aria-valuenow', String(slidesProgressPct));
 
   renderTiming();
 }
@@ -187,6 +219,8 @@ function renderTiming() {
   const totalPlannedSeconds = totalPlannedMs() / 1000;
   const timeProgressPct = Math.min(100, Math.round((elapsedSeconds / totalPlannedSeconds) * 100));
   document.querySelector('[data-time-progress]').textContent = `${timeProgressPct}%`;
+  document.querySelector('[data-time-progress-fill]').style.width = `${timeProgressPct}%`;
+  document.querySelector('[data-time-progressbar]').setAttribute('aria-valuenow', String(timeProgressPct));
 }
 
 /* ---------- Presentation timer (presenter-only; separate from the
@@ -309,14 +343,45 @@ document.getElementById('btn-presenter-prev').addEventListener('click', () => {
   }
 });
 
-document.getElementById('btn-presenter-goto').addEventListener('click', () => {
-  const slide = Number(document.getElementById('presenter-goto-input').value) - 1;
-  if (Number.isInteger(slide)) sendCommand('GO_TO_SLIDE', { slide });
-});
 document.getElementById('btn-toggle-context-overlay').addEventListener('click', () => sendCommand('TOGGLE_CONTEXT_OVERLAY'));
 document.getElementById('btn-toggle-left-aside').addEventListener('click', () => sendCommand('TOGGLE_LEFT_ASIDE'));
 document.getElementById('btn-toggle-right-aside').addEventListener('click', () => sendCommand('TOGGLE_RIGHT_ASIDE'));
 document.getElementById('btn-toggle-pause-overlay').addEventListener('click', () => sendCommand('TOGGLE_PAUSE_OVERLAY'));
+
+// Mirror the Presentation View's arrow-key model in this window too:
+// horizontal arrows navigate slides, ArrowDown opens the Presentatiebrief,
+// and ArrowUp closes it. PageDown/PageUp keep common presentation clickers
+// working while Presenter View has focus.
+document.addEventListener('keydown', (e) => {
+  if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    sendCommand('SHOW_CONTEXT_OVERLAY');
+    return;
+  }
+
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    sendCommand('HIDE_CONTEXT_OVERLAY');
+    return;
+  }
+
+  // Match the real Presentation View: while the Presentatiebrief is open,
+  // left/right input belongs to that layer and must not change slides.
+  if (latestState && latestState.contextOverlayVisible) return;
+
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+    e.preventDefault();
+    document.getElementById('btn-presenter-next').click();
+    return;
+  }
+
+  if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+    e.preventDefault();
+    document.getElementById('btn-presenter-prev').click();
+  }
+});
 
 if (presentationRef) {
   requestState();

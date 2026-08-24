@@ -112,21 +112,23 @@ test.describe('timing math (plannedStartOfSlide / totalPlannedMs)', () => {
 
 test.describe('presentation timer persistence', () => {
   test('elapsed time survives a Presenter View refresh while running', async ({ page }) => {
-    await page.goto(PRESENTER_URL);
-    await page.click('#btn-presenter-timer-start');
-    await page.waitForTimeout(1100);
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await presenter.click('#btn-presenter-timer-start');
+    await presenter.waitForTimeout(1100);
 
-    await page.reload();
-    const elapsedAfterReload = await page.evaluate(() => getElapsedSeconds());
+    await presenter.reload();
+    const elapsedAfterReload = await presenter.evaluate(() => getElapsedSeconds());
     expect(elapsedAfterReload).toBeGreaterThanOrEqual(1);
   });
 
   test('reset zeroes the timer and clears sessionStorage', async ({ page }) => {
-    await page.goto(PRESENTER_URL);
-    await page.click('#btn-presenter-timer-start');
-    await page.waitForTimeout(300);
-    await page.click('#btn-presenter-timer-reset');
-    const elapsed = await page.evaluate(() => getElapsedSeconds());
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await presenter.click('#btn-presenter-timer-start');
+    await presenter.waitForTimeout(300);
+    await presenter.click('#btn-presenter-timer-reset');
+    const elapsed = await presenter.evaluate(() => getElapsedSeconds());
     expect(elapsed).toBe(0);
   });
 

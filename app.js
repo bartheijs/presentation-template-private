@@ -41,7 +41,7 @@ const CONFIG_DEFAULTS = {
     presenterViewButton: 'Presenter View',
     finishTitle: 'Klaar!',
     finishBodyHtml: '',
-    pauseOverlayText: '',
+    pauseOverlayText: '...',
   },
 };
 

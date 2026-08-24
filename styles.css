@@ -1031,9 +1031,14 @@ button {
   justify-content: center;
 }
 .pause-overlay-text {
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  font-weight: 600;
+  margin: 0;
+  color: color-mix(in srgb, var(--text-muted) 72%, transparent);
+  font-family: var(--font-mono);
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  line-height: 1;
+  transform: translateX(0.14em);
 }
 
 /* ---------- Responsive fallback ---------- */
