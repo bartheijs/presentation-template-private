@@ -14,6 +14,9 @@
  * - discoMode: 'auto' or 'pause'
  * - discoTitleLines: per-slide transition copy
  * - discoHoldMs: extra fully-visible time in auto mode after panels leave
+ * - duration: presenter-only planned time for this slide, in seconds (used
+ *   for the Presenter View's schedule-adherence indicator; falls back to an
+ *   even split of CONFIG.timer.defaultMinutes when omitted)
  * - isTemplateAnchor / templateSection: show or highlight the reference
  *   overlay. These legacy internal names implement the generic overlay.
  * - bullets may be strings or { text, subtext } objects
@@ -82,6 +85,7 @@ const SLIDES = [
     bullets: [],
     meta: ['Van ruwe inhoud', 'naar een werkende presentatie'],
     notes: `Deze demo laat zien wat het template kan. Voor een nieuwe presentatie hoeft de gebruiker alleen de inhoud en context aan te leveren.`,
+    duration: 60,
   },
   {
     id: 2,
@@ -94,6 +98,7 @@ const SLIDES = [
       'Wat moet het publiek na afloop begrijpen, voelen of doen?',
     ],
     notes: `Meer hoeft niet om te beginnen. Als duur, taal of toon belangrijk zijn, kunnen die er gewoon in normale taal bij.`,
+    duration: 90,
   },
   {
     id: 3,
@@ -115,6 +120,7 @@ const SLIDES = [
       },
     ],
     notes: `Ruwe input bestaat vaak uit feiten, voorbeelden en nuances. De kracht van een presentatie zit in de keuze welke lijn het publiek moet volgen.`,
+    duration: 120,
   },
   {
     id: 4,
@@ -128,6 +134,7 @@ const SLIDES = [
       'De afsluiting vertaalt inzicht naar een concrete uitkomst',
     ],
     notes: `Een goede volgorde helpt het publiek verbanden te leggen. Zo voelt de presentatie als één verhaal in plaats van een verzameling losse slides.`,
+    duration: 90,
   },
   {
     id: 5,

@@ -13,10 +13,6 @@ const CONFIG = {
   lang: 'nl',
   title: 'Presentation Template Demo',
 
-  toc: {
-    heading: 'Inhoud',
-  },
-
   layout: {
     align: 'center', // 'center' (default) | 'left' — global default for the
     // slide-content block (heading + bullets); a slide's own `align`
@@ -61,24 +57,4 @@ const CONFIG = {
     enabled: true,
   },
 
-  ui: {
-    templateButton: 'Presentatiebrief',
-    notesToggleHide: 'Notities verbergen', // shown while notes are visible (clicking hides them)
-    notesToggleShow: 'Notities tonen', // shown while notes are hidden (clicking shows them)
-    timerStart: 'Start',
-    timerPause: 'Pause',
-    timerFinish: 'Klaar!',
-    navNext: 'Volgende',
-    navPrev: 'Vorige',
-    tocCollapseHide: 'Inhoud verbergen', // shown while the TOC pane is open (clicking collapses it)
-    tocCollapseShow: 'Inhoud tonen', // shown while the TOC pane is collapsed (clicking expands it)
-    controlsCollapseHide: 'Bediening inklappen', // shown while the controls pane is open
-    controlsCollapseShow: 'Bediening uitklappen', // shown while the controls pane is collapsed
-    overlayCloseLabel: 'Sluiten',
-    overlayTitle: 'Presentatiebrief',
-    backToDeckLabel: 'Terug naar de presentatie',
-    finishTitle: 'Klaar om te presenteren!',
-    // Set via innerHTML at startup — trusted local config, not user input.
-    finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
-  },
 };

@@ -8,7 +8,9 @@ const { gotoPresentation, waitIdle } = require('./helpers');
 test.describe('notes visibility toggle', () => {
   test('starts hidden with the "show" label', async ({ page }) => {
     await gotoPresentation(page);
-    await expect(page.locator('#notes-toggle-label')).toHaveText('Notities tonen');
+    await expect(page.locator('#notes-toggle-label')).toHaveText(
+      await page.evaluate(() => CONFIG.ui.notesToggleShow)
+    );
     // Slide 1 (index 0) is a divider slide with no notes of its own, so
     // check on a slide that actually has notes to exercise the toggle's
     // real effect, not just whatever the first slide happens to contain.
@@ -29,7 +31,9 @@ test.describe('notes visibility toggle', () => {
     expect(before).toBe('7');
 
     await page.click('#btn-toggle-notes');
-    await expect(page.locator('#notes-toggle-label')).toHaveText('Notities tonen');
+    await expect(page.locator('#notes-toggle-label')).toHaveText(
+      await page.evaluate(() => CONFIG.ui.notesToggleShow)
+    );
     await expect(page.locator('#slide-notes')).toBeHidden();
 
     await page.waitForTimeout(140);
@@ -69,7 +73,9 @@ test.describe('notes visibility toggle', () => {
     await waitIdle(page);
 
     await expect(page.locator('#slide-notes')).toBeHidden();
-    await expect(page.locator('#notes-toggle-label')).toHaveText('Notities tonen');
+    await expect(page.locator('#notes-toggle-label')).toHaveText(
+      await page.evaluate(() => CONFIG.ui.notesToggleShow)
+    );
   });
 
   test('toggling back on restores the notes panel', async ({ page }) => {
@@ -79,10 +85,14 @@ test.describe('notes visibility toggle', () => {
 
     await page.click('#btn-toggle-notes'); // reveal — session starts hidden
     await expect(page.locator('#slide-notes')).toBeVisible();
-    await expect(page.locator('#notes-toggle-label')).toHaveText('Notities verbergen');
+    await expect(page.locator('#notes-toggle-label')).toHaveText(
+      await page.evaluate(() => CONFIG.ui.notesToggleHide)
+    );
     await page.click('#btn-toggle-notes');
     await expect(page.locator('#slide-notes')).toBeHidden();
-    await expect(page.locator('#notes-toggle-label')).toHaveText('Notities tonen');
+    await expect(page.locator('#notes-toggle-label')).toHaveText(
+      await page.evaluate(() => CONFIG.ui.notesToggleShow)
+    );
   });
 
   test('is ignored while a slide transition is in flight', async ({ page }) => {

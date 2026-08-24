@@ -69,8 +69,14 @@ werkt en mag `skill-workshop-presentation` nooit als schrijfdoel gebruiken.
 
 AI verwerkt de inhoud uiteindelijk in `config.js` en `slides-data.js`.
 Themakleuren en fonts staan als CSS custom properties bovenaan `styles.css`.
-`index.html`, `app.js` en de overige CSS vormen de gedeelde engine en horen
-bij gewone inhoudswijzigingen intact te blijven.
+`CONFIG.lang` bepaalt de vaste bedieningstaal van zowel Presentation View als
+Presenter View (`'nl'` of `'en'`). De gedeelde engine bevat beide vertalingen;
+een presentatie hoeft dus geen losse bedieningsteksten te onderhouden. Er is
+bewust geen taalkeuze in de interface: deze wordt gekozen wanneer de
+presentatie wordt gemaakt.
+`index.html`, `app.js`, `presenter.html`, `presenter.js`, `presenter.css` en
+de overige CSS vormen de gedeelde engine en horen bij gewone
+inhoudswijzigingen intact te blijven.
 
 ## Slidegegevens
 
@@ -102,6 +108,9 @@ Ondersteunde optionele velden:
   bullets.
 - `isTemplateAnchor` en `templateSection` — legacy interne veldnamen voor de
   generieke reference-overlay.
+- `duration` — gepland aantal seconden voor deze slide, alleen gebruikt door
+  Presenter View's schema-indicator. Ontbreekt het, dan valt de indicator
+  terug op een gelijke verdeling van de geconfigureerde totale tijd.
 
 Een bullet is een string of een object met extra subtekst:
 
@@ -130,6 +139,21 @@ Combineer nooit een icoon met een gecentreerde titel.
 - De timer kan starten, pauzeren en worden verlengd.
 - Klaar! toont de afsluitoverlay en confetti.
 - Beide zijpanelen kunnen worden ingeklapt.
+
+### Presenter View
+
+- Presenter View opent via de knop of `Shift+P`, en alleen vanuit de
+  Presentatieweergave zelf — niet als losstaand startpunt.
+- Vanuit Presenter View navigeer je door de echte presentatie, met een
+  live-voorvertoning van de huidige en volgende slide, sprekersnotities en
+  een schema-indicator.
+- Zodra Presenter View verbonden is, verdwijnt de rechter bedieningskolom uit
+  het hoofdscherm. De kolom kan vanuit Presenter View tijdelijk worden
+  teruggezet en keert na sluiten terug naar de toestand van vóór de verbinding.
+- Presentation View en Presenter View volgen beide `CONFIG.lang` (`'nl'` of
+  `'en'`).
+- Is Presenter View niet beschikbaar (bijv. het venster is gesloten), dan
+  sluit `Esc` de pauze-overlay nog steeds vanuit de Presentatieweergave zelf.
 
 ## Configuratie
 

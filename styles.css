@@ -165,6 +165,8 @@ button {
    instead of disappearing outright, so the toggle button stays put. */
 .app-shell.toc-collapsed { --toc-width: 60px; }
 .app-shell.next-collapsed { --next-width: 68px; }
+.app-shell.presenter-controls-hidden { --next-width: 0px; }
+.app-shell.presenter-controls-hidden .next-column { display: none; }
 
 /* ---------- Pane collapse toggle buttons (TOC + controls) ---------- */
 .btn-pane-toggle {
@@ -1018,6 +1020,27 @@ button {
   inset: 0;
   pointer-events: none;
   z-index: 2000;
+}
+
+/* ---------- Pause overlay (presenter-triggered cutaway) ---------- */
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500; /* above #confetti-canvas (2000); finish-overlay is 1500 */
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pause-overlay-text {
+  margin: 0;
+  color: color-mix(in srgb, var(--text-muted) 72%, transparent);
+  font-family: var(--font-mono);
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  line-height: 1;
+  transform: translateX(0.14em);
 }
 
 /* ---------- Responsive fallback ---------- */
