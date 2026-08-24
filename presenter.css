@@ -270,7 +270,7 @@ input:focus-visible {
 }
 
 .presenter-notes:empty::before {
-  content: "Geen notities voor deze slide.";
+  content: attr(data-empty-message);
   color: var(--text-muted);
   font-style: italic;
 }

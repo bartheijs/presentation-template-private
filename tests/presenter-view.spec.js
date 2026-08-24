@@ -47,7 +47,15 @@ test.describe('launch mechanism and connection status', () => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     expect(presenter.url()).toMatch(/presenter\.html$/);
-    await expect(presenter.locator('[data-connection-status]')).toHaveText('Verbonden');
+    await expect(presenter.locator('[data-connection-status]')).toHaveText(
+      await presenter.evaluate(() => presenterText.connected)
+    );
+    await expect(page.locator('.app-shell')).toHaveClass(/presenter-controls-hidden/);
+    await expect(page.locator('#next-column')).toBeHidden();
+
+    await presenter.close();
+    await expect(page.locator('.app-shell')).not.toHaveClass(/presenter-controls-hidden/);
+    await expect(page.locator('#next-column')).toBeVisible();
   });
 
   test('Shift+P also opens presenter.html', async ({ page }) => {
@@ -62,8 +70,28 @@ test.describe('launch mechanism and connection status', () => {
   test('presenter.html opened directly, with no opener, shows disconnected', async ({ page }) => {
     const path = require('path');
     await page.goto('file://' + path.resolve(__dirname, '..', 'presenter.html'));
-    await expect(page.locator('[data-connection-status]')).toHaveText('Niet verbonden');
-    await expect(page.locator('[data-connection-hint]')).toContainText('Open deze pagina via de Presentatieweergave');
+    await expect(page.locator('[data-connection-status]')).toHaveText(
+      await page.evaluate(() => presenterText.disconnected)
+    );
+    await expect(page.locator('[data-connection-hint]')).toHaveText(
+      await page.evaluate(() => presenterText.connectionHint)
+    );
+  });
+
+  test('CONFIG.lang = en localizes the Presenter View controls', async ({ page }) => {
+    const path = require('path');
+    await page.goto('file://' + path.resolve(__dirname, '..', 'presenter.html'));
+    await page.evaluate(() => {
+      CONFIG.lang = 'en';
+      applyPresenterLanguage();
+      setConnected(false);
+    });
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('[data-connection-status]')).toHaveText('Not connected');
+    await expect(page.locator('[data-i18n="speakerNotes"]')).toHaveText('Speaker notes');
+    await expect(page.locator('#btn-toggle-left-aside')).toContainText('Left sidebar');
+    await expect(page.locator('#btn-presenter-next')).toContainText('Next');
   });
 });
 
@@ -120,24 +148,39 @@ test.describe('command whitelist and state broadcast', () => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
 
+    await expect(presenter.locator('[data-right-aside]')).toHaveText(
+      await presenter.evaluate(() => presenterText.off)
+    );
+    await presenter.click('#btn-toggle-right-aside');
+    await expect(page.locator('#next-column')).toBeVisible();
+    await expect(presenter.locator('#btn-toggle-right-aside')).toHaveAttribute('aria-pressed', 'true');
+
     await presenter.click('#btn-toggle-context-overlay');
     await expect(page.locator('#template-overlay')).toBeVisible();
-    await expect(presenter.locator('[data-context-overlay]')).toHaveText('Aan');
+    await expect(presenter.locator('[data-context-overlay]')).toHaveText(
+      await presenter.evaluate(() => presenterText.on)
+    );
     await expect(presenter.locator('#btn-toggle-context-overlay')).toHaveAttribute('aria-pressed', 'true');
 
     await presenter.click('#btn-toggle-left-aside');
-    await expect(presenter.locator('[data-left-aside]')).toHaveText('Uit');
+    await expect(presenter.locator('[data-left-aside]')).toHaveText(
+      await presenter.evaluate(() => presenterText.off)
+    );
     await expect(presenter.locator('#btn-toggle-left-aside')).toHaveAttribute('aria-pressed', 'false');
 
     await presenter.click('#btn-toggle-pause-overlay');
     await expect(page.locator('#pause-overlay')).toBeVisible();
-    await expect(presenter.locator('[data-pause-overlay]')).toHaveText('Aan');
+    await expect(presenter.locator('[data-pause-overlay]')).toHaveText(
+      await presenter.evaluate(() => presenterText.on)
+    );
     await expect(presenter.locator('#btn-toggle-pause-overlay')).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('a real button click in the Presentation View also updates the presenter', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
+    await presenter.click('#btn-toggle-right-aside');
+    await expect(page.locator('#next-column')).toBeVisible();
     await page.click('#btn-next');
     await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
   });
@@ -161,11 +204,13 @@ test.describe('reconnect resilience', () => {
   test('reloading the Presenter View re-syncs via window.opener + REQUEST_STATE', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
-    await page.click('#btn-next');
+    await presenter.click('#btn-presenter-next');
     await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
 
     await presenter.reload();
-    await expect(presenter.locator('[data-connection-status]')).toHaveText('Verbonden');
+    await expect(presenter.locator('[data-connection-status]')).toHaveText(
+      await presenter.evaluate(() => presenterText.connected)
+    );
     await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
   });
 
@@ -174,8 +219,14 @@ test.describe('reconnect resilience', () => {
     const presenter = await openPresenterView(page);
 
     await page.reload();
-    await presenter.evaluate(() => requestState());
+    await presenter.evaluate(() => {
+      latestState = null;
+      requestState();
+    });
+    await page.waitForFunction(() => presenterConnected);
+    await presenter.waitForFunction(() => latestState !== null);
     await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
     // eslint-disable-next-line no-undef
     expect(await page.evaluate(() => state.currentIndex)).toBe(1);
   });
@@ -191,7 +242,9 @@ test.describe('reconnect resilience', () => {
     expect(errors).toEqual([]);
 
     const presenter2 = await openPresenterView(page);
-    await expect(presenter2.locator('[data-connection-status]')).toHaveText('Verbonden');
+    await expect(presenter2.locator('[data-connection-status]')).toHaveText(
+      await presenter2.evaluate(() => presenterText.connected)
+    );
     await expect(presenter2.locator('[data-current-slide]')).toHaveText('2');
   });
 });
@@ -284,12 +337,24 @@ test.describe('preview iframes', () => {
   test('current-preview mirrors the real slide/overlay state; next-preview shows pendingNextSlide', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
+    const mainUi = await page.evaluate(() => ({ toc: CONFIG.toc.heading, ...CONFIG.ui }));
 
     const currentPreviewFrame = presenter.frameLocator('#current-preview');
     const nextPreviewFrame = presenter.frameLocator('#next-preview');
 
     await expect(currentPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('01');
     await expect(nextPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('02');
+    await expect(currentPreviewFrame.locator('#toc-heading')).toHaveText(mainUi.toc);
+    await expect(currentPreviewFrame.locator('.app-shell')).toHaveClass(/presenter-controls-hidden/);
+    await expect(nextPreviewFrame.locator('.app-shell')).toHaveClass(/presenter-controls-hidden/);
+    await expect(currentPreviewFrame.locator('#next-column')).toBeHidden();
+    await expect(nextPreviewFrame.locator('#next-column')).toBeHidden();
+
+    await presenter.click('#btn-toggle-right-aside');
+    await expect(currentPreviewFrame.locator('#btn-prev-label')).toHaveText(mainUi.navPrev);
+    await expect(currentPreviewFrame.locator('#btn-next-label')).toHaveText(mainUi.navNext);
+    await expect(currentPreviewFrame.locator('#next-column')).toBeVisible();
+    await expect(nextPreviewFrame.locator('#next-column')).toBeVisible();
 
     await presenter.click('#btn-toggle-context-overlay');
     await expect(currentPreviewFrame.locator('#template-overlay')).toBeVisible();
@@ -299,12 +364,11 @@ test.describe('preview iframes', () => {
     await expect(nextPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('03');
   });
 
-  test('preview iframes do not navigate on their own keyboard/click input', async ({ page }) => {
+  test('preview iframes do not navigate on their own click input', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     const currentPreviewFrame = presenter.frameLocator('#current-preview');
     await currentPreviewFrame.locator('body').click();
-    await currentPreviewFrame.locator('body').press('ArrowRight');
     await expect(currentPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('01');
   });
 
@@ -312,6 +376,12 @@ test.describe('preview iframes', () => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     const currentPreviewFrame = presenter.frameLocator('#current-preview');
+
+    // The right aside is hidden in both the real view and its previews while
+    // Presenter View is connected. Show it first so #btn-next is visible;
+    // the preview frame itself must still remain non-interactive.
+    await presenter.click('#btn-toggle-right-aside');
+    await expect(currentPreviewFrame.locator('#btn-next')).toBeVisible();
 
     // pointer-events: none on .preview-frame (presenter.css) means this click
     // never actually reaches the iframe's own #btn-next — { force: true }

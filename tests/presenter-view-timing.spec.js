@@ -174,6 +174,8 @@ test.describe('continuous timing updates (renderTiming)', () => {
       // eslint-disable-next-line no-undef
       renderTiming();
     });
-    await expect(page.locator('[data-schedule-delta]')).toHaveText('Op schema');
+    await expect(page.locator('[data-schedule-delta]')).toHaveText(
+      await page.evaluate(() => presenterText.onSchedule)
+    );
   });
 });

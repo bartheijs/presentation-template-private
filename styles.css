@@ -165,6 +165,8 @@ button {
    instead of disappearing outright, so the toggle button stays put. */
 .app-shell.toc-collapsed { --toc-width: 60px; }
 .app-shell.next-collapsed { --next-width: 68px; }
+.app-shell.presenter-controls-hidden { --next-width: 0px; }
+.app-shell.presenter-controls-hidden .next-column { display: none; }
 
 /* ---------- Pane collapse toggle buttons (TOC + controls) ---------- */
 .btn-pane-toggle {

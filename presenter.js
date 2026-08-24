@@ -3,6 +3,64 @@
  * as app.js. See docs/superpowers/specs/2026-08-22-presenter-view-design.md.
  */
 
+const PRESENTER_I18N = {
+  nl: {
+    presenterMode: 'Presentatieweergave', localTime: 'Lokale tijd', connected: 'Verbonden',
+    disconnected: 'Niet verbonden',
+    connectionHint: 'Open deze pagina via de Presentatieweergave (de Presenter View-knop of Shift+P), niet rechtstreeks.',
+    slidePreviews: 'Slidevoorbeelden', nowVisible: 'Nu zichtbaar', currentSlide: 'Huidige slide',
+    currentPreviewTitle: 'Voorbeeld van de huidige slide', upNext: 'Hierna', nextSlide: 'Volgende slide',
+    nextPreviewTitle: 'Voorbeeld van de volgende slide', prepareOtherSlide: 'Andere slide klaarzetten?',
+    restore: 'Herstel', skipOneSlide: 'Sla één slide over', onlyForYou: 'Alleen voor jou',
+    speakerNotes: 'Sprekersnotities', elapsed: 'Verstreken', start: 'Start', pause: 'Pauze', reset: 'Reset',
+    progress: 'Voortgang', onSchedule: 'Op schema', slides: 'Slides', time: 'Tijd', display: 'Weergave',
+    displayOptions: 'Weergaveopties', leftSidebar: 'Linker zijbalk', rightSidebar: 'Rechter zijbalk',
+    pauseScreen: 'Pauzescherm', contextOverlay: 'Context-overlay', presentationControls: 'Presentatiebediening',
+    presentationTiming: 'Presentatietijd', timerControls: 'Timerbediening', slideProgress: 'Voortgang slides',
+    timeProgress: 'Voortgang tijd', previous: 'Vorige', next: 'Volgende', noNotes: 'Geen notities voor deze slide.',
+    on: 'Aan', off: 'Uit', elapsedSuffix: 'verstreken', aheadOfSchedule: 'voor op schema',
+    behindSchedule: 'achter op schema',
+  },
+  en: {
+    presenterMode: 'Presenter mode', localTime: 'Local time', connected: 'Connected',
+    disconnected: 'Not connected',
+    connectionHint: 'Open this page from Presentation View (the Presenter View button or Shift+P), not directly.',
+    slidePreviews: 'Slide previews', nowVisible: 'Now showing', currentSlide: 'Current slide',
+    currentPreviewTitle: 'Preview of the current slide', upNext: 'Up next', nextSlide: 'Next slide',
+    nextPreviewTitle: 'Preview of the next slide', prepareOtherSlide: 'Prepare a different slide?',
+    restore: 'Restore', skipOneSlide: 'Skip one slide', onlyForYou: 'Only for you',
+    speakerNotes: 'Speaker notes', elapsed: 'Elapsed', start: 'Start', pause: 'Pause', reset: 'Reset',
+    progress: 'Progress', onSchedule: 'On schedule', slides: 'Slides', time: 'Time', display: 'Display',
+    displayOptions: 'Display options', leftSidebar: 'Left sidebar', rightSidebar: 'Right sidebar',
+    pauseScreen: 'Pause screen', contextOverlay: 'Context overlay', presentationControls: 'Presentation controls',
+    presentationTiming: 'Presentation timing', timerControls: 'Timer controls', slideProgress: 'Slide progress',
+    timeProgress: 'Time progress', previous: 'Previous', next: 'Next', noNotes: 'No notes for this slide.',
+    on: 'On', off: 'Off', elapsedSuffix: 'elapsed', aheadOfSchedule: 'ahead of schedule',
+    behindSchedule: 'behind schedule',
+  },
+};
+
+let presenterLang;
+let presenterText;
+
+function applyPresenterLanguage() {
+  presenterLang = String(CONFIG.lang || 'nl').toLowerCase().startsWith('en') ? 'en' : 'nl';
+  presenterText = PRESENTER_I18N[presenterLang];
+  document.documentElement.lang = presenterLang;
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    el.textContent = presenterText[el.dataset.i18n];
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+    el.setAttribute('aria-label', presenterText[el.dataset.i18nAriaLabel]);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    el.title = presenterText[el.dataset.i18nTitle];
+  });
+  document.getElementById('presenter-notes').dataset.emptyMessage = presenterText.noNotes;
+}
+
+applyPresenterLanguage();
+
 /* ---------- Timing math ----------
  * See docs/superpowers/specs/2026-08-22-presenter-view-design.md §9:
  * plannedStartOfCurrentSlide = sum of duration of all slides BEFORE it;
@@ -41,23 +99,33 @@ function totalPlannedMs() {
 
 let presentationRef = window.opener || null;
 
+// A reload of index.html can invalidate the previously cached WindowProxy in
+// some browsers even though `window.opener` already points at the replacement
+// document. Reacquire it before every outbound message so reconnecting is not
+// limited to REQUEST_STATE while later commands still target the stale page.
+function refreshPresentationRef() {
+  if (window.opener && !window.opener.closed) presentationRef = window.opener;
+  return presentationRef && !presentationRef.closed ? presentationRef : null;
+}
+
 const connectionBannerEl = document.getElementById('connection-banner');
 const connectionStatusEl = document.querySelector('[data-connection-status]');
 
 function setConnected(connected) {
   connectionBannerEl.setAttribute('data-connected', String(connected));
-  connectionStatusEl.textContent = connected ? 'Verbonden' : 'Niet verbonden';
+  connectionStatusEl.textContent = connected ? presenterText.connected : presenterText.disconnected;
 }
 
 function requestState() {
-  if (!presentationRef || presentationRef.closed) {
+  const target = refreshPresentationRef();
+  if (!target) {
     setConnected(false);
     return;
   }
   // targetOrigin '*' is deliberate: file:// pages have opaque origins, so
   // event.origin can't be checked meaningfully. Sender identity is verified
   // instead via e.source === presentationRef in the message listener below.
-  presentationRef.postMessage({ type: 'command', command: 'REQUEST_STATE' }, '*');
+  target.postMessage({ type: 'command', command: 'REQUEST_STATE' }, '*');
 }
 
 let latestState = null;
@@ -149,12 +217,13 @@ resyncPreviewOnLoad(currentPreviewEl, () => latestState.currentSlide, currentFla
 resyncPreviewOnLoad(nextPreviewEl, () => pendingNextSlide, nextPreviewFlags);
 
 function sendCommand(command, extra) {
-  if (!presentationRef || presentationRef.closed) {
+  const target = refreshPresentationRef();
+  if (!target) {
     setConnected(false);
     return;
   }
   // targetOrigin '*' is deliberate: see requestState() above for rationale.
-  presentationRef.postMessage(Object.assign({ type: 'command', command }, extra), '*');
+  target.postMessage(Object.assign({ type: 'command', command }, extra), '*');
 }
 
 let pendingNextSlide = 1; // 0-based index; defaults to currentSlide + 1
@@ -163,7 +232,7 @@ let lastJumpOriginIndex = null;
 function renderToggleState(buttonId, statusSelector, active) {
   const button = document.getElementById(buttonId);
   button.setAttribute('aria-pressed', String(active));
-  document.querySelector(statusSelector).textContent = active ? 'Aan' : 'Uit';
+  document.querySelector(statusSelector).textContent = active ? presenterText.on : presenterText.off;
 }
 
 function renderState(newState) {
@@ -211,10 +280,10 @@ function renderTiming() {
   const deltaAbsSec = String(Math.abs(delta) % 60).padStart(2, '0');
   document.querySelector('[data-schedule-delta]').textContent =
     delta < 0
-      ? `${deltaAbsMin}:${deltaAbsSec} voor op schema`
+      ? `${deltaAbsMin}:${deltaAbsSec} ${presenterText.aheadOfSchedule}`
       : delta > 0
-        ? `${deltaAbsMin}:${deltaAbsSec} achter op schema`
-        : 'Op schema';
+        ? `${deltaAbsMin}:${deltaAbsSec} ${presenterText.behindSchedule}`
+        : presenterText.onSchedule;
 
   const totalPlannedSeconds = totalPlannedMs() / 1000;
   const timeProgressPct = Math.min(100, Math.round((elapsedSeconds / totalPlannedSeconds) * 100));
@@ -290,7 +359,7 @@ function renderClockAndElapsed() {
     `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const elapsed = getElapsedSeconds();
   document.querySelector('[data-elapsed]').textContent =
-    `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')} verstreken`;
+    `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')} ${presenterText.elapsedSuffix}`;
   renderTiming();
 }
 setInterval(renderClockAndElapsed, 250);

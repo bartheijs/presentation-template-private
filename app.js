@@ -45,6 +45,56 @@ const CONFIG_DEFAULTS = {
   },
 };
 
+// Shared Presentation View chrome. CONFIG.lang is the single language
+// switch for both index.html and presenter.html; deck authors should not
+// have to keep a second copy of these generic controls in sync.
+const APP_I18N = {
+  nl: {
+    tocHeading: 'Inhoud',
+    templateButton: 'Presentatiebrief',
+    notesToggleHide: 'Notities verbergen',
+    notesToggleShow: 'Notities tonen',
+    timerStart: 'Start',
+    timerPause: 'Pauze',
+    timerFinish: 'Klaar!',
+    navNext: 'Volgende',
+    navPrev: 'Vorige',
+    tocCollapseHide: 'Inhoud verbergen',
+    tocCollapseShow: 'Inhoud tonen',
+    controlsCollapseHide: 'Bediening inklappen',
+    controlsCollapseShow: 'Bediening uitklappen',
+    overlayCloseLabel: 'Sluiten',
+    overlayTitle: 'Presentatiebrief',
+    backToDeckLabel: 'Terug naar de presentatie',
+    presenterViewButton: 'Presenter View',
+    finishTitle: 'Klaar om te presenteren!',
+    finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
+    pauseOverlayText: '...',
+  },
+  en: {
+    tocHeading: 'Contents',
+    templateButton: 'Presentation brief',
+    notesToggleHide: 'Hide notes',
+    notesToggleShow: 'Show notes',
+    timerStart: 'Start',
+    timerPause: 'Pause',
+    timerFinish: 'Done!',
+    navNext: 'Next',
+    navPrev: 'Previous',
+    tocCollapseHide: 'Hide contents',
+    tocCollapseShow: 'Show contents',
+    controlsCollapseHide: 'Collapse controls',
+    controlsCollapseShow: 'Expand controls',
+    overlayCloseLabel: 'Close',
+    overlayTitle: 'Presentation brief',
+    backToDeckLabel: 'Back to presentation',
+    presenterViewButton: 'Presenter View',
+    finishTitle: 'Ready to present!',
+    finishBodyHtml: 'Use this demo as the starting point for your own story.',
+    pauseOverlayText: '...',
+  },
+};
+
 // Mutates `cfg` in place, filling in any key missing (or non-object, where a
 // nested section is expected) with the matching fallback from `defaults`.
 // CONFIG is declared `const` in config.js, so this fills gaps in the
@@ -64,6 +114,16 @@ function normalizeConfig(cfg, defaults) {
 }
 
 normalizeConfig(CONFIG, CONFIG_DEFAULTS);
+
+function applyAppLanguage() {
+  const lang = String(CONFIG.lang || 'nl').toLowerCase().startsWith('en') ? 'en' : 'nl';
+  const { tocHeading, ...ui } = APP_I18N[lang];
+  CONFIG.lang = lang;
+  CONFIG.toc.heading = tocHeading;
+  CONFIG.ui = ui;
+}
+
+applyAppLanguage();
 
 // ?embed=preview marks this document as a passive preview iframe inside
 // presenter.html (see docs/superpowers/specs/2026-08-22-presenter-view-design.md
@@ -291,6 +351,9 @@ function updateNotesToggleLabel() {
 const MOBILE_BREAKPOINT = 900;
 let tocCollapsed = false;
 let nextCollapsed = false;
+let presenterConnected = false;
+let presenterHidesControls = false;
+let nextCollapsedBeforePresenter = null;
 const appShellEl = document.querySelector('.app-shell');
 
 function toggleTocCollapse() {
@@ -304,21 +367,48 @@ function toggleTocCollapse() {
   sendStateToPresenter();
 }
 
-function toggleNextCollapse() {
-  nextCollapsed = !nextCollapsed;
+function renderNextPaneState() {
   appShellEl.classList.toggle('next-collapsed', nextCollapsed);
+  appShellEl.classList.toggle('presenter-controls-hidden', presenterHidesControls);
   document.getElementById('next-collapse-icon').setAttribute('href', nextCollapsed ? '#icon-arrow-left' : '#icon-arrow-right');
   document.getElementById('btn-next-collapse').setAttribute(
     'aria-label',
     nextCollapsed ? CONFIG.ui.controlsCollapseShow : CONFIG.ui.controlsCollapseHide
   );
+}
+
+function setNextCollapsed(collapsed) {
+  nextCollapsed = collapsed;
+  renderNextPaneState();
   sendStateToPresenter();
+}
+
+function setPresenterControlsHidden(hidden) {
+  presenterHidesControls = hidden;
+  renderNextPaneState();
+  sendStateToPresenter();
+}
+
+function toggleNextCollapse() {
+  if (presenterConnected) {
+    setPresenterControlsHidden(!presenterHidesControls);
+  } else {
+    setNextCollapsed(!nextCollapsed);
+  }
+}
+
+function setRightAsideVisible(visible) {
+  if (presenterConnected) {
+    setPresenterControlsHidden(!visible);
+  } else if (nextCollapsed === visible) {
+    setNextCollapsed(!visible);
+  }
 }
 
 window.addEventListener('resize', () => {
   if (window.innerWidth >= MOBILE_BREAKPOINT) return;
   if (tocCollapsed) toggleTocCollapse();
-  if (nextCollapsed) toggleNextCollapse();
+  if (nextCollapsed) setNextCollapsed(false);
 });
 
 function renderTocOnce() {
@@ -1079,6 +1169,7 @@ document.addEventListener('keydown', (e) => {
 /* ---------- Apply config-driven strings/toggles ---------- */
 
 function applyConfigStrings() {
+  applyAppLanguage();
   document.title = CONFIG.title;
   document.documentElement.lang = CONFIG.lang;
   document.documentElement.style.setProperty('--transition-out-ms', `${ANIM_OUT_MS}ms`);
@@ -1123,6 +1214,31 @@ function openPresenterView() {
   presenterRef = window.open('presenter.html', 'presenterView');
 }
 
+function setPresenterConnected(connected) {
+  if (presenterConnected === connected) return;
+  presenterConnected = connected;
+
+  if (connected) {
+    nextCollapsedBeforePresenter = nextCollapsed;
+    nextCollapsed = false;
+    presenterHidesControls = true;
+  } else {
+    presenterHidesControls = false;
+    nextCollapsed = nextCollapsedBeforePresenter === null ? nextCollapsed : nextCollapsedBeforePresenter;
+    nextCollapsedBeforePresenter = null;
+  }
+  renderNextPaneState();
+}
+
+// window.closed is the one dependable same-origin/file:// signal available
+// when the separate Presenter View is closed. Restore the main-screen
+// controls promptly without requiring another user action in index.html.
+setInterval(() => {
+  if (!presenterConnected || !presenterRef || !presenterRef.closed) return;
+  presenterRef = null;
+  setPresenterConnected(false);
+}, 500);
+
 if (!isEmbedPreview) {
   document.getElementById('btn-presenter-view').addEventListener('click', openPresenterView);
   document.addEventListener('keydown', (e) => {
@@ -1152,9 +1268,9 @@ const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   TOGGLE_LEFT_ASIDE: () => toggleTocCollapse(),
   SHOW_LEFT_ASIDE: () => { if (tocCollapsed) toggleTocCollapse(); },
   HIDE_LEFT_ASIDE: () => { if (!tocCollapsed) toggleTocCollapse(); },
-  TOGGLE_RIGHT_ASIDE: () => toggleNextCollapse(),
-  SHOW_RIGHT_ASIDE: () => { if (nextCollapsed) toggleNextCollapse(); },
-  HIDE_RIGHT_ASIDE: () => { if (!nextCollapsed) toggleNextCollapse(); },
+  TOGGLE_RIGHT_ASIDE: () => setRightAsideVisible(presenterHidesControls || nextCollapsed),
+  SHOW_RIGHT_ASIDE: () => setRightAsideVisible(true),
+  HIDE_RIGHT_ASIDE: () => setRightAsideVisible(false),
   TOGGLE_PAUSE_OVERLAY: () => (isPauseOverlayVisible() ? hidePauseOverlay() : showPauseOverlay()),
   SHOW_PAUSE_OVERLAY: () => showPauseOverlay(),
   HIDE_PAUSE_OVERLAY: () => hidePauseOverlay(),
@@ -1180,7 +1296,12 @@ window.addEventListener('message', (e) => {
         e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
       }
       if (tocCollapsed !== !e.data.leftAsideVisible) toggleTocCollapse();
-      if (nextCollapsed !== !e.data.rightAsideVisible) toggleNextCollapse();
+      // Presenter previews should mirror the audience screen exactly. While
+      // Presenter View is connected, a hidden right aside disappears there
+      // completely; it is not the ordinary collapsed icon rail.
+      nextCollapsed = false;
+      presenterHidesControls = !e.data.rightAsideVisible;
+      renderNextPaneState();
       if (isPauseOverlayVisible() !== e.data.pauseOverlayVisible) {
         e.data.pauseOverlayVisible ? showPauseOverlay() : hidePauseOverlay();
       }
@@ -1200,6 +1321,7 @@ window.addEventListener('message', (e) => {
   } else {
     presenterRef = e.source;
   }
+  setPresenterConnected(true);
   const handler = COMMAND_HANDLERS[e.data.command];
   if (!handler) return; // unknown command: ignored, never executed
   handler(e.data);
@@ -1218,7 +1340,7 @@ function sendStateToPresenter() {
       totalSlides: SLIDES.length,
       contextOverlayVisible: !overlayEl.hidden,
       leftAsideVisible: !tocCollapsed,
-      rightAsideVisible: !nextCollapsed,
+      rightAsideVisible: !nextCollapsed && !presenterHidesControls,
       pauseOverlayVisible: isPauseOverlayVisible(),
     },
     '*'

@@ -11,12 +11,12 @@
 
 <header class="presenter-header">
   <div class="presenter-heading">
-    <span class="presenter-kicker">Presentatieweergave</span>
+    <span class="presenter-kicker" data-i18n="presenterMode">Presentatieweergave</span>
     <h1>Presenter View</h1>
   </div>
 
   <div class="clock-block presenter-clock">
-    <span class="meta-label">Lokale tijd</span>
+    <span class="meta-label" data-i18n="localTime">Lokale tijd</span>
     <time class="clock" data-clock></time>
   </div>
 </header>
@@ -25,41 +25,41 @@
   <span class="connection-dot" aria-hidden="true"></span>
   <div>
     <strong data-connection-status>Niet verbonden</strong>
-    <p data-connection-hint>Open deze pagina via de Presentatieweergave (de Presenter View-knop of Shift+P), niet rechtstreeks.</p>
+    <p data-connection-hint data-i18n="connectionHint">Open deze pagina via de Presentatieweergave (de Presenter View-knop of Shift+P), niet rechtstreeks.</p>
   </div>
 </div>
 
 <main id="presenter-main" class="presenter-main" hidden>
-  <section class="preview-grid" aria-label="Slidevoorbeelden">
+  <section class="preview-grid" aria-label="Slidevoorbeelden" data-i18n-aria-label="slidePreviews">
     <article class="panel preview-card preview-card--current">
       <header class="panel-header">
         <div>
-          <span class="panel-kicker">Nu zichtbaar</span>
-          <h2>Huidige slide</h2>
+          <span class="panel-kicker" data-i18n="nowVisible">Nu zichtbaar</span>
+          <h2 data-i18n="currentSlide">Huidige slide</h2>
         </div>
         <span class="slide-chip">Slide <strong data-current-slide></strong> / <span data-total-slides></span></span>
       </header>
       <div class="preview-viewport">
-        <iframe id="current-preview" src="index.html?embed=preview" class="preview-frame" title="Voorbeeld van de huidige slide"></iframe>
+        <iframe id="current-preview" src="index.html?embed=preview" class="preview-frame" title="Voorbeeld van de huidige slide" data-i18n-title="currentPreviewTitle"></iframe>
       </div>
     </article>
 
     <article class="panel preview-card preview-card--next">
       <header class="panel-header">
         <div>
-          <span class="panel-kicker">Hierna</span>
-          <h2>Volgende slide</h2>
+          <span class="panel-kicker" data-i18n="upNext">Hierna</span>
+          <h2 data-i18n="nextSlide">Volgende slide</h2>
         </div>
         <span class="slide-chip slide-chip--next">Slide <strong data-pending-next-slide></strong></span>
       </header>
       <div class="preview-viewport">
-        <iframe id="next-preview" src="index.html?embed=preview" class="preview-frame" title="Voorbeeld van de volgende slide"></iframe>
+        <iframe id="next-preview" src="index.html?embed=preview" class="preview-frame" title="Voorbeeld van de volgende slide" data-i18n-title="nextPreviewTitle"></iframe>
       </div>
       <div class="skip-controls">
-        <span>Andere slide klaarzetten?</span>
+        <span data-i18n="prepareOtherSlide">Andere slide klaarzetten?</span>
         <div>
-          <button id="btn-presenter-herstel" class="btn btn--quiet" type="button">Herstel</button>
-          <button id="btn-presenter-skip" class="btn" type="button">Sla één slide over</button>
+          <button id="btn-presenter-herstel" class="btn btn--quiet" type="button" data-i18n="restore">Herstel</button>
+          <button id="btn-presenter-skip" class="btn" type="button" data-i18n="skipOneSlide">Sla één slide over</button>
         </div>
       </div>
     </article>
@@ -69,8 +69,8 @@
     <article class="panel notes-panel">
       <header class="panel-header panel-header--compact">
         <div>
-          <span class="panel-kicker">Alleen voor jou</span>
-          <h2>Sprekersnotities</h2>
+          <span class="panel-kicker" data-i18n="onlyForYou">Alleen voor jou</span>
+          <h2 data-i18n="speakerNotes">Sprekersnotities</h2>
         </div>
       </header>
       <div id="presenter-notes" class="presenter-notes"></div>
@@ -78,70 +78,70 @@
 
     <div class="presenter-sidebar">
       <article class="panel progress-panel">
-        <div class="progress-timer" aria-label="Presentatietijd">
+        <div class="progress-timer" aria-label="Presentatietijd" data-i18n-aria-label="presentationTiming">
           <div class="elapsed-block">
-            <span class="meta-label">Verstreken</span>
+            <span class="meta-label" data-i18n="elapsed">Verstreken</span>
             <time class="elapsed" data-elapsed></time>
           </div>
-          <div class="timer-controls" aria-label="Timerbediening">
-            <button id="btn-presenter-timer-start" class="btn btn--primary" type="button">Start</button>
-            <button id="btn-presenter-timer-pause" class="btn" type="button">Pauze</button>
-            <button id="btn-presenter-timer-reset" class="btn btn--quiet" type="button">Reset</button>
+          <div class="timer-controls" aria-label="Timerbediening" data-i18n-aria-label="timerControls">
+            <button id="btn-presenter-timer-start" class="btn btn--primary" type="button" data-i18n="start">Start</button>
+            <button id="btn-presenter-timer-pause" class="btn" type="button" data-i18n="pause">Pauze</button>
+            <button id="btn-presenter-timer-reset" class="btn btn--quiet" type="button" data-i18n="reset">Reset</button>
           </div>
         </div>
 
         <header class="panel-header panel-header--compact progress-heading">
           <div>
-            <span class="panel-kicker">Voortgang</span>
-            <h2>Op schema</h2>
+            <span class="panel-kicker" data-i18n="progress">Voortgang</span>
+            <h2 data-i18n="onSchedule">Op schema</h2>
           </div>
           <span class="schedule-chip" data-schedule-delta></span>
         </header>
 
         <div class="progress-row">
-          <div class="progress-label"><span>Slides</span><strong data-slides-progress></strong></div>
-          <div class="progress-track" role="progressbar" aria-label="Voortgang slides" aria-valuemin="0" aria-valuemax="100" data-slides-progressbar>
+          <div class="progress-label"><span data-i18n="slides">Slides</span><strong data-slides-progress></strong></div>
+          <div class="progress-track" role="progressbar" aria-label="Voortgang slides" data-i18n-aria-label="slideProgress" aria-valuemin="0" aria-valuemax="100" data-slides-progressbar>
             <span class="progress-fill progress-fill--slides" data-slides-progress-fill></span>
           </div>
         </div>
         <div class="progress-row">
-          <div class="progress-label"><span>Tijd</span><strong data-time-progress></strong></div>
-          <div class="progress-track" role="progressbar" aria-label="Voortgang tijd" aria-valuemin="0" aria-valuemax="100" data-time-progressbar>
+          <div class="progress-label"><span data-i18n="time">Tijd</span><strong data-time-progress></strong></div>
+          <div class="progress-track" role="progressbar" aria-label="Voortgang tijd" data-i18n-aria-label="timeProgress" aria-valuemin="0" aria-valuemax="100" data-time-progressbar>
             <span class="progress-fill progress-fill--time" data-time-progress-fill></span>
           </div>
         </div>
       </article>
 
-      <section class="panel controls-panel" aria-label="Weergaveopties">
-        <span class="panel-kicker">Weergave</span>
+      <section class="panel controls-panel" aria-label="Weergaveopties" data-i18n-aria-label="displayOptions">
+        <span class="panel-kicker" data-i18n="display">Weergave</span>
         <div class="display-controls">
           <button id="btn-toggle-left-aside" class="btn btn--display-toggle" type="button" aria-pressed="false">
             <span class="toggle-indicator" aria-hidden="true"></span>
-            <span>Linker zijbalk</span>
+            <span data-i18n="leftSidebar">Linker zijbalk</span>
             <strong class="toggle-status" data-left-aside></strong>
           </button>
           <button id="btn-toggle-right-aside" class="btn btn--display-toggle" type="button" aria-pressed="false">
             <span class="toggle-indicator" aria-hidden="true"></span>
-            <span>Rechter zijbalk</span>
+            <span data-i18n="rightSidebar">Rechter zijbalk</span>
             <strong class="toggle-status" data-right-aside></strong>
           </button>
           <button id="btn-toggle-pause-overlay" class="btn btn--display-toggle" type="button" aria-pressed="false">
             <span class="toggle-indicator" aria-hidden="true"></span>
-            <span>Pauzescherm</span>
+            <span data-i18n="pauseScreen">Pauzescherm</span>
             <strong class="toggle-status" data-pause-overlay></strong>
           </button>
           <button id="btn-toggle-context-overlay" class="btn btn--display-toggle" type="button" aria-pressed="false">
             <span class="toggle-indicator" aria-hidden="true"></span>
-            <span>Context-overlay</span>
+            <span data-i18n="contextOverlay">Context-overlay</span>
             <strong class="toggle-status" data-context-overlay></strong>
           </button>
         </div>
       </section>
 
-      <nav class="panel nav-panel" aria-label="Presentatiebediening">
+      <nav class="panel nav-panel" aria-label="Presentatiebediening" data-i18n-aria-label="presentationControls">
         <div class="nav-controls">
-          <button id="btn-presenter-prev" class="btn btn--nav" type="button"><span aria-hidden="true">&#8592;</span> Vorige</button>
-          <button id="btn-presenter-next" class="btn btn--primary btn--nav" type="button">Volgende <span aria-hidden="true">&#8594;</span></button>
+          <button id="btn-presenter-prev" class="btn btn--nav" type="button"><span aria-hidden="true">&#8592;</span> <span data-i18n="previous">Vorige</span></button>
+          <button id="btn-presenter-next" class="btn btn--primary btn--nav" type="button"><span data-i18n="next">Volgende</span> <span aria-hidden="true">&#8594;</span></button>
         </div>
       </nav>
     </div>
