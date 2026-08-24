@@ -1,6 +1,6 @@
 ---
 name: test-presentation
-description: Run and interpret the Playwright test suite for this skill-workshop-presentation repo. Use after any change to app.js, styles.css, config.js, or slides-data.js, or when the user asks to test/verify/check that a change didn't break the presentation.
+description: Run and interpret the Playwright test suite for this reusable presentation template. Use after changes to app.js, styles.css, config.js, slides-data.js, presenter.html, presenter.js or presenter.css, or when asked to verify presentation behavior.
 ---
 
 # Testsuite draaien en interpreteren
@@ -11,10 +11,11 @@ ingecheckte, herbruikbare testsuite in `tests/`.
 
 ## Goal
 
-Na een wijziging aan `app.js`/`styles.css`/`config.js`/`slides-data.js`
-(engine-code, niet content-only wijzigingen aan slide-teksten) bevestigen
-dat niets is gebroken, en bij een falende test snel naar de juiste plek in
-de code kunnen wijzen.
+Na een wijziging aan `app.js`/`styles.css`/`config.js`/`slides-data.js`/
+`presenter.html`/`presenter.js`/`presenter.css` (engine-code, niet
+content-only wijzigingen aan slide-teksten) bevestigen dat niets is
+gebroken, en bij een falende test snel naar de juiste plek in de code
+kunnen wijzen.
 
 ## Inputs & context
 
@@ -67,6 +68,26 @@ Bash (om `npm`/`npx playwright` te draaien). Geen MCP of sub-agents nodig.
    - `tests/notes-toggle.spec.js` faalt → `toggleNotesVisibility`/
      `shouldShowNotes`/`notesHiddenByUser`/`updateNotesToggleLabel` in
      `app.js`, of `#btn-toggle-notes`/`#notes-toggle-label` in `index.html`.
+   - `tests/presenter-view-scenarios.spec.js` faalt → de
+     reconnect-bootstrap-regel in `app.js`'s `window.addEventListener('message', ...)`
+     (bekende `presenterRef` vereist een matchende `event.source`, een nog
+     onbekende accepteert precies één `REQUEST_STATE`), of
+     `presentationRef`/`requestState` in `presenter.js`. Iedere test komt
+     direct overeen met één scenario in §3 van
+     `docs/superpowers/specs/2026-08-22-presenter-view-design.md`.
+   - `tests/presenter-view-timing.spec.js` faalt → `plannedStartOfSlide`/
+     `scheduleDelta`/`totalPlannedMs`/`configuredTotalMs`/
+     `averageSlideDurationSeconds`, of de timer-persistentie
+     (`loadTimerState`/`saveTimerState`/`getElapsedSeconds`) in `presenter.js`.
+   - `tests/presenter-view.spec.js` faalt → het lanceermechanisme
+     (`openPresenterView`/`#btn-presenter-view`/`Shift+P` in `app.js`), het
+     command-protocol (`COMMAND_HANDLERS`/`sendStateToPresenter` in
+     `app.js`, `sendCommand`/`renderState` in `presenter.js`), de
+     pauze-overlay (`showPauseOverlay`/`hidePauseOverlay`/
+     `isPauseOverlayVisible` in `app.js`), skip-ahead
+     (`pendingNextSlide`/`lastJumpOriginIndex` in `presenter.js`), of de
+     preview-iframes (`?embed=preview`/`isEmbedPreview` in `app.js`,
+     `syncPreview`/`resyncPreviewOnLoad` in `presenter.js`).
    - `tests/regression.spec.js` faalt → iets breekt breder dan één
      specifiek onderdeel; lees de console-errors in de testoutput, die
      citeren de daadwerkelijke JS-fout.

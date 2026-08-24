@@ -7,6 +7,41 @@ const { gotoPresentation } = require('./helpers');
 // isTemplateAnchor compact slides.
 
 test.describe('content alignment', () => {
+  test('demo slides never combine an icon with a centered title', async ({ page }) => {
+    await gotoPresentation(page);
+    const violations = await page.evaluate(() => SLIDES
+      .filter((slide) => slide.icon && (slide.align || CONFIG.layout.align) !== 'left')
+      .map((slide) => slide.id));
+    expect(violations).toEqual([]);
+  });
+
+  test('icons stay aligned with the top of multi-line titles', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await gotoPresentation(page);
+    const result = await page.evaluate(() => {
+      const slideIndex = SLIDES.findIndex((slide) => slide.icon);
+      SLIDES[slideIndex].title = 'Een bewust lange titel die over meerdere regels wordt verdeeld';
+      state.currentIndex = slideIndex;
+      renderSlide();
+
+      const heading = document.querySelector('.slide-heading');
+      const icon = heading.querySelector('.icon');
+      const title = heading.querySelector('h1');
+      title.style.width = '18rem';
+      const iconRect = icon.getBoundingClientRect();
+      const titleRect = title.getBoundingClientRect();
+      return {
+        alignSelf: getComputedStyle(icon).alignSelf,
+        topDifference: Math.abs(iconRect.top - titleRect.top),
+        titleIsMultiLine: titleRect.height > parseFloat(getComputedStyle(title).lineHeight) * 1.5,
+      };
+    });
+
+    expect(result.alignSelf).toBe('flex-start');
+    expect(result.topDifference).toBeLessThanOrEqual(1);
+    expect(result.titleIsMultiLine).toBe(true);
+  });
+
   test('CONFIG.layout.align = "center" applies no align-left modifier', async ({ page }) => {
     await gotoPresentation(page);
     // Forced explicitly rather than assumed from this deck's own
@@ -58,6 +93,9 @@ test.describe('content alignment', () => {
       // with whatever the ambient global default happens to be.
       CONFIG.layout.align = 'center';
       SLIDES[2].align = 'left';
+      // The demo is free to give the comparison slide its own alignment.
+      // Remove that content choice so this test isolates inheritance.
+      delete SLIDES[3].align;
       state.currentIndex = 2;
       renderSlide();
     });
@@ -161,7 +199,7 @@ test.describe('malformed bullet entries', () => {
 });
 
 test.describe('isTemplateAnchor slides', () => {
-  test('an isTemplateAnchor slide renders compact with the inline skill.md code block', async ({ page }) => {
+  test('an isTemplateAnchor slide renders compact with the inline reference block', async ({ page }) => {
     await gotoPresentation(page);
     // Looked up by the isTemplateAnchor flag rather than a fixed index —
     // this deck's content is edited often and slide positions shift.

@@ -1,7 +1,7 @@
 {
-  "name": "skill-workshop-presentation",
+  "name": "presentation-template",
   "private": true,
-  "description": "Automated tests for the skill-workshop-presentation deck. The presentation itself needs no dependencies at all — this package.json only exists to test it.",
+  "description": "Automated tests for the reusable presentation template. The presentation itself needs no dependencies at all — this package.json only exists to test it.",
   "scripts": {
     "test": "playwright test"
   },

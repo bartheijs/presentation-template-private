@@ -18,7 +18,7 @@ const CONFIG_DEFAULTS = {
   toc: { heading: 'Inhoud' },
   layout: { align: 'center' },
   disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
-  timer: { defaultMinutes: 30, addMinutes: 5 },
+  timer: { defaultMinutes: 30, addMinutes: 5, warningMinutes: 5, warningDurationMs: 5000 },
   transitions: { outMs: 280, inMs: 420, discoRevealDelayMs: 90, discoHideLeadMs: 260 },
   confettiColors: ['#FF3D6E', '#FFB703', '#06D6A0', '#3AB0FF', '#8657FF'],
   templateOverlay: { enabled: true },
@@ -38,8 +38,60 @@ const CONFIG_DEFAULTS = {
     overlayCloseLabel: 'Sluiten',
     overlayTitle: 'Template',
     backToDeckLabel: 'Terug naar de presentatie',
+    presenterViewButton: 'Presenter View',
     finishTitle: 'Klaar!',
     finishBodyHtml: '',
+    pauseOverlayText: '...',
+  },
+};
+
+// Shared Presentation View chrome. CONFIG.lang is the single language
+// switch for both index.html and presenter.html; deck authors should not
+// have to keep a second copy of these generic controls in sync.
+const APP_I18N = {
+  nl: {
+    tocHeading: 'Inhoud',
+    templateButton: 'Presentatiebrief',
+    notesToggleHide: 'Notities verbergen',
+    notesToggleShow: 'Notities tonen',
+    timerStart: 'Start',
+    timerPause: 'Pauze',
+    timerFinish: 'Klaar!',
+    navNext: 'Volgende',
+    navPrev: 'Vorige',
+    tocCollapseHide: 'Inhoud verbergen',
+    tocCollapseShow: 'Inhoud tonen',
+    controlsCollapseHide: 'Bediening inklappen',
+    controlsCollapseShow: 'Bediening uitklappen',
+    overlayCloseLabel: 'Sluiten',
+    overlayTitle: 'Presentatiebrief',
+    backToDeckLabel: 'Terug naar de presentatie',
+    presenterViewButton: 'Presenter View',
+    finishTitle: 'Klaar om te presenteren!',
+    finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
+    pauseOverlayText: '...',
+  },
+  en: {
+    tocHeading: 'Contents',
+    templateButton: 'Presentation brief',
+    notesToggleHide: 'Hide notes',
+    notesToggleShow: 'Show notes',
+    timerStart: 'Start',
+    timerPause: 'Pause',
+    timerFinish: 'Done!',
+    navNext: 'Next',
+    navPrev: 'Previous',
+    tocCollapseHide: 'Hide contents',
+    tocCollapseShow: 'Show contents',
+    controlsCollapseHide: 'Collapse controls',
+    controlsCollapseShow: 'Expand controls',
+    overlayCloseLabel: 'Close',
+    overlayTitle: 'Presentation brief',
+    backToDeckLabel: 'Back to presentation',
+    presenterViewButton: 'Presenter View',
+    finishTitle: 'Ready to present!',
+    finishBodyHtml: 'Use this demo as the starting point for your own story.',
+    pauseOverlayText: '...',
   },
 };
 
@@ -62,6 +114,22 @@ function normalizeConfig(cfg, defaults) {
 }
 
 normalizeConfig(CONFIG, CONFIG_DEFAULTS);
+
+function applyAppLanguage() {
+  const lang = String(CONFIG.lang || 'nl').toLowerCase().startsWith('en') ? 'en' : 'nl';
+  const { tocHeading, ...ui } = APP_I18N[lang];
+  CONFIG.lang = lang;
+  CONFIG.toc.heading = tocHeading;
+  CONFIG.ui = ui;
+}
+
+applyAppLanguage();
+
+// ?embed=preview marks this document as a passive preview iframe inside
+// presenter.html (see docs/superpowers/specs/2026-08-22-presenter-view-design.md
+// §7): it must not navigate/launch on its own, only render commands it
+// receives.
+const isEmbedPreview = new URLSearchParams(location.search).get('embed') === 'preview';
 
 /* ---------- Small helpers ---------- */
 
@@ -116,6 +184,7 @@ const tocListEl = document.getElementById('toc-list');
 const overlayEl = document.getElementById('template-overlay');
 const overlayBodyEl = document.getElementById('overlay-body');
 const finishOverlayEl = document.getElementById('finish-overlay');
+const pauseOverlayEl = document.getElementById('pause-overlay');
 
 /* ---------- Rendering ---------- */
 
@@ -282,6 +351,9 @@ function updateNotesToggleLabel() {
 const MOBILE_BREAKPOINT = 900;
 let tocCollapsed = false;
 let nextCollapsed = false;
+let presenterConnected = false;
+let presenterHidesControls = false;
+let nextCollapsedBeforePresenter = null;
 const appShellEl = document.querySelector('.app-shell');
 
 function toggleTocCollapse() {
@@ -292,11 +364,12 @@ function toggleTocCollapse() {
     'aria-label',
     tocCollapsed ? CONFIG.ui.tocCollapseShow : CONFIG.ui.tocCollapseHide
   );
+  sendStateToPresenter();
 }
 
-function toggleNextCollapse() {
-  nextCollapsed = !nextCollapsed;
+function renderNextPaneState() {
   appShellEl.classList.toggle('next-collapsed', nextCollapsed);
+  appShellEl.classList.toggle('presenter-controls-hidden', presenterHidesControls);
   document.getElementById('next-collapse-icon').setAttribute('href', nextCollapsed ? '#icon-arrow-left' : '#icon-arrow-right');
   document.getElementById('btn-next-collapse').setAttribute(
     'aria-label',
@@ -304,10 +377,38 @@ function toggleNextCollapse() {
   );
 }
 
+function setNextCollapsed(collapsed) {
+  nextCollapsed = collapsed;
+  renderNextPaneState();
+  sendStateToPresenter();
+}
+
+function setPresenterControlsHidden(hidden) {
+  presenterHidesControls = hidden;
+  renderNextPaneState();
+  sendStateToPresenter();
+}
+
+function toggleNextCollapse() {
+  if (presenterConnected) {
+    setPresenterControlsHidden(!presenterHidesControls);
+  } else {
+    setNextCollapsed(!nextCollapsed);
+  }
+}
+
+function setRightAsideVisible(visible) {
+  if (presenterConnected) {
+    setPresenterControlsHidden(!visible);
+  } else if (nextCollapsed === visible) {
+    setNextCollapsed(!visible);
+  }
+}
+
 window.addEventListener('resize', () => {
   if (window.innerWidth >= MOBILE_BREAKPOINT) return;
   if (tocCollapsed) toggleTocCollapse();
-  if (nextCollapsed) toggleNextCollapse();
+  if (nextCollapsed) setNextCollapsed(false);
 });
 
 function renderTocOnce() {
@@ -349,7 +450,8 @@ function updateTocActiveState() {
 // click/arrow can finish it. Any non-matching navigation cancels it.
 let pendingPause = null; // { toIndex, dir } | null
 
-// Handles for the "out"-phase timer/listener currently in flight, so
+// Handles for the "out"-phase timer/listener and optional auto-mode hold
+// currently in flight, so
 // resetAnimationState() can reach and tear them down if a TOC click
 // interrupts a transition before they fire on their own. Both functions
 // that start an "out" phase (animateTransition/beginPausedTransition) must
@@ -357,6 +459,7 @@ let pendingPause = null; // { toIndex, dir } | null
 // completes normally.
 let pendingRevealTimer = null;
 let pendingOutListener = null;
+let pendingHoldTimer = null;
 
 function goTo(index, { animate = false, direction = null } = {}) {
   if (index < 0 || index >= SLIDES.length) return;
@@ -384,12 +487,16 @@ function goTo(index, { animate = false, direction = null } = {}) {
     state.currentIndex = index;
     renderSlide();
     updateTocActiveState();
+    sendStateToPresenter();
     return;
   }
 
   const destSlide = SLIDES[index];
   const discoOn = isDiscoEnabledFor(destSlide);
-  const pauseOn = discoOn && isDiscoPauseFor(destSlide);
+  // Pause reveals are a forward-presenting device. Going back should stay
+  // corrective and immediate: keep the visual transition, but never freeze
+  // halfway and require a second click.
+  const pauseOn = dir === 'next' && discoOn && isDiscoPauseFor(destSlide);
 
   if (discoOn) renderDiscoTitle(destSlide.discoTitleLines || CONFIG.disco.titleLines);
 
@@ -397,9 +504,10 @@ function goTo(index, { animate = false, direction = null } = {}) {
     beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
   } else {
     state.currentIndex = index;
-    animateTransition(dir, renderSlide);
+    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide));
   }
   updateTocActiveState();
+  sendStateToPresenter();
 }
 
 // Shared by the Next button, ArrowRight and Space: goTo() itself just
@@ -444,6 +552,15 @@ function isDiscoPauseFor(slide) {
   return (slide.discoMode || CONFIG.disco.mode || 'auto') === 'pause';
 }
 
+// Optional per-slide hold for an auto-mode disco transition. It begins
+// after the outgoing panels have left and keeps the background fully
+// visible before the destination panels enter. Invalid/negative values are
+// ignored so malformed content cannot stall navigation.
+function resolveDiscoHoldMsFor(slide) {
+  const holdMs = Number(slide.discoHoldMs);
+  return Number.isFinite(holdMs) && holdMs > 0 ? holdMs : 0;
+}
+
 // A slide's own `discoTitleLines` overrides CONFIG.disco.titleLines just
 // for the transition landing on it. #disco-title is a single shared
 // element (see index.html) re-rendered right before that one transition
@@ -454,7 +571,7 @@ function renderDiscoTitle(lines) {
     .join('');
 }
 
-function animateTransition(dir, applyFn) {
+function animateTransition(dir, applyFn, holdMs = 0) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
@@ -469,34 +586,43 @@ function animateTransition(dir, applyFn) {
     clearTimeout(pendingRevealTimer);
     pendingRevealTimer = null;
     pendingOutListener = null;
-    // Swap in the new slide's content WHILE still hidden by the "out"
-    // classes (which hold the panel off-screen via animation-fill-mode:
-    // forwards). renderSlide() forces a synchronous reflow (scrollTop),
-    // so if we removed the "out" classes first, that reflow could catch
-    // the panel mid-snap-back to its normal (visible, in-place) resting
-    // style and paint a one-frame flash before the "in" class re-hides
-    // it. Doing the swap first, then flipping classes back-to-back with
-    // nothing forcing a reflow in between, avoids that flash entirely.
-    applyFn();
-    slideContentEl.classList.remove('content-anim-out');
-    slideNotesEl.classList.remove('notes-anim-out');
-    slideContentEl.classList.add('content-anim-in');
-    if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
+    const finishOut = () => {
+      pendingHoldTimer = null;
+      // Swap in the new slide's content WHILE still hidden by the "out"
+      // classes (which hold the panel off-screen via animation-fill-mode:
+      // forwards). renderSlide() forces a synchronous reflow (scrollTop),
+      // so if we removed the "out" classes first, that reflow could catch
+      // the panel mid-snap-back to its normal (visible, in-place) resting
+      // style and paint a one-frame flash before the "in" class re-hides
+      // it. Doing the swap first, then flipping classes back-to-back with
+      // nothing forcing a reflow in between, avoids that flash entirely.
+      applyFn();
+      slideContentEl.classList.remove('content-anim-out');
+      slideNotesEl.classList.remove('notes-anim-out');
+      slideContentEl.classList.add('content-anim-in');
+      if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-in');
 
-    if (discoOn) {
-      const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
-      setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+      if (discoOn) {
+        const hideDelay = Math.max(0, ANIM_IN_MS - DISCO_HIDE_LEAD_MS);
+        setTimeout(() => slideStageEl.classList.remove('is-transitioning'), hideDelay);
+      }
+
+      slideContentEl.addEventListener(
+        'animationend',
+        () => {
+          slideContentEl.classList.remove('content-anim-in');
+          slideNotesEl.classList.remove('notes-anim-in');
+          isAnimatingSlide = false;
+        },
+        { once: true }
+      );
+    };
+
+    if (discoOn && holdMs > 0) {
+      pendingHoldTimer = setTimeout(finishOut, holdMs);
+    } else {
+      finishOut();
     }
-
-    slideContentEl.addEventListener(
-      'animationend',
-      () => {
-        slideContentEl.classList.remove('content-anim-in');
-        slideNotesEl.classList.remove('notes-anim-in');
-        isAnimatingSlide = false;
-      },
-      { once: true }
-    );
   }
   pendingOutListener = onOut;
   slideContentEl.addEventListener('animationend', onOut, { once: true });
@@ -570,6 +696,7 @@ function resumePausedTransition() {
   );
 
   updateTocActiveState();
+  sendStateToPresenter();
 }
 
 // Any non-matching navigation while frozen cancels the pause: snap the
@@ -616,6 +743,10 @@ function resetAnimationState() {
     slideContentEl.removeEventListener('animationend', pendingOutListener);
     pendingOutListener = null;
   }
+  if (pendingHoldTimer) {
+    clearTimeout(pendingHoldTimer);
+    pendingHoldTimer = null;
+  }
   slideContentEl.classList.remove('content-anim-out', 'content-anim-in');
   slideNotesEl.classList.remove('notes-anim-out', 'notes-anim-in');
   slideStageEl.classList.remove('is-transitioning');
@@ -626,49 +757,66 @@ document.getElementById('btn-prev').addEventListener('click', () =>
   goTo(state.currentIndex - 1, { animate: true, direction: 'prev' })
 );
 
-document.addEventListener('keydown', (e) => {
-  if (!finishOverlayEl.hidden) return;
-  if (e.key === 'ArrowDown') {
-    if (!CONFIG.templateOverlay.enabled) return;
-    e.preventDefault();
-    if (overlayEl.hidden) openTemplateOverlay();
-    return;
-  }
-  if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    if (!overlayEl.hidden) closeTemplateOverlay();
-    return;
-  }
-  if (!overlayEl.hidden) return;
-  if (e.key === 'ArrowRight') goNext();
-  if (e.key === 'ArrowLeft') goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
-  if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
-    // Skipped when a <button> is focused (Next itself, a TOC row, ...) —
-    // space already natively activates that button on its own, so also
-    // advancing here would double-fire (or fire a jarring extra "next"
-    // while e.g. the timer's Start button happens to have focus).
-    e.preventDefault(); // space's native behavior scrolls the page otherwise
-    goNext();
-  }
-});
+// Both listeners below drive the real presentation's own navigation from
+// its own keyboard/click input. A preview iframe (?embed=preview) must stay
+// passive — it only renders what the message listener below tells it to —
+// so these are skipped entirely there (see isEmbedPreview, defined above).
+if (!isEmbedPreview) {
+  document.addEventListener('keydown', (e) => {
+    if (!finishOverlayEl.hidden) return;
+    if (e.key === 'ArrowDown') {
+      if (!CONFIG.templateOverlay.enabled) return;
+      e.preventDefault();
+      if (overlayEl.hidden) openTemplateOverlay();
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!overlayEl.hidden) closeTemplateOverlay();
+      return;
+    }
+    if (!overlayEl.hidden) return;
+    // Presentation clickers commonly emit PageDown/PageUp rather than arrow
+    // keys, so support both pairs as equivalent navigation controls.
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      e.preventDefault();
+      goNext();
+      return;
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+      return;
+    }
+    if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
+      // Skipped when a <button> is focused (Next itself, a TOC row, ...) —
+      // space already natively activates that button on its own, so also
+      // advancing here would double-fire (or fire a jarring extra "next"
+      // while e.g. the timer's Start button happens to have focus).
+      e.preventDefault(); // space's native behavior scrolls the page otherwise
+      goNext();
+    }
+  });
 
-tocListEl.addEventListener('click', (e) => {
-  const item = e.target.closest('.toc-item');
-  if (!item) return;
-  goTo(Number(item.dataset.index), { animate: false });
-});
+  tocListEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.toc-item');
+    if (!item) return;
+    goTo(Number(item.dataset.index), { animate: false });
+  });
+}
 
 /* ---------- Timer ---------- */
 
 const THIRTY_MIN_MS = CONFIG.timer.defaultMinutes * 60 * 1000;
 const FIVE_MIN_MS = CONFIG.timer.addMinutes * 60 * 1000;
+const TIMER_WARNING_MS = CONFIG.timer.warningMinutes * 60 * 1000;
 
 const timer = {
   remainingMs: THIRTY_MIN_MS,
   running: false,
   endAt: null,
   intervalId: null,
-  firedZero: false,
+  warningShown: false,
 };
 
 const timerDisplayEl = document.getElementById('timer-display');
@@ -711,25 +859,35 @@ function timerPause() {
 function timerAddFive() {
   if (timer.running) {
     const remaining = Math.max(0, timer.endAt - Date.now());
-    timer.endAt = Date.now() + Math.min(THIRTY_MIN_MS, remaining + FIVE_MIN_MS);
+    timer.remainingMs = Math.min(THIRTY_MIN_MS, remaining + FIVE_MIN_MS);
+    timer.endAt = Date.now() + timer.remainingMs;
   } else {
     timer.remainingMs = Math.min(THIRTY_MIN_MS, timer.remainingMs + FIVE_MIN_MS);
   }
-  timer.firedZero = false;
+  if (timer.remainingMs > TIMER_WARNING_MS) timer.warningShown = false;
   renderTimerDisplay();
 }
 
 function timerTick() {
+  const previousRemainingMs = timer.remainingMs;
   timer.remainingMs = Math.max(0, timer.endAt - Date.now());
   renderTimerDisplay();
+
+  if (
+    !timer.warningShown &&
+    previousRemainingMs > TIMER_WARNING_MS &&
+    timer.remainingMs <= TIMER_WARNING_MS &&
+    timer.remainingMs > 0
+  ) {
+    timer.warningShown = true;
+    launchTemporaryConfetti();
+  }
+
   if (timer.remainingMs <= 0) {
     clearInterval(timer.intervalId);
+    timer.intervalId = null;
     timer.running = false;
     setTimerToggleUI(false);
-    if (!timer.firedZero) {
-      timer.firedZero = true;
-      launchConfetti();
-    }
   }
 }
 
@@ -756,8 +914,10 @@ const CONFETTI_GRAVITY = 0.025;
 const CONFETTI_MAX_VY = 2.2;
 
 let confettiActive = false;
+let confettiPersistent = false;
 let confettiSpawnIntervalId = null;
 let confettiRafId = null;
+let temporaryConfettiStopTimerId = null;
 let fallingParticles = [];
 let pileHeights = null;
 let settledCanvas = null;
@@ -840,7 +1000,13 @@ function spawnConfettiBatch(count) {
   for (let i = 0; i < count; i++) fallingParticles.push(makeConfettiParticle());
 }
 
-function launchConfetti(burstCount = 60) {
+function clearTemporaryConfettiStopTimer() {
+  if (temporaryConfettiStopTimerId === null) return;
+  clearTimeout(temporaryConfettiStopTimerId);
+  temporaryConfettiStopTimerId = null;
+}
+
+function startConfetti(burstCount) {
   if (!settledCanvas) ensureConfettiBuffers();
   spawnConfettiBatch(burstCount);
   if (!confettiActive) {
@@ -851,6 +1017,25 @@ function launchConfetti(burstCount = 60) {
     }, SPAWN_INTERVAL_MS);
   }
   if (!confettiRafId) confettiRafId = requestAnimationFrame(confettiLoop);
+}
+
+function launchConfetti(burstCount = 60) {
+  clearTemporaryConfettiStopTimer();
+  confettiPersistent = true;
+  startConfetti(burstCount);
+}
+
+function launchTemporaryConfetti(
+  durationMs = CONFIG.timer.warningDurationMs,
+  burstCount = 60
+) {
+  if (confettiPersistent) return;
+  clearTemporaryConfettiStopTimer();
+  startConfetti(burstCount);
+  temporaryConfettiStopTimerId = setTimeout(() => {
+    temporaryConfettiStopTimerId = null;
+    stopConfetti();
+  }, durationMs);
 }
 
 function confettiLoop() {
@@ -882,7 +1067,9 @@ function confettiLoop() {
 }
 
 function stopConfetti() {
+  clearTemporaryConfettiStopTimer();
   confettiActive = false;
+  confettiPersistent = false;
   if (confettiSpawnIntervalId) {
     clearInterval(confettiSpawnIntervalId);
     confettiSpawnIntervalId = null;
@@ -914,10 +1101,12 @@ function openTemplateOverlay() {
   const slide = SLIDES[state.currentIndex];
   renderTemplateOverlay(slide.templateSection || null);
   overlayEl.hidden = false;
+  sendStateToPresenter();
 }
 
 function closeTemplateOverlay() {
   overlayEl.hidden = true;
+  sendStateToPresenter();
 }
 
 document.getElementById('btn-template').addEventListener('click', openTemplateOverlay);
@@ -940,6 +1129,26 @@ function closeFinishOverlay() {
   stopConfetti();
 }
 
+/* ---------- Pause overlay (presenter-triggered cutaway) ---------- */
+
+// Presenter-only cutaway: covers the whole viewport without touching
+// currentIndex, any overlay, or either aside's own state — see
+// docs/superpowers/specs/2026-08-22-presenter-view-design.md §6.
+function showPauseOverlay() {
+  document.getElementById('pause-overlay-text').textContent = CONFIG.ui.pauseOverlayText;
+  pauseOverlayEl.hidden = false;
+  sendStateToPresenter();
+}
+
+function hidePauseOverlay() {
+  pauseOverlayEl.hidden = true;
+  sendStateToPresenter();
+}
+
+function isPauseOverlayVisible() {
+  return !pauseOverlayEl.hidden;
+}
+
 document.getElementById('btn-timer-finish').addEventListener('click', () => {
   launchConfetti();
   openFinishOverlay();
@@ -954,11 +1163,13 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!finishOverlayEl.hidden) closeFinishOverlay();
   else if (!overlayEl.hidden) closeTemplateOverlay();
+  else if (isPauseOverlayVisible()) hidePauseOverlay();
 });
 
 /* ---------- Apply config-driven strings/toggles ---------- */
 
 function applyConfigStrings() {
+  applyAppLanguage();
   document.title = CONFIG.title;
   document.documentElement.lang = CONFIG.lang;
   document.documentElement.style.setProperty('--transition-out-ms', `${ANIM_OUT_MS}ms`);
@@ -970,6 +1181,8 @@ function applyConfigStrings() {
   document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
   document.getElementById('btn-template').setAttribute('aria-label', CONFIG.ui.templateButton);
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
+  document.getElementById('btn-presenter-view-label').textContent = CONFIG.ui.presenterViewButton;
+  document.getElementById('btn-presenter-view').setAttribute('aria-label', CONFIG.ui.presenterViewButton);
   updateNotesToggleLabel();
   document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
   document.getElementById('btn-next-collapse').setAttribute('aria-label', CONFIG.ui.controlsCollapseHide);
@@ -991,6 +1204,147 @@ function applyConfigStrings() {
   document.getElementById('finish-title').textContent = CONFIG.ui.finishTitle;
   document.getElementById('finish-body').innerHTML = CONFIG.ui.finishBodyHtml;
   document.getElementById('finish-back-label').textContent = CONFIG.ui.backToDeckLabel;
+}
+
+/* ---------- Presenter View launch (skipped entirely in preview iframes) ---------- */
+
+let presenterRef = null;
+
+function openPresenterView() {
+  presenterRef = window.open('presenter.html', 'presenterView');
+}
+
+function setPresenterConnected(connected) {
+  if (presenterConnected === connected) return;
+  presenterConnected = connected;
+
+  if (connected) {
+    nextCollapsedBeforePresenter = nextCollapsed;
+    nextCollapsed = false;
+    presenterHidesControls = true;
+  } else {
+    presenterHidesControls = false;
+    nextCollapsed = nextCollapsedBeforePresenter === null ? nextCollapsed : nextCollapsedBeforePresenter;
+    nextCollapsedBeforePresenter = null;
+  }
+  renderNextPaneState();
+}
+
+// window.closed is the one dependable same-origin/file:// signal available
+// when the separate Presenter View is closed. Restore the main-screen
+// controls promptly without requiring another user action in index.html.
+setInterval(() => {
+  if (!presenterConnected || !presenterRef || !presenterRef.closed) return;
+  presenterRef = null;
+  setPresenterConnected(false);
+}, 500);
+
+if (!isEmbedPreview) {
+  document.getElementById('btn-presenter-view').addEventListener('click', openPresenterView);
+  document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.key === 'P') openPresenterView();
+  });
+}
+
+// Whitelisted commands a connected Presenter View may send. Each handler
+// takes the full message payload (only GO_TO_SLIDE uses it) and is trusted
+// to leave state consistent — the listener below broadcasts once after
+// every successful dispatch, so handlers never need to call
+// sendStateToPresenter() themselves.
+// Object.create(null) as the prototype means a command name that collides
+// with an inherited Object.prototype member (e.g. "toString") looks up to
+// undefined instead of resolving to a truthy inherited function, so the
+// `if (!handler) return;` check below correctly rejects it.
+const COMMAND_HANDLERS = Object.assign(Object.create(null), {
+  NEXT_SLIDE: () => goNext(),
+  PREVIOUS_SLIDE: () => goTo(state.currentIndex - 1, { animate: true, direction: 'prev' }),
+  GO_TO_SLIDE: (data) => {
+    const slide = Number(data.slide);
+    if (Number.isInteger(slide)) goTo(slide, { animate: false });
+  },
+  TOGGLE_CONTEXT_OVERLAY: () => (overlayEl.hidden ? openTemplateOverlay() : closeTemplateOverlay()),
+  SHOW_CONTEXT_OVERLAY: () => openTemplateOverlay(),
+  HIDE_CONTEXT_OVERLAY: () => closeTemplateOverlay(),
+  TOGGLE_LEFT_ASIDE: () => toggleTocCollapse(),
+  SHOW_LEFT_ASIDE: () => { if (tocCollapsed) toggleTocCollapse(); },
+  HIDE_LEFT_ASIDE: () => { if (!tocCollapsed) toggleTocCollapse(); },
+  TOGGLE_RIGHT_ASIDE: () => setRightAsideVisible(presenterHidesControls || nextCollapsed),
+  SHOW_RIGHT_ASIDE: () => setRightAsideVisible(true),
+  HIDE_RIGHT_ASIDE: () => setRightAsideVisible(false),
+  TOGGLE_PAUSE_OVERLAY: () => (isPauseOverlayVisible() ? hidePauseOverlay() : showPauseOverlay()),
+  SHOW_PAUSE_OVERLAY: () => showPauseOverlay(),
+  HIDE_PAUSE_OVERLAY: () => hidePauseOverlay(),
+  REQUEST_STATE: () => {}, // no-op handler: the broadcast below every dispatch is what answers it
+});
+
+// Message listener is registered unconditionally (not gated on
+// isEmbedPreview): a Task 6 preview iframe (isEmbedPreview === true) still
+// needs to receive and act on messages — it just never opens its own
+// Presenter View or navigates on its own (that's what the guard above is
+// for).
+window.addEventListener('message', (e) => {
+  // Preview iframes (?embed=preview) are driven exclusively by
+  // presenter.js's syncPreview() via `window.parent`: a preview-state
+  // snapshot (asides/overlays) plus a GO_TO_SLIDE command for the slide
+  // index. They never establish a presenterRef of their own and never fall
+  // through to the ordinary command dispatch below.
+  if (isEmbedPreview) {
+    if (e.source !== window.parent) return;
+    if (!e.data) return;
+    if (e.data.type === 'preview-state') {
+      if (!overlayEl.hidden !== e.data.contextOverlayVisible) {
+        e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
+      }
+      if (tocCollapsed !== !e.data.leftAsideVisible) toggleTocCollapse();
+      // Presenter previews should mirror the audience screen exactly. While
+      // Presenter View is connected, a hidden right aside disappears there
+      // completely; it is not the ordinary collapsed icon rail.
+      nextCollapsed = false;
+      presenterHidesControls = !e.data.rightAsideVisible;
+      renderNextPaneState();
+      if (isPauseOverlayVisible() !== e.data.pauseOverlayVisible) {
+        e.data.pauseOverlayVisible ? showPauseOverlay() : hidePauseOverlay();
+      }
+      return;
+    }
+    if (e.data.type === 'command' && e.data.command === 'GO_TO_SLIDE') {
+      const slide = Number(e.data.slide);
+      if (Number.isInteger(slide)) goTo(slide, { animate: false });
+    }
+    return;
+  }
+  if (!e.data || e.data.type !== 'command') return; // schema check, done once
+  if (presenterRef && !presenterRef.closed) {
+    if (e.source !== presenterRef) return;
+  } else if (e.data.command !== 'REQUEST_STATE') {
+    return; // bootstrap gate: only a REQUEST_STATE may establish presenterRef
+  } else {
+    presenterRef = e.source;
+  }
+  setPresenterConnected(true);
+  const handler = COMMAND_HANDLERS[e.data.command];
+  if (!handler) return; // unknown command: ignored, never executed
+  handler(e.data);
+  sendStateToPresenter();
+});
+
+function sendStateToPresenter() {
+  if (!presenterRef || presenterRef.closed) return;
+  // targetOrigin '*' is deliberate: file:// pages have opaque origins, so
+  // event.origin can't be checked meaningfully. Sender identity is verified
+  // instead via e.source === presenterRef in the message listener above.
+  presenterRef.postMessage(
+    {
+      type: 'state',
+      currentSlide: state.currentIndex,
+      totalSlides: SLIDES.length,
+      contextOverlayVisible: !overlayEl.hidden,
+      leftAsideVisible: !tocCollapsed,
+      rightAsideVisible: !nextCollapsed && !presenterHidesControls,
+      pauseOverlayVisible: isPauseOverlayVisible(),
+    },
+    '*'
+  );
 }
 
 /* ---------- Init ---------- */

@@ -16,6 +16,18 @@ async function clickAndSettle(page, selector) {
   }
 }
 
+test('PageDown/PageUp clicker signals navigate forward and backward', async ({ page }) => {
+  await gotoPresentation(page);
+
+  await page.keyboard.press('PageDown');
+  await waitIdle(page);
+  expect(await page.evaluate(() => state.currentIndex)).toBe(1);
+
+  await page.keyboard.press('PageUp');
+  await waitIdle(page);
+  expect(await page.evaluate(() => state.currentIndex)).toBe(0);
+});
+
 test('clicking through all slides produces no console/page errors', async ({ page }) => {
   test.setTimeout(90_000); // ~60 animated transitions at up to 700ms each
   const errors = [];

@@ -80,6 +80,29 @@ test.describe('disco enable/disable', () => {
     const restoredHtml = await page.evaluate(() => document.getElementById('disco-title').innerHTML);
     expect(restoredHtml).toBe(defaultHtml);
   });
+
+  test('per-slide discoHoldMs keeps an auto transition visible longer', async ({ page }) => {
+    await gotoPresentation(page);
+    const { outgoingTitle, targetTitle } = await page.evaluate(() => {
+      CONFIG.disco.enabled = false;
+      SLIDES[1].disco = true;
+      SLIDES[1].discoMode = 'auto';
+      SLIDES[1].discoHoldMs = 700;
+      state.currentIndex = 0;
+      renderSlide();
+      return { outgoingTitle: SLIDES[0].title, targetTitle: SLIDES[1].title };
+    });
+
+    await page.click('#btn-next');
+    await page.waitForTimeout(500); // out animation is done; hold is active
+
+    await expect(page.locator('#slide-stage')).toHaveClass(/is-transitioning/);
+    await expect(page.locator('.slide-heading h1')).toHaveText(outgoingTitle);
+
+    await waitIdle(page);
+    await expect(page.locator('#slide-stage')).not.toHaveClass(/is-transitioning/);
+    await expect(page.locator('.slide-heading h1')).toHaveText(targetTitle);
+  });
 });
 
 test.describe('pause-mode transition', () => {
@@ -122,6 +145,29 @@ test.describe('pause-mode transition', () => {
     await expect(page.locator('.toc-item.is-active')).toHaveAttribute('data-index', '3');
     const finalIndex = await page.evaluate(() => state.currentIndex);
     expect(finalIndex).toBe(3);
+  });
+
+  test('going back skips pause mode and lands in one click', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      SLIDES[3].disco = true;
+      SLIDES[3].discoMode = 'pause';
+      state.currentIndex = 4;
+      renderSlide();
+      updateTocActiveState();
+    });
+
+    await page.click('#btn-prev'); // 4 -> 3: pause destination, but backwards
+    await waitIdle(page);
+
+    const result = await page.evaluate(() => ({
+      currentIndex: state.currentIndex,
+      pendingPause,
+      isTransitioning: document.getElementById('slide-stage').classList.contains('is-transitioning'),
+    }));
+    expect(result.currentIndex).toBe(3);
+    expect(result.pendingPause).toBeNull();
+    expect(result.isTransitioning).toBe(false);
   });
 
   test('cancels cleanly when the opposite direction is pressed', async ({ page }) => {
