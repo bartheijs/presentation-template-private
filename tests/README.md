@@ -56,6 +56,15 @@ npx playwright test
   flip, smooth resize (reusing the notes-resize fix), heading position
   staying fixed, persistence across slide navigation, and the guard that
   ignores the toggle during an in-flight transition.
+- `presenter-view.spec.js` — the Presenter View launch mechanism, connection
+  handshake, full command whitelist with state broadcast, reconnect
+  resilience, skip-ahead/back-to-jump-origin, and the two preview iframes.
+- `presenter-view-scenarios.spec.js` — the six reconnect/lifecycle scenarios
+  from `docs/superpowers/specs/2026-08-22-presenter-view-design.md` §3,
+  one test per scenario, for direct traceability against the spec.
+- `presenter-view-timing.spec.js` — schedule-adherence math
+  (`plannedStartOfSlide`/`scheduleDelta`) and the presentation timer's
+  `sessionStorage` persistence across a Presenter View refresh.
 - `regression.spec.js` — a full click-through of every slide (forward and
   back), PageDown/PageUp presentation-clicker navigation, and both overlays
   opening/closing, asserting zero console/page errors, plus malformed-slide-
@@ -79,3 +88,16 @@ the generic Presentation brief reference (see
 `scaffold-presentation`/`update-slides`'s skill docs). A presentation forked
 for a different topic that doesn't use that concept should remove or adapt
 that one test; it isn't testing generic engine behavior.
+
+## Manual verification (not automated)
+
+`file://` cross-window messaging behavior is not guaranteed identical
+across browsers. Before considering the Presenter View feature done,
+manually verify scenarios 1-6 above by hand in:
+
+- macOS: Chrome, Edge, Safari
+- Windows: Edge (if available)
+
+Open `index.html` directly (double-click), click the Presenter View
+button, and step through each scenario from
+`docs/superpowers/specs/2026-08-22-presenter-view-design.md` §3.

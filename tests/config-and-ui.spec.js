@@ -49,6 +49,28 @@ test.describe('config-driven UI strings', () => {
     await expect(page.locator('#template-overlay')).toBeVisible();
   });
 
+  test('CONFIG.lang switches all shared Presentation View controls', async ({ page }) => {
+    await gotoPresentation(page);
+
+    await page.evaluate(() => {
+      CONFIG.lang = 'en';
+      applyConfigStrings();
+    });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('#toc-heading')).toHaveText('Contents');
+    await expect(page.locator('#btn-prev-label')).toHaveText('Previous');
+    await expect(page.locator('#btn-next-label')).toHaveText('Next');
+
+    await page.evaluate(() => {
+      CONFIG.lang = 'nl';
+      applyConfigStrings();
+    });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'nl');
+    await expect(page.locator('#toc-heading')).toHaveText('Inhoud');
+    await expect(page.locator('#btn-prev-label')).toHaveText('Vorige');
+    await expect(page.locator('#btn-next-label')).toHaveText('Volgende');
+  });
+
   test('templateOverlay.enabled false hides the button and disables ArrowDown', async ({ page }) => {
     await gotoPresentation(page);
     // Toggle config and re-run the real startup function that applies it —
@@ -84,7 +106,9 @@ test.describe('config-driven UI strings', () => {
     });
 
     expect(errors).toEqual([]);
-    await expect(page.locator('#btn-template-label')).toHaveText('Skill Template');
+    await expect(page.locator('#btn-template-label')).toHaveText(
+      await page.evaluate(() => CONFIG.ui.templateButton)
+    );
     await expect(page.locator('.slide-heading')).toBeVisible();
     // Regression guard: CONFIG.transitions.* is read at module-evaluation
     // time in app.js (ANIM_OUT_MS and friends), before anything renders —
