@@ -11,7 +11,7 @@ const SKILL_TEMPLATE_SECTIONS = [];
 const SLIDES = [
   {
     id: 1,
-    title: 'AI codeert, jij regisseert',
+    title: 'AI codeert,\njij regisseert',
     subtitle: 'Mendix Pluggable Widgets bouwen met AI',
     bullets: [],
     notes: `Open met de kernboodschap van de hele dag in twee zinnen. Geen lange intro — de titel zelf is de hook. Vertel kort wie je bent en waarom je dit doet: je eigen skill-suite en je ervaring met widgets bouwen met AI.`,
@@ -63,10 +63,18 @@ Vraag hier ook echt even handen omhoog — een kort, licht moment om de zaal wak
     id: 5,
     title: 'De dag in vogelvlucht',
     align: 'center',
-    bullets: [
-      '🎤 Presentatie & Scaffolding  →  🔎 Exploring  →  🧭 Plannen → 💻 Coderen  →  🎬 Demo’s',
+    bullets: [],
+    timeline: [
+      { time: '09:00', label: 'Presentatie & scaffolding', icon: 'wrench' },
+      { time: '09:45', label: 'Exploring', icon: 'question' },
+      { time: '10:30', label: 'Plannen', icon: 'steps' },
+      { time: '11:00', label: 'Coderen', icon: 'bolt' },
+      { time: '12:00', label: 'Lunchpauze', icon: 'pause', kind: 'break' },
+      { time: '12:45', label: 'Coderen', icon: 'bolt' },
+      { time: '14:30', label: 'Demo’s', icon: 'party' },
+      { time: '15:30', label: 'Einde', icon: 'flag', kind: 'end' },
     ],
-    notes: `Dit is de echte dagplanning, niet het conceptuele 6-fasenmodel — vandaar dat “Presentatie & Scaffolding” er zelf ook op staat (dit hier, nu) en Releasen ontbreekt: dat komt zo dadelijk nog kort aan bod in de presentatie, maar is geen onderdeel van het praktische dagverloop. Demo’s staan er wel op, want dat is het afsluitende moment waar iedereen naartoe werkt.
+    notes: `Dit is de echte dagplanning, niet het conceptuele 6-fasenmodel. Loop de starttijden kort langs: 09:00 presentatie en scaffolding, 09:45 Exploring, 10:30 Plannen en vanaf 11:00 Coderen. Om 12:00 is er lunchpauze; om 12:45 gaat Coderen verder. De demo’s beginnen om 14:30 en de workshop eindigt om 15:30. Releasen komt in de presentatie nog kort aan bod, maar is geen apart praktisch tijdsblok.
 
 Loop de blokken kort langs zonder in te zoomen — dit is de roadmap, niet de inhoud. Testen is bewust geen aparte stap: als developer test je continu terwijl je codeert, dus dat hoort al bij Coderen. Vertel dat de rest van de dag deze indeling volgt en dat dit de kapstok is waar alles aan hangt.`,
     duration: 90,

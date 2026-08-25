@@ -179,6 +179,54 @@ test.describe('bullet subtext', () => {
   });
 });
 
+test.describe('slide timeline', () => {
+  test('renders slide 5 as eight timed, ordered, non-overflowing phases', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await gotoPresentation(page);
+    await page.evaluate(() => { state.currentIndex = 4; renderSlide(); });
+
+    const timeline = page.locator('.slide-timeline');
+    await expect(timeline).toBeVisible();
+    await expect(timeline.locator('.slide-timeline-step')).toHaveCount(8);
+    await expect(page.locator('.slide-bullets')).toHaveCount(0);
+    await expect(timeline.locator('.slide-timeline-time')).toHaveText([
+      '09:00', '09:45', '10:30', '11:00', '12:00', '12:45', '14:30', '15:30',
+    ]);
+    await expect(timeline.locator('.slide-timeline-label')).toHaveText([
+      'Presentatie & scaffolding', 'Exploring', 'Plannen', 'Coderen',
+      'Lunchpauze', 'Coderen', 'Demo’s', 'Einde',
+    ]);
+    await expect(timeline.locator('.slide-timeline-step--break')).toHaveCount(1);
+    await expect(timeline.locator('.slide-timeline-step--end')).toHaveCount(1);
+    await expect(timeline.locator('.slide-timeline-step').nth(3).locator('use')).toHaveAttribute('href', '#icon-bolt');
+    await expect(timeline.locator('.slide-timeline-step').nth(5).locator('use')).toHaveAttribute('href', '#icon-bolt');
+
+    const layout = await page.evaluate(() => {
+      const stage = document.getElementById('slide-content').getBoundingClientRect();
+      const timelineRect = document.querySelector('.slide-timeline').getBoundingClientRect();
+      const markers = [...document.querySelectorAll('.slide-timeline-marker')]
+        .map((marker) => marker.getBoundingClientRect());
+      const steps = [...document.querySelectorAll('.slide-timeline-step')];
+      return {
+        withinStage: timelineRect.left >= stage.left && timelineRect.right <= stage.right
+          && timelineRect.top >= stage.top && timelineRect.bottom <= stage.bottom,
+        markersIncrease: markers.every((marker, index) => index === 0 || marker.left > markers[index - 1].right),
+        codingColorsMatch: getComputedStyle(steps[3]).getPropertyValue('--step-color')
+          === getComputedStyle(steps[5]).getPropertyValue('--step-color'),
+        breakColor: getComputedStyle(steps[4]).getPropertyValue('--step-color').trim(),
+        endColor: getComputedStyle(steps[7]).getPropertyValue('--step-color').trim(),
+        demoColor: getComputedStyle(steps[6]).getPropertyValue('--step-color').trim(),
+        purple: getComputedStyle(document.documentElement).getPropertyValue('--accent-5').trim(),
+      };
+    });
+    expect(layout.withinStage).toBe(true);
+    expect(layout.markersIncrease).toBe(true);
+    expect(layout.codingColorsMatch).toBe(true);
+    expect(layout.breakColor).toBe(layout.endColor);
+    expect(layout.demoColor).toBe(layout.purple);
+  });
+});
+
 test.describe('malformed bullet entries', () => {
   test('null/undefined entries and an object without text render without crashing', async ({ page }) => {
     await gotoPresentation(page);

@@ -214,6 +214,20 @@ function buildSlideContentHTML(slide) {
   const bulletsBlock = bullets.length
     ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
     : '';
+  const timelineSteps = Array.isArray(slide.timeline)
+    ? slide.timeline.filter((step) => step && typeof step.label === 'string')
+    : [];
+  const timelineBlock = timelineSteps.length
+    ? `<ol class="slide-timeline${timelineSteps.length > 6 ? ' slide-timeline--dense' : ''}" style="--timeline-count: ${timelineSteps.length}" aria-label="Dagprogramma">${timelineSteps.map((step, index) => `
+        <li class="slide-timeline-step${step.kind === 'break' ? ' slide-timeline-step--break' : ''}${step.kind === 'end' ? ' slide-timeline-step--end' : ''}">
+          <span class="slide-timeline-time">${escapeHtml(step.time || String(index + 1).padStart(2, '0'))}</span>
+          <span class="slide-timeline-marker">
+            <svg class="icon"><use href="#icon-${escapeHtml(step.icon || 'spark')}"></use></svg>
+          </span>
+          <span class="slide-timeline-label">${escapeHtml(step.label)}</span>
+        </li>`).join('')}
+      </ol>`
+    : '';
   const templateBlock = slide.isTemplateAnchor
     ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
     : '';
@@ -273,6 +287,7 @@ function buildSlideContentHTML(slide) {
     <div class="slide-inner">
       ${headingBlock}
       ${bulletsBlock}
+      ${timelineBlock}
       ${templateBlock}
     </div>
     ${metaBlock}`;
@@ -303,6 +318,7 @@ function renderSlide() {
   slideContentEl.className =
     'slide-content' +
     (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
+    (Array.isArray(slide.timeline) && slide.timeline.length ? ' slide-content--timeline' : '') +
     (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
   const hasNotesText = Boolean(slide.notes && slide.notes.trim());
