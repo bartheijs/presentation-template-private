@@ -201,10 +201,11 @@ test.describe('malformed bullet entries', () => {
 test.describe('isTemplateAnchor slides', () => {
   test('an isTemplateAnchor slide renders compact with the inline reference block', async ({ page }) => {
     await gotoPresentation(page);
-    // Looked up by the isTemplateAnchor flag rather than a fixed index —
-    // this deck's content is edited often and slide positions shift.
     await page.evaluate(() => {
-      state.currentIndex = SLIDES.findIndex((s) => s.isTemplateAnchor);
+      // Force the feature under test instead of requiring topic content to
+      // ship a reference slide merely to satisfy this engine-level test.
+      SLIDES[0].isTemplateAnchor = true;
+      state.currentIndex = 0;
       renderSlide();
     });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--compact/);

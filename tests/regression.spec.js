@@ -113,6 +113,10 @@ test('opening and closing both overlays produces no errors', async ({ page }) =>
 
   await gotoPresentation(page);
 
+  await page.evaluate(() => {
+    CONFIG.templateOverlay.enabled = true;
+    applyConfigStrings();
+  });
   await page.click('#btn-template');
   await expect(page.locator('#template-overlay')).toBeVisible();
   await page.keyboard.press('Escape');

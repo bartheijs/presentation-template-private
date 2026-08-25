@@ -11,7 +11,7 @@
 
 const CONFIG = {
   lang: 'nl',
-  title: 'Presentation Template Demo',
+  title: 'Mendix Pluggable Widgets bouwen met AI',
 
   layout: {
     align: 'center', // 'center' (default) | 'left' — global default for the
@@ -29,7 +29,7 @@ const CONFIG = {
   },
 
   timer: {
-    defaultMinutes: 20,
+    defaultMinutes: 60,
     addMinutes: 5,
     warningMinutes: 5,
     warningDurationMs: 5000,
@@ -54,7 +54,12 @@ const CONFIG = {
   // Hides the generic reference-overlay button + its ArrowDown shortcut
   // entirely for presentations that do not need supporting reference text.
   templateOverlay: {
-    enabled: true,
+    enabled: false,
+  },
+
+  ui: {
+    finishTitle: 'Tijd om te bouwen!',
+    finishBodyHtml: 'Exploring → Plannen → Coderen → Demo’s',
   },
 
 };

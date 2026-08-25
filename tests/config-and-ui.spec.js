@@ -43,6 +43,10 @@ test.describe('config-driven UI strings', () => {
 
   test('templateOverlay.enabled true shows the button and ArrowDown opens it', async ({ page }) => {
     await gotoPresentation(page);
+    await page.evaluate(() => {
+      CONFIG.templateOverlay.enabled = true;
+      applyConfigStrings();
+    });
     await expect(page.locator('#btn-template')).toBeVisible();
 
     await page.keyboard.press('ArrowDown');
