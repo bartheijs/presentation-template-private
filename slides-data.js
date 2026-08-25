@@ -23,9 +23,9 @@ const SLIDES = [
     icon: 'target',
     align: 'left',
     bullets: [
-      'Hoe stuur je AI om een pluggable widget te bouwen?',
-      'Hoe zorg je dat je werkwijze production-ready is?',
-      'Niet elke regel code zelf schrijven — wel elke beslissing zelf nemen',
+      'Hoe stuur je AI aan om een pluggable widget te bouwen?',
+      'Hoe zorg je dat je resultaat production-ready is?',
+      'Niet elke regel code zelf schrijven, wel elke beslissing zelf nemen',
     ],
     notes: `Leg uit dat AI heel goed code kan schrijven, maar niet weet wélke keuzes goed zijn voor jouw project — welke properties, welke edge cases, welke afhankelijkheden. Dat is waar de developer als regisseur naar voren komt.
 
@@ -53,8 +53,8 @@ Vraag hier ook echt even handen omhoog — een kort, licht moment om de zaal wak
     align: 'left',
     bullets: [
       'Je eigen widget-idee, door jou en je teamgenoot gekozen',
-      'Aan het eind van de dag: lokaal volledig werkend — al is het klein',
-      'Geen live coding door mij; onderweg laat ik wel mijn eigen widgets zien',
+      'Aan het eind van de dag: lokaal volledig werkend, al is het klein',
+      'Geen live coding door mij',
     ],
     notes: `Wees hier expliciet over het succescriterium: klein en werkend is beter dan groot en kapot. Leg uit dat je zelf niet live gaat zitten coderen op het scherm, maar dat je af en toe wisselt naar je eigen VSC/Studio Pro om iets concreets te laten zien uit een bestaande widget van jezelf.`,
     duration: 120,
@@ -86,13 +86,14 @@ Loop de blokken kort langs zonder in te zoomen — dit is de roadmap, niet de in
     align: 'left',
     bullets: [
       'Kies je Mendix-versie: nieuwste 11.12-patch (huidige LTS)',
-      'Node.js 22.20.0 of hoger is vereist',
+      'Node.js 22.20.0 (aanbevolen) of hoger is vereist',
       'Maak een testproject in Mendix Studio Pro',
       'Maak een `PluggableWidgets` folder in je projectroot en open daar de terminal',
       '`npx @mendix/generator-widget "MyWidget"` (TypeScript + unit tests aan)',
       '`npm install`',
-      'Test hello world met `npm start`',
-      'Initialiseer Git, maak de eerste commit en werk `.gitignore` bij',
+      'Initialiseer Git, maak de eerste commit',
+      '`npm run start`',
+      'In Mendix Studio Pro, F4, run en test `Hello World` versie',
     ],
     notes: `Dit zijn bewuste keuzes die de developer maakt vóórdat AI iets ziet — niet aan AI overlaten. De versiekeuze is meer dan een detail: tussen 10.24 en 11.12 zitten mogelijk breaking changes of nieuwe features, dus als je de widget ook met 10.24 compatible wilt maken, moet je daar bewust rekening mee houden. Voor vandaag houden we het bij de nieuwste 11.12-patch; wie zelf op 10.x zit pint een specifieke tools-versie, maar dat is geen dagvullend onderwerp.
 
