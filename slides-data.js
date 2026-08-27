@@ -89,6 +89,7 @@ Loop de blokken kort langs zonder in te zoomen — dit is de roadmap, niet de in
       'Node.js 22.20.0 (aanbevolen) of hoger is vereist',
       'Maak een testproject in Mendix Studio Pro',
       'Maak een `PluggableWidgets` folder in je projectroot en open daar de terminal',
+      'Voeg de `PluggableWidgets` folder toe aan de .gitignore van het Mendix project',
       '`npx @mendix/generator-widget "MyWidget"` (TypeScript + unit tests aan)',
       '`npm install`',
       'Initialiseer Git, maak de eerste commit',
@@ -128,8 +129,9 @@ Dit is de fase waarin je je verhaal en de hands-on combineert: vertel deze stapp
     bullets: [
       '`src/<WidgetName>.xml` — configuratie die Studio Pro leest',
       '`src/<WidgetName>.tsx` — de widget-code zelf',
+      '`src/ui/<WidgetName>.css` — de widget css styling',
+      '`src/componenten/..` — de ui componenten (widgets) van de widget',
       '`typings/` — automatisch gegenereerd uit de XML; nooit aanpassen',
-      'Een property heeft altijd: key, type, caption, description',
     ],
     notes: `Nu iedereen VSC open heeft staan na het scaffolden, is dit hét moment om kort te wijzen waar wat leeft — voordat je verdergaat naar plannen en coderen. Laat zien dat de XML de “input” van de widget beschrijft (wat de modeler in Studio Pro configureert) en dat de typings-map daar automatisch uit wordt gegenereerd — vandaar ook waarom je die nooit met de hand aanpast. Dit hoeft geen diepe uitleg te zijn, puur een kort rondje wijzen: “dit leeft hier, dat leeft daar”.`,
     duration: 180,
@@ -142,7 +144,7 @@ Dit is de fase waarin je je verhaal en de hands-on combineert: vertel deze stapp
     bullets: [
       '`editorConfig.ts` — Structure mode + zichtbaarheid van properties',
       '`editorPreview.tsx` — Design mode-preview, alleen voor web-widgets',
-      '`package.json` — naam, versie en build-instellingen',
+      '`package.json` — naam, versie, afhankelijkheden en build-instellingen',
       'Widget-icoon: PNG’s in de projectroot volgens naamconventie',
       '`npm start` / `npm run build` / `npm run release`',
       '`dist/` — hier landt het uiteindelijke `.mpk`-bestand',
@@ -227,10 +229,12 @@ Commit vaak, bij elke werkende stap. Dat geeft je een terugvalpunt zodra AI iets
     icon: 'repeat',
     align: 'left',
     bullets: [
-      'Kleine wijziging → AI past de code aan',
-      'Build en checks: typings, lint en tests',
-      'Testen in Studio Pro',
-      'Bevinding teruggeven → opnieuw testen → commit',
+      'AI past de code aan',
+      '`npm run start`-script build automatisch na iedere aanpassing',
+      'Mendix studio Pro > F4 > Run',
+      'Developer test',
+      'Bevinding teruggeven',
+      'Tevreden? Comitten.',
     ],
     notes: `Dit is misschien wel de belangrijkste praktische les van de dag: regisseren is geen lineair proces, maar een korte cyclus die je steeds opnieuw doorloopt. Klein wijzigen — niet alles tegelijk aan AI vragen. Laat AI de build en checks draaien. Probeer het zelf in Studio Pro. Geef je bevinding terug aan AI (“dit werkte niet, want...”), zodat die de volgende aanpassing kan maken. Herhaal dit tot het klopt, en commit dan pas.
 
@@ -247,9 +251,9 @@ Optioneel, voor wie verder wil: laat AI ook automatische frontend-tests toevoege
     bullets: [
       'Versiebump is een bewuste daad, nooit een bijeffect',
       '`npm run release` bouwt de definitieve `.mpk` en lint eerst',
-      'Marketplace: privé of publiek — publiek kan niet meer terug',
-      'Publiceren gaat via review door Sander of Anthony',
-      'Repo-hygiëne: CHANGELOG, backlog, README',
+      'Repo-hygiëne: CHANGELOG.md, README.md',
+      'Eerst review door Sander of Anthony',
+      'Marketplace: privé of publiek (no way back)',
     ],
     notes: `Deze fase doen we vandaag bewust niet hands-on — puur ter afronding van het complete plaatje, zodat iedereen weet wat er ná vandaag nog volgt. Dat is ook geen toeval: publiceren gaat bij ons altijd via een review door Sander of Anthony, die vandaag niet beschikbaar zijn. Dus zelfs als je zover zou komen, kun je vandaag niet daadwerkelijk publiceren.
 
