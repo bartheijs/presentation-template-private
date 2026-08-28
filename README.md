@@ -133,7 +133,7 @@ Combineer nooit een icoon met een gecentreerde titel.
 - Volgende/Vorige, `←`/`→` of een presentatieklikker navigeert door de
   slides. Gangbare `PageDown`/`PageUp`-signalen worden ook ondersteund.
 - De inhoudsopgave springt direct naar een slide.
-- Presentatiebrief opent het configureerbare achtergrondpaneel; `Esc` sluit
+- Skill Template opent het configureerbare achtergrondpaneel; `Esc` sluit
   hem.
 - Notities tonen/verbergen geldt voor de hele sessie.
 - De timer kan starten, pauzeren en worden verlengd.

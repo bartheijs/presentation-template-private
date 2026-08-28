@@ -233,7 +233,7 @@ Ook bijwerken: `tests/layout.spec.js` (`isTemplateAnchor`-describe/test,
 skill-docs.
 
 **Extra actie in `scaffold-presentation/SKILL.md`:** een expliciete
-checkpoint/vraag toevoegen die bij het opzetten van een nieuwe presentatie
+vraag toevoegen die bij het opzetten van een nieuwe presentatie
 vraagt of de "Reference overlay" gebruikt gaat worden, en zo ja, welke
 content erin moet (blijft vrije tekst — dit voegt alleen het gesprek erover
 toe, geen generieke content-structuur).

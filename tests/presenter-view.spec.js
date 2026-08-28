@@ -96,7 +96,7 @@ test.describe('launch mechanism and connection status', () => {
 });
 
 test.describe('command whitelist and state broadcast', () => {
-  test('arrow keys in Presenter View control slides and the Presentatiebrief', async ({ page }) => {
+  test('arrow keys in Presenter View control slides and the Skill Template overlay', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
 

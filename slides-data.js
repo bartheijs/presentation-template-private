@@ -45,10 +45,11 @@
  * malformed slide is still worth fixing properly.
  */
 
-// Shared skill.md skeleton — shown inline in the slide itself for the
-// "template anchor" slide (31, see isTemplateAnchor below) AND reused
-// by the floating "Skill Template" overlay, so it only has to be maintained
-// once.
+// Plain-text copy of the skill.md skeleton — kept in sync with
+// SKILL_TEMPLATE_SECTIONS below (which is what actually renders, with
+// per-section heading colors, on both the "template anchor" slide and the
+// floating "Skill Template" overlay). Useful as a flat string to copy out
+// (e.g. to hand to a skill-authoring tool) without the HTML markup.
 const SKILL_TEMPLATE_MD = `---
 name: [naam]
 description: [beschrijving — dit bepaalt of de skill wordt getriggerd]
@@ -64,18 +65,18 @@ description: [beschrijving — dit bepaalt of de skill wordt getriggerd]
 [Welke MCP, sub-agents of code execution de skill gebruikt.]
 
 ## Process
-1. [Stap 1: actie + benodigde informatie]
-2. [Stap 2: actie] → [CHECKPOINT: wat moet de gebruiker hier controleren of aanleveren?]
-3. [Stap 3: update naar gebruiker over de status]
-4. [Stap 4: actie] → [CHECKPOINT: ...]
-5. Controleer of alle stappen zijn doorlopen zoals bedoeld en of alle benodigde informatie voorhanden is. Ontbreekt er iets, stel dan eerst vragen voordat je het resultaat oplevert.
+1. Verzamel de informatie om tot passende recepten te komen.
+2. QUESTION: "Hoeveel mensen eten er mee?"
+3. FEEDBACK: "Ik zoek naar recepten passend bij het aantal personen..."
+4. Rond af: controleer of alle benodigde informatie beschikbaar is; ontbreekt er iets, vraag het na.
 
 ## Output
 [Hoe een goed resultaat eruitziet — verwijs naar een example output file indien beschikbaar.]
 
 ## Rules
-- ALTIJD [...]
-- NOOIT [...]`;
+- ALTIJD een QUESTION behandelen als blokkerend: wacht op het antwoord van de gebruiker voordat je verdergaat.
+- NOOIT zelfstandig voorbij een QUESTION gaan, ook niet als het antwoord voor de hand lijkt te liggen.
+- ALTIJD een FEEDBACK delen zodra die van toepassing is, maar NIET wachten op een reactie voordat je verdergaat.`;
 
 // Same skeleton, split into sections for the overlay (and for the
 // per-slide highlight while walking through the framework, slides 20-29).
@@ -108,7 +109,7 @@ const SKILL_TEMPLATE_SECTIONS = [
     id: 'process',
     label: 'Process',
     icon: 'steps',
-    body: `## Process\n1. [Stap 1: actie + benodigde informatie]\n2. [Stap 2: actie] → [CHECKPOINT: wat moet de gebruiker hier controleren of aanleveren?]\n3. [Stap 3: update naar gebruiker over de status]\n4. [Stap 4: actie] → [CHECKPOINT: ...]\n5. Controleer of alle stappen zijn doorlopen zoals bedoeld en of alle benodigde informatie voorhanden is. Ontbreekt er iets, stel dan eerst vragen voordat je het resultaat oplevert.`,
+    body: `## Process\n1. Verzamel de informatie om tot passende recepten te komen.\n2. QUESTION: "Hoeveel mensen eten er mee?"\n3. FEEDBACK: "Ik zoek naar recepten passend bij het aantal personen..."\n4. Rond af: controleer of alle benodigde informatie beschikbaar is; ontbreekt er iets, vraag het na.`,
   },
   {
     id: 'output',
@@ -120,7 +121,7 @@ const SKILL_TEMPLATE_SECTIONS = [
     id: 'rules',
     label: 'Rules',
     icon: 'rules',
-    body: `## Rules\n- ALTIJD [...]\n- NOOIT [...]`,
+    body: `## Rules\n- ALTIJD een QUESTION behandelen als blokkerend: wacht op het antwoord van de gebruiker voordat je verdergaat.\n- NOOIT zelfstandig voorbij een QUESTION gaan, ook niet als het antwoord voor de hand lijkt te liggen.\n- ALTIJD een FEEDBACK delen zodra die van toepassing is, maar NIET wachten op een reactie voordat je verdergaat.`,
   },
 ];
 
@@ -339,7 +340,7 @@ const SLIDES = [
   },
   {
     id: 19,
-    title: 'Het framework',
+    title: 'Waarom een skill template?',
     icon: 'layers',
     disco: true,
     discoMode: 'pause',
@@ -405,7 +406,7 @@ const SLIDES = [
       'Proces stap voor stap uitleggen',
       '- actie',
       '- Benodigde informatie bij die actie',
-      '- Eventueel human-in-the-loop checkpoint'],
+      '- Eventueel een human-in-the-loop moment'],
     notes: ``,
   },
   {
@@ -414,9 +415,9 @@ const SLIDES = [
     icon: 'checkpoint',
     templateSection: 'process',
     bullets: [
-      'Skills ondersteunen vaak human-in-the-loop momenten',
-      'Punten waar het model pauzeert voor een vraag, goedkeuring of feedback over voortgang',
-      'Dit komt terug als checkpoint in de process-stappen',
+      'Skills bevatten vaak human-in-the-loop momenten',
+      'QUESTION: blokkerend — het model wacht op antwoord voordat het verdergaat',
+      'FEEDBACK: niet-blokkerend — het model deelt een beslissing, aanname of voortgang, maar wacht niet',
       'Zo houdt de gebruiker eigenaarschap',
     ],
     notes: ``,
@@ -439,9 +440,8 @@ const SLIDES = [
     icon: 'output',
     templateSection: 'output',
     bullets: [
-      'Echte voorbeelden toevoegen als example output file',
-      'Tekst/creatief: meerdere variaties aanbieden',
-      'Code/data: nadruk op validatie (testen/uitvoeren)',
+      'Beschrijf hoe de output er ui moet zien',
+      'Bijvoorbeeld echte voorbeelden of een template toevoegen',
     ],
     notes: ``,
   },
@@ -471,19 +471,19 @@ const SLIDES = [
   },
   {
     id: 30,
+    title: 'Skill Template',
+    icon: 'template',
+    isTemplateAnchor: true,
+    bullets: [],
+    notes: ``,
+  },
+  {
+    id: 31,
     title: 'Skill groeit continu',
     icon: 'repeat',
     bullets: [
       'Elke keer dat je de skill gebruikt, is een kans om het te verbeteren',
     ],
-    notes: ``,
-  },
-  {
-    id: 31,
-    title: 'Het skeleton',
-    icon: 'template',
-    isTemplateAnchor: true,
-    bullets: [],
     notes: ``,
   },
   {
@@ -507,7 +507,7 @@ const SLIDES = [
     bullets: [
       'Geef elke skill één duidelijk, afgebakend doel — liever meerdere kleine skills dan één grote',
       'Houd de `SKILL.md` gefocust op alleen het proces — de rest hoort in een referentiebestand',
-      'Bouw bewust human-in-the-loop checkpoints in',
+      'Bouw bewust human-in-the-loop momenten in',
     ],
     notes: ``,
   },

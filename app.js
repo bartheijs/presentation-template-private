@@ -51,7 +51,7 @@ const CONFIG_DEFAULTS = {
 const APP_I18N = {
   nl: {
     tocHeading: 'Inhoud',
-    templateButton: 'Presentatiebrief',
+    templateButton: 'Skill Template',
     notesToggleHide: 'Notities verbergen',
     notesToggleShow: 'Notities tonen',
     timerStart: 'Start',
@@ -64,7 +64,7 @@ const APP_I18N = {
     controlsCollapseHide: 'Bediening inklappen',
     controlsCollapseShow: 'Bediening uitklappen',
     overlayCloseLabel: 'Sluiten',
-    overlayTitle: 'Presentatiebrief',
+    overlayTitle: 'Skill Template',
     backToDeckLabel: 'Terug naar de presentatie',
     presenterViewButton: 'Presenter View',
     finishTitle: 'Klaar om te presenteren!',
@@ -73,7 +73,7 @@ const APP_I18N = {
   },
   en: {
     tocHeading: 'Contents',
-    templateButton: 'Presentation brief',
+    templateButton: 'Skill Template',
     notesToggleHide: 'Hide notes',
     notesToggleShow: 'Show notes',
     timerStart: 'Start',
@@ -86,7 +86,7 @@ const APP_I18N = {
     controlsCollapseHide: 'Collapse controls',
     controlsCollapseShow: 'Expand controls',
     overlayCloseLabel: 'Close',
-    overlayTitle: 'Presentation brief',
+    overlayTitle: 'Skill Template',
     backToDeckLabel: 'Back to presentation',
     presenterViewButton: 'Presenter View',
     finishTitle: 'Ready to present!',
@@ -215,7 +215,7 @@ function buildSlideContentHTML(slide) {
     ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
     : '';
   const templateBlock = slide.isTemplateAnchor
-    ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
+    ? `<pre class="slide-template-code"><code>${buildTemplateSectionsHtml(null)}</code></pre>`
     : '';
   // `icon` is optional — a title slide can omit it to show just the
   // heading text, with no icon glyph taking up space next to it. A slide
@@ -290,7 +290,9 @@ function buildSlideContentHTML(slide) {
   // widens `.slide-inner` just for that slide — the row's own left edge
   // still lines up with the heading/bullets above it since it stays inside
   // the same column.
-  const innerClass = diagramLogoBlock ? ' slide-inner--wide' : '';
+  const innerClass = diagramLogoBlock
+    ? ' slide-inner--wide'
+    : (slide.isTemplateAnchor ? ' slide-inner--fill' : '');
 
   return `
     <div class="slide-inner${innerClass}">
@@ -1110,7 +1112,11 @@ function stopConfetti() {
 
 /* ---------- Skill template overlay ---------- */
 
-function renderTemplateOverlay(highlightId) {
+// Shared by the overlay and the isTemplateAnchor slide (buildSlideContentHTML)
+// so both render SKILL_TEMPLATE_SECTIONS with the same per-section heading
+// colors (.tpl-block--<id> .tpl-heading in styles.css) instead of one of them
+// drifting into a flat, uncolored copy.
+function buildTemplateSectionsHtml(highlightId) {
   const blocks = SKILL_TEMPLATE_SECTIONS.map((s) => {
     const [headingLine, ...rest] = s.body.split('\n');
     const highlightClass = s.id === highlightId ? ' is-highlighted' : '';
@@ -1118,7 +1124,11 @@ function renderTemplateOverlay(highlightId) {
       rest.length ? '\n' + escapeHtml(rest.join('\n')) : ''
     }</span>`;
   });
-  overlayBodyEl.innerHTML = `<pre class="template-code"><code>${blocks.join('\n\n')}</code></pre>`;
+  return blocks.join('\n\n');
+}
+
+function renderTemplateOverlay(highlightId) {
+  overlayBodyEl.innerHTML = `<pre class="template-code"><code>${buildTemplateSectionsHtml(highlightId)}</code></pre>`;
 }
 
 function openTemplateOverlay() {

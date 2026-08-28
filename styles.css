@@ -502,6 +502,15 @@ button {
   width: 100%;
 }
 
+/* Applied for the isTemplateAnchor slide (see buildSlideContentHTML) so its
+   `.slide-template-code` block can grow to fill the slide instead of being
+   capped to its own natural content height, which otherwise left an
+   avoidable inner scrollbar. */
+.slide-inner--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .slide-content--align-left .slide-inner {
   align-items: flex-start;
   text-align: left;
@@ -707,14 +716,15 @@ button {
   width: 100%;
   text-align: left;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  line-height: 1.5;
+  font-size: clamp(0.58rem, 1.3vh, 1.15rem);
+  line-height: 1.35;
   background: #1E1B2E;
   color: #F2ECFF;
   border-radius: var(--radius-md);
-  padding: 1.1rem 1.3rem;
+  padding: 0.9rem 1.1rem;
   overflow: auto;
-  max-height: 58vh;
+  flex: 1 1 0;
+  min-height: 0;
   white-space: pre-wrap;
   word-break: break-word;
 }

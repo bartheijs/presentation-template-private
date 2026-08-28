@@ -94,7 +94,7 @@ Bash (om `npm`/`npx playwright` te draaien). Geen MCP of sub-agents nodig.
 4. Los de oorzaak op (niet de test aanpassen om hem te laten slagen, tenzij
    de test zelf een fout blijkt te bevatten — bv. een verkeerde
    referentiewaarde, zoals eerder gebeurde met de 900px-breakpoint-test die
-   de verkeerde box vergeleek). → CHECKPOINT: als onduidelijk is of de app
+   de verkeerde box vergeleek). → QUESTION: als onduidelijk is of de app
    of de test fout zit, leg dat voor aan de gebruiker voordat je iets
    aanpast.
 5. Draai de suite opnieuw tot alles slaagt.

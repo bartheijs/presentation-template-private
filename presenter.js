@@ -418,7 +418,7 @@ document.getElementById('btn-toggle-right-aside').addEventListener('click', () =
 document.getElementById('btn-toggle-pause-overlay').addEventListener('click', () => sendCommand('TOGGLE_PAUSE_OVERLAY'));
 
 // Mirror the Presentation View's arrow-key model in this window too:
-// horizontal arrows navigate slides, ArrowDown opens the Presentatiebrief,
+// horizontal arrows navigate slides, ArrowDown opens the Skill Template overlay,
 // and ArrowUp closes it. PageDown/PageUp keep common presentation clickers
 // working while Presenter View has focus.
 document.addEventListener('keydown', (e) => {
@@ -436,7 +436,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Match the real Presentation View: while the Presentatiebrief is open,
+  // Match the real Presentation View: while the Skill Template overlay is open,
   // left/right input belongs to that layer and must not change slides.
   if (latestState && latestState.contextOverlayVisible) return;
 
