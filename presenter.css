@@ -442,13 +442,6 @@ input:focus-visible {
   color: color-mix(in srgb, var(--accent-3) 65%, var(--text));
 }
 
-@media (max-width: 1180px) {
-  .progress-timer {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-
 @media (max-width: 820px) {
   body { padding: 0.8rem; }
 
@@ -469,6 +462,5 @@ input:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn,
-  .progress-fill { transition: none; }
+  .btn { transition: none; }
 }
