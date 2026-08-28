@@ -20,6 +20,28 @@ test.describe('disco enable/disable', () => {
     await expect(page.locator('#slide-stage')).not.toHaveClass(/is-transitioning/);
   });
 
+  test('disco is a forward-only device: no flash when navigating back to a disco-enabled slide', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => { CONFIG.disco.enabled = true; });
+
+    // Forward onto index1 flashes disco, as the test above already covers.
+    await page.click('#btn-next');
+    await waitIdle(page);
+
+    // Move one further forward so there's somewhere to come back from.
+    await page.click('#btn-next');
+    await waitIdle(page);
+
+    // Regression: animateTransition() used to recompute discoOn from the
+    // now-current destination slide regardless of direction, so revisiting
+    // a disco-enabled slide by going back replayed the flash — disco is
+    // meant to be a forward-presenting device only.
+    await page.click('#btn-prev'); // back onto index1, the same disco slide
+    await page.waitForTimeout(150); // past DISCO_REVEAL_DELAY_MS, mid-animation
+    await expect(page.locator('#slide-stage')).not.toHaveClass(/is-transitioning/);
+    await waitIdle(page);
+  });
+
   test('global disco.enabled = false suppresses the flash', async ({ page }) => {
     await gotoPresentation(page);
     await page.evaluate(() => { CONFIG.disco.enabled = false; });

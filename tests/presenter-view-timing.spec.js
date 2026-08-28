@@ -111,71 +111,46 @@ test.describe('timing math (plannedStartOfSlide / totalPlannedMs)', () => {
 });
 
 test.describe('presentation timer persistence', () => {
-  test('elapsed time survives a Presenter View refresh while running', async ({ page }) => {
+  test('the countdown keeps decreasing across a Presenter View refresh while running', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
-    await presenter.click('#btn-presenter-timer-start');
+    const initialRemaining = await presenter.evaluate(() => getRemainingSeconds());
+    await presenter.click('#btn-presenter-timer-toggle');
     await presenter.waitForTimeout(1100);
 
     await presenter.reload();
-    const elapsedAfterReload = await presenter.evaluate(() => getElapsedSeconds());
-    expect(elapsedAfterReload).toBeGreaterThanOrEqual(1);
+    const remainingAfterReload = await presenter.evaluate(() => getRemainingSeconds());
+    expect(remainingAfterReload).toBeLessThan(initialRemaining);
   });
 
-  test('reset zeroes the timer and clears sessionStorage', async ({ page }) => {
+  test('reset restores the configured duration, not zero', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
-    await presenter.click('#btn-presenter-timer-start');
-    await presenter.waitForTimeout(300);
+    await presenter.fill('[data-elapsed]', '5:00');
+    await presenter.dispatchEvent('[data-elapsed]', 'blur');
+    await presenter.click('#btn-presenter-timer-toggle');
+    await presenter.waitForTimeout(1100);
     await presenter.click('#btn-presenter-timer-reset');
-    const elapsed = await presenter.evaluate(() => getElapsedSeconds());
-    expect(elapsed).toBe(0);
+    const remaining = await presenter.evaluate(() => getRemainingSeconds());
+    expect(remaining).toBe(300);
+  });
+
+  test('typing a new duration while paused updates the countdown, but is ignored while running', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await presenter.fill('[data-elapsed]', '2:00');
+    await presenter.dispatchEvent('[data-elapsed]', 'blur');
+    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(120);
+
+    await presenter.click('#btn-presenter-timer-toggle');
+    await expect(presenter.locator('[data-elapsed]')).toBeDisabled();
+
+    await presenter.click('#btn-presenter-timer-toggle'); // same button — now pauses
+    await expect(presenter.locator('[data-elapsed]')).toBeEnabled();
   });
 
   test('the clock renders and updates', async ({ page }) => {
     await page.goto(PRESENTER_URL);
     await expect(page.locator('[data-clock]')).not.toHaveText('');
-  });
-});
-
-test.describe('continuous timing updates (renderTiming)', () => {
-  test('schedule-delta keeps updating every tick, not just on navigation/state broadcast', async ({ page }) => {
-    await gotoPresentation(page);
-    const presenter = await openPresenterView(page);
-    await presenter.click('#btn-presenter-timer-start');
-
-    // Let the presenter timer accumulate a bit before the first sample, so
-    // the very first reading isn't still "0:00 achter op schema" for both
-    // samples by coincidence.
-    await presenter.waitForTimeout(1200);
-    const first = await presenter.locator('[data-schedule-delta]').textContent();
-
-    // No navigation happens here — renderState() is not re-invoked. If the
-    // schedule-delta/time-progress text only updated inside renderState(),
-    // it would stay frozen at `first` despite the clock/elapsed ticking.
-    await presenter.waitForTimeout(1500);
-    const second = await presenter.locator('[data-schedule-delta]').textContent();
-
-    expect(second).not.toBe(first);
-    // Sanity check on the underlying clock too.
-    const elapsedAfter = await presenter.evaluate(() => getElapsedSeconds());
-    expect(elapsedAfter).toBeGreaterThanOrEqual(2);
-  });
-
-  test('delta === 0 renders a neutral "Op schema" state, not "achter"', async ({ page }) => {
-    await page.goto(PRESENTER_URL);
-    await page.evaluate(() => {
-      // eslint-disable-next-line no-undef
-      SLIDES.length = 0;
-      // eslint-disable-next-line no-undef
-      SLIDES.push({ id: 1, title: 'A', bullets: [], notes: '', duration: 100 });
-      // eslint-disable-next-line no-undef
-      latestState = { currentSlide: 0, totalSlides: 1 };
-      // eslint-disable-next-line no-undef
-      renderTiming();
-    });
-    await expect(page.locator('[data-schedule-delta]')).toHaveText(
-      await page.evaluate(() => presenterText.onSchedule)
-    );
   });
 });

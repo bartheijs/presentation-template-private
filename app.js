@@ -215,7 +215,7 @@ function buildSlideContentHTML(slide) {
     ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
     : '';
   const templateBlock = slide.isTemplateAnchor
-    ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
+    ? `<pre class="slide-template-code"><code>${buildTemplateSectionsHtml(null)}</code></pre>`
     : '';
   // `icon` is optional — a title slide can omit it to show just the
   // heading text, with no icon glyph taking up space next to it. A slide
@@ -269,8 +269,10 @@ function buildSlideContentHTML(slide) {
     ${metaBlock}`;
   }
 
+  const innerClass = slide.isTemplateAnchor ? ' slide-inner--fill' : '';
+
   return `
-    <div class="slide-inner">
+    <div class="slide-inner${innerClass}">
       ${headingBlock}
       ${bulletsBlock}
       ${templateBlock}
@@ -466,6 +468,14 @@ function goTo(index, { animate = false, direction = null } = {}) {
   if (index === state.currentIndex && !pendingPause) return;
   if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid out/in animation
 
+  // The finish overlay opens on top of the last slide without changing
+  // state.currentIndex (see goNext()). goPrev() special-cases the plain
+  // "back" gesture itself (see below), but an explicit jump elsewhere
+  // (GO_TO_SLIDE from Presenter View's TOC/skip-ahead — it has no on-screen
+  // button to close the overlay, unlike the local keyboard handler's own
+  // guard) should still close the celebration on its way there.
+  if (!finishOverlayEl.hidden) closeFinishOverlay();
+
   const dir = direction || (index > state.currentIndex ? 'next' : 'prev');
 
   if (pendingPause) {
@@ -492,19 +502,25 @@ function goTo(index, { animate = false, direction = null } = {}) {
   }
 
   const destSlide = SLIDES[index];
-  const discoOn = isDiscoEnabledFor(destSlide);
-  // Pause reveals are a forward-presenting device. Going back should stay
-  // corrective and immediate: keep the visual transition, but never freeze
-  // halfway and require a second click.
-  const pauseOn = dir === 'next' && discoOn && isDiscoPauseFor(destSlide);
+  // Disco is a forward-presenting device — revisiting a slide by going
+  // back should be quick and unobtrusive, not replay its flash/title (or,
+  // in 'pause' mode, freeze on it) a second time.
+  const discoOn = dir === 'next' && isDiscoEnabledFor(destSlide);
+  const pauseOn = discoOn && isDiscoPauseFor(destSlide);
 
-  if (discoOn) renderDiscoTitle(destSlide.discoTitleLines || CONFIG.disco.titleLines);
+  // Tracked separately from isAnimatingSlide/pendingPause so
+  // sendStateToPresenter() can tell Presenter View exactly what disco text
+  // (if any) the audience is currently looking at — including during a
+  // paused hold, where isAnimatingSlide is already back to false but the
+  // disco is still fully visible, frozen.
+  activeDiscoTitleLines = discoOn ? (destSlide.discoTitleLines || CONFIG.disco.titleLines) : null;
+  if (discoOn) renderDiscoTitle(activeDiscoTitleLines);
 
   if (pauseOn) {
     beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
   } else {
     state.currentIndex = index;
-    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide));
+    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide), discoOn);
   }
   updateTocActiveState();
   sendStateToPresenter();
@@ -524,6 +540,22 @@ function goNext() {
   goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
 }
 
+// Shared by the Prev button and PREVIOUS_SLIDE: the finish overlay is
+// conceptually one more step past the last slide (see goNext() above), so
+// going back from it should just reveal that last slide again — the same
+// thing its own "Terug naar de presentatie" button does — not ALSO step
+// past it to the slide before. goTo() is never even called in that case,
+// so state.currentIndex (already sitting on the last slide) is untouched;
+// a second "back" press, with the overlay now closed, behaves normally.
+function goPrev() {
+  if (!finishOverlayEl.hidden) {
+    closeFinishOverlay();
+    sendStateToPresenter();
+    return;
+  }
+  goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+}
+
 /* Content up / notes down (out) -> swap content while off-screen ->
  * content down / notes up (in). Durations come from CONFIG.transitions.
  * The disco-bg layer behind them is
@@ -532,6 +564,10 @@ function goNext() {
  * and (b) is fully faded out well before the panels finish landing — with
  * a comfortable buffer, not a race against the panels' own transition. */
 let isAnimatingSlide = false;
+// Non-null exactly while the audience is looking at a disco transition —
+// animating or frozen mid-'pause'-mode hold. See goTo() (where it's set)
+// and sendStateToPresenter() (where Presenter View reads it).
+let activeDiscoTitleLines = null;
 const ANIM_OUT_MS = CONFIG.transitions.outMs;
 const ANIM_IN_MS = CONFIG.transitions.inMs;
 const DISCO_REVEAL_DELAY_MS = CONFIG.transitions.discoRevealDelayMs; // background starts fading in this long after "out" begins
@@ -571,12 +607,15 @@ function renderDiscoTitle(lines) {
     .join('');
 }
 
-function animateTransition(dir, applyFn, holdMs = 0) {
+// `discoOn` comes from goTo() (already gated on dir === 'next' there) rather
+// than being recomputed here from the now-current SLIDES[state.currentIndex]
+// — recomputing would silently ignore that gating and flash disco on a
+// backward revisit of a disco-enabled slide.
+function animateTransition(dir, applyFn, holdMs = 0, discoOn = false) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
 
-  const discoOn = isDiscoEnabledFor(SLIDES[state.currentIndex]);
   pendingRevealTimer = discoOn
     ? setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS)
     : null;
@@ -613,6 +652,8 @@ function animateTransition(dir, applyFn, holdMs = 0) {
           slideContentEl.classList.remove('content-anim-in');
           slideNotesEl.classList.remove('notes-anim-in');
           isAnimatingSlide = false;
+          activeDiscoTitleLines = null;
+          sendStateToPresenter();
         },
         { once: true }
       );
@@ -691,6 +732,8 @@ function resumePausedTransition() {
       slideContentEl.classList.remove('content-anim-in');
       slideNotesEl.classList.remove('notes-anim-in');
       isAnimatingSlide = false;
+      activeDiscoTitleLines = null;
+      sendStateToPresenter();
     },
     { once: true }
   );
@@ -735,6 +778,7 @@ function cancelPendingPause() {
 function resetAnimationState() {
   pendingPause = null;
   isAnimatingSlide = false;
+  activeDiscoTitleLines = null;
   if (pendingRevealTimer) {
     clearTimeout(pendingRevealTimer);
     pendingRevealTimer = null;
@@ -753,9 +797,7 @@ function resetAnimationState() {
 }
 
 document.getElementById('btn-next').addEventListener('click', goNext);
-document.getElementById('btn-prev').addEventListener('click', () =>
-  goTo(state.currentIndex - 1, { animate: true, direction: 'prev' })
-);
+document.getElementById('btn-prev').addEventListener('click', goPrev);
 
 // Both listeners below drive the real presentation's own navigation from
 // its own keyboard/click input. A preview iframe (?embed=preview) must stay
@@ -785,7 +827,7 @@ if (!isEmbedPreview) {
     }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
       e.preventDefault();
-      goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+      goPrev();
       return;
     }
     if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
@@ -1086,7 +1128,11 @@ function stopConfetti() {
 
 /* ---------- Skill template overlay ---------- */
 
-function renderTemplateOverlay(highlightId) {
+// Shared by the overlay and the isTemplateAnchor slide (buildSlideContentHTML)
+// so both render SKILL_TEMPLATE_SECTIONS with the same per-section heading
+// colors (.tpl-block--<id> .tpl-heading in styles.css) instead of one of them
+// drifting into a flat, uncolored copy.
+function buildTemplateSectionsHtml(highlightId) {
   const blocks = SKILL_TEMPLATE_SECTIONS.map((s) => {
     const [headingLine, ...rest] = s.body.split('\n');
     const highlightClass = s.id === highlightId ? ' is-highlighted' : '';
@@ -1094,7 +1140,11 @@ function renderTemplateOverlay(highlightId) {
       rest.length ? '\n' + escapeHtml(rest.join('\n')) : ''
     }</span>`;
   });
-  overlayBodyEl.innerHTML = `<pre class="template-code"><code>${blocks.join('\n\n')}</code></pre>`;
+  return blocks.join('\n\n');
+}
+
+function renderTemplateOverlay(highlightId) {
+  overlayBodyEl.innerHTML = `<pre class="template-code"><code>${buildTemplateSectionsHtml(highlightId)}</code></pre>`;
 }
 
 function openTemplateOverlay() {
@@ -1257,7 +1307,7 @@ if (!isEmbedPreview) {
 // `if (!handler) return;` check below correctly rejects it.
 const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   NEXT_SLIDE: () => goNext(),
-  PREVIOUS_SLIDE: () => goTo(state.currentIndex - 1, { animate: true, direction: 'prev' }),
+  PREVIOUS_SLIDE: () => goPrev(),
   GO_TO_SLIDE: (data) => {
     const slide = Number(data.slide);
     if (Number.isInteger(slide)) goTo(slide, { animate: false });
@@ -1342,6 +1392,11 @@ function sendStateToPresenter() {
       leftAsideVisible: !tocCollapsed,
       rightAsideVisible: !nextCollapsed && !presenterHidesControls,
       pauseOverlayVisible: isPauseOverlayVisible(),
+      // Non-null for the whole time the audience sees a disco transition
+      // (animating, or frozen mid-'pause'-mode hold) — never set for an
+      // ordinary non-disco transition. Presenter View shows this as a still
+      // (the title text on a disco-colored card), not a live mirror.
+      discoTitleLines: activeDiscoTitleLines,
     },
     '*'
   );
