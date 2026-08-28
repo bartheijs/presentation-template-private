@@ -526,11 +526,11 @@ function goTo(index, { animate = false, direction = null } = {}) {
   }
 
   const destSlide = SLIDES[index];
-  const discoOn = isDiscoEnabledFor(destSlide);
-  // Pause reveals are a forward-presenting device. Going back should stay
-  // corrective and immediate: keep the visual transition, but never freeze
-  // halfway and require a second click.
-  const pauseOn = dir === 'next' && discoOn && isDiscoPauseFor(destSlide);
+  // Disco is a forward-presenting device — revisiting a slide by going
+  // back should be quick and unobtrusive, not replay its flash/title (or,
+  // in 'pause' mode, freeze on it) a second time.
+  const discoOn = dir === 'next' && isDiscoEnabledFor(destSlide);
+  const pauseOn = discoOn && isDiscoPauseFor(destSlide);
 
   // Tracked separately from isAnimatingSlide/pendingPause so
   // sendStateToPresenter() can tell Presenter View exactly what disco text
@@ -544,7 +544,7 @@ function goTo(index, { animate = false, direction = null } = {}) {
     beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
   } else {
     state.currentIndex = index;
-    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide));
+    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide), discoOn);
   }
   updateTocActiveState();
   sendStateToPresenter();
@@ -631,12 +631,15 @@ function renderDiscoTitle(lines) {
     .join('');
 }
 
-function animateTransition(dir, applyFn, holdMs = 0) {
+// `discoOn` comes from goTo() (already gated on dir === 'next' there) rather
+// than being recomputed here from the now-current SLIDES[state.currentIndex]
+// — recomputing would silently ignore that gating and flash disco on a
+// backward revisit of a disco-enabled slide.
+function animateTransition(dir, applyFn, holdMs = 0, discoOn = false) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
 
-  const discoOn = isDiscoEnabledFor(SLIDES[state.currentIndex]);
   pendingRevealTimer = discoOn
     ? setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS)
     : null;

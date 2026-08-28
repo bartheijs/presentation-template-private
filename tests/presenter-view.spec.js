@@ -454,6 +454,30 @@ test.describe('disco still (Presenter View)', () => {
     await waitIdle(page);
     await expect(presenter.locator('[data-disco-still]')).toBeHidden();
   });
+
+  test('does not show when navigating back to a disco-enabled slide (forward-only device)', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => { CONFIG.disco.enabled = true; });
+
+    await presenter.click('#btn-presenter-next'); // forward onto index1: shows the still
+    await expect(presenter.locator('[data-disco-still]')).toBeVisible();
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-next'); // forward onto index2, so there's somewhere to go back from
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-prev'); // back onto index1, the same disco slide
+    // A plain toBeHidden() here would still pass even if this briefly
+    // flashed visible mid-transition (it retries until hidden) — check
+    // partway through the transition instead, matching the equivalent
+    // app.js-level test in disco-and-pause.spec.js.
+    await presenter.waitForTimeout(150);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+    await waitIdle(page);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+  });
 });
 
 test.describe('finish overlay interaction', () => {
