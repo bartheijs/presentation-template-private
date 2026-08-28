@@ -19,7 +19,7 @@ const PRESENTER_I18N = {
     presentationTiming: 'Presentatietijd', timerControls: 'Timerbediening',
     setTimerDuration: 'Tijdsduur instellen (MM:SS of minuten), alleen als de timer niet loopt',
     previous: 'Vorige', next: 'Volgende', noNotes: 'Geen notities voor deze slide.',
-    on: 'Aan', off: 'Uit',
+    on: 'Aan', off: 'Uit', discoStillLabel: 'Dit ziet je publiek nu — een still, niet live',
   },
   en: {
     presenterMode: 'Presenter mode', localTime: 'Local time', connected: 'Connected',
@@ -36,7 +36,7 @@ const PRESENTER_I18N = {
     presentationTiming: 'Presentation timing', timerControls: 'Timer controls',
     setTimerDuration: 'Set the duration (MM:SS or minutes) — only while the timer is not running',
     previous: 'Previous', next: 'Next', noNotes: 'No notes for this slide.',
-    on: 'On', off: 'Off',
+    on: 'On', off: 'Off', discoStillLabel: 'This is what your audience sees now — a still, not live',
   },
 };
 
@@ -235,6 +235,25 @@ function renderToggleState(buttonId, statusSelector, active) {
   document.querySelector(statusSelector).textContent = active ? presenterText.on : presenterText.off;
 }
 
+const discoStillEl = document.querySelector('[data-disco-still]');
+const discoStillTitleEl = document.querySelector('[data-disco-still-title]');
+
+// `lines` is app.js's discoTitleLines array (or null/undefined when no
+// disco is currently up) — one <span> per line, same shape as app.js's own
+// renderDiscoTitle(), but this is a still: it renders once per state
+// broadcast, never animates.
+function renderDiscoStill(lines) {
+  discoStillEl.hidden = !lines;
+  if (!lines) return;
+  discoStillTitleEl.replaceChildren(
+    ...lines.map((line) => {
+      const span = document.createElement('span');
+      span.textContent = line;
+      return span;
+    })
+  );
+}
+
 function renderState(newState) {
   latestState = newState;
   // pendingNextSlide only ever diverges from currentSlide + 1 locally, via
@@ -254,6 +273,7 @@ function renderState(newState) {
   renderToggleState('btn-toggle-right-aside', '[data-right-aside]', newState.rightAsideVisible);
   renderToggleState('btn-toggle-pause-overlay', '[data-pause-overlay]', newState.pauseOverlayVisible);
   renderToggleState('btn-toggle-context-overlay', '[data-context-overlay]', newState.contextOverlayVisible);
+  renderDiscoStill(newState.discoTitleLines);
   document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());

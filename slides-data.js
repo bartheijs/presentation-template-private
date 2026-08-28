@@ -440,7 +440,7 @@ const SLIDES = [
     icon: 'output',
     templateSection: 'output',
     bullets: [
-      'Beschrijf hoe de output er ui moet zien',
+      'Beschrijf hoe de output er uit moet zien',
       'Bijvoorbeeld echte voorbeelden of een template toevoegen',
     ],
     notes: ``,

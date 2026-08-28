@@ -524,7 +524,13 @@ function goTo(index, { animate = false, direction = null } = {}) {
   // halfway and require a second click.
   const pauseOn = dir === 'next' && discoOn && isDiscoPauseFor(destSlide);
 
-  if (discoOn) renderDiscoTitle(destSlide.discoTitleLines || CONFIG.disco.titleLines);
+  // Tracked separately from isAnimatingSlide/pendingPause so
+  // sendStateToPresenter() can tell Presenter View exactly what disco text
+  // (if any) the audience is currently looking at — including during a
+  // paused hold, where isAnimatingSlide is already back to false but the
+  // disco is still fully visible, frozen.
+  activeDiscoTitleLines = discoOn ? (destSlide.discoTitleLines || CONFIG.disco.titleLines) : null;
+  if (discoOn) renderDiscoTitle(activeDiscoTitleLines);
 
   if (pauseOn) {
     beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
@@ -558,6 +564,10 @@ function goNext() {
  * and (b) is fully faded out well before the panels finish landing — with
  * a comfortable buffer, not a race against the panels' own transition. */
 let isAnimatingSlide = false;
+// Non-null exactly while the audience is looking at a disco transition —
+// animating or frozen mid-'pause'-mode hold. See goTo() (where it's set)
+// and sendStateToPresenter() (where Presenter View reads it).
+let activeDiscoTitleLines = null;
 const ANIM_OUT_MS = CONFIG.transitions.outMs;
 const ANIM_IN_MS = CONFIG.transitions.inMs;
 const DISCO_REVEAL_DELAY_MS = CONFIG.transitions.discoRevealDelayMs; // background starts fading in this long after "out" begins
@@ -639,6 +649,8 @@ function animateTransition(dir, applyFn, holdMs = 0) {
           slideContentEl.classList.remove('content-anim-in');
           slideNotesEl.classList.remove('notes-anim-in');
           isAnimatingSlide = false;
+          activeDiscoTitleLines = null;
+          sendStateToPresenter();
         },
         { once: true }
       );
@@ -717,6 +729,8 @@ function resumePausedTransition() {
       slideContentEl.classList.remove('content-anim-in');
       slideNotesEl.classList.remove('notes-anim-in');
       isAnimatingSlide = false;
+      activeDiscoTitleLines = null;
+      sendStateToPresenter();
     },
     { once: true }
   );
@@ -761,6 +775,7 @@ function cancelPendingPause() {
 function resetAnimationState() {
   pendingPause = null;
   isAnimatingSlide = false;
+  activeDiscoTitleLines = null;
   if (pendingRevealTimer) {
     clearTimeout(pendingRevealTimer);
     pendingRevealTimer = null;
@@ -1376,6 +1391,11 @@ function sendStateToPresenter() {
       leftAsideVisible: !tocCollapsed,
       rightAsideVisible: !nextCollapsed && !presenterHidesControls,
       pauseOverlayVisible: isPauseOverlayVisible(),
+      // Non-null for the whole time the audience sees a disco transition
+      // (animating, or frozen mid-'pause'-mode hold) — never set for an
+      // ordinary non-disco transition. Presenter View shows this as a still
+      // (the title text on a disco-colored card), not a live mirror.
+      discoTitleLines: activeDiscoTitleLines,
     },
     '*'
   );

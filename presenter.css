@@ -260,6 +260,52 @@ input:focus-visible {
   color: var(--accent-5);
 }
 
+/* A still (not live/animated) of the disco the audience is currently seeing
+   instead of the normal slide — the current-preview iframe still shows the
+   underlying slide, which would otherwise be misleading while disco is up.
+   Colors reused from styles.css's :root (also linked on this page) so this
+   matches the real disco-bg/disco-title look without redefining it. */
+.disco-still {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-radius: inherit;
+  background: var(--disco-backdrop);
+  text-align: center;
+  padding: 1rem;
+}
+
+.disco-still-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.disco-still-title span {
+  font-size: clamp(1.1rem, 3.2vw, 1.8rem);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--disco-title-fill);
+  -webkit-text-stroke: 1px var(--disco-title-stroke);
+  text-shadow: 2px 2px 0 var(--disco-title-shadow-1), 4px 4px 0 var(--disco-title-shadow-2);
+}
+
+.disco-still-label {
+  color: color-mix(in srgb, var(--disco-title-fill) 70%, transparent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .preview-viewport {
   position: relative;
   width: 100%;

@@ -425,3 +425,33 @@ test.describe('preview iframes', () => {
     expect(await page.evaluate(() => state.currentIndex)).toBe(0);
   });
 });
+
+test.describe('disco still (Presenter View)', () => {
+  test('shows a still of the disco title while the audience sees it, hides once it settles', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => { CONFIG.disco.enabled = true; CONFIG.disco.titleLines = ['SKILL IT']; });
+
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-disco-still]')).toBeVisible();
+    await expect(presenter.locator('[data-disco-still-title]')).toHaveText('SKILL IT');
+
+    await waitIdle(page);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+  });
+
+  test('does not show for an ordinary transition with disco disabled', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => { CONFIG.disco.enabled = false; });
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+    await waitIdle(page);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+  });
+});
