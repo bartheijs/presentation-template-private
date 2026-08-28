@@ -236,14 +236,17 @@ function renderToggleState(buttonId, statusSelector, active) {
 }
 
 function renderState(newState) {
-  const isFirstState = latestState === null;
   latestState = newState;
-  // Normalize pendingNextSlide before anything below reads it (the text
-  // display and syncPreview() both need the up-to-date value, not the
-  // previous render's stale one).
-  if (isFirstState || pendingNextSlide <= newState.currentSlide) {
-    pendingNextSlide = newState.currentSlide + 1;
-  }
+  // pendingNextSlide only ever diverges from currentSlide + 1 locally, via
+  // the Sla over/Herstel buttons — neither of which triggers renderState().
+  // So any real navigation arriving here (this call firing at all) means
+  // whatever was staged has just been consumed or is now stale, and must
+  // resync unconditionally. Resetting only when pendingNextSlide had fallen
+  // behind (<= newState.currentSlide) missed the reverse case: going back
+  // leaves it 2 slides ahead of the new position instead of 1, and the next
+  // Volgende click then misreads that gap as a deliberate skip-jump and
+  // jumps an extra slide instead of just advancing one.
+  pendingNextSlide = newState.currentSlide + 1;
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
   document.querySelector('[data-total-slides]').textContent = String(newState.totalSlides);

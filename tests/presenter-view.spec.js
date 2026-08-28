@@ -331,6 +331,36 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
     // eslint-disable-next-line no-undef
     expect(await page.evaluate(() => state.currentIndex)).toBe(1);
   });
+
+  test('plain Vorige then Volgende (no skip involved) lands back on the same slide, not one ahead', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('4');
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-prev');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
+    await waitIdle(page);
+
+    // Regression: pendingNextSlide used to only resync when it fell behind
+    // the new currentSlide, so going back left it 2 slides ahead instead of
+    // 1 — the next Volgende click then misread that gap as a deliberate
+    // skip-jump and landed on slide 5 instead of slide 4.
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('4');
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(3);
+  });
 });
 
 test.describe('preview iframes', () => {
