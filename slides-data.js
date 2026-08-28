@@ -31,6 +31,13 @@
  * The title stays full-width above it. Pass an array of `{ src, alt }`
  * instead to stack several images in that same column (e.g. a photo above
  * a logo).
+ * Optional `diagram: { src, alt, logo }` renders a wide diagram/screenshot
+ * full-width below the bullet list, sized to stay readable (not
+ * cover-cropped like `image`) — use this instead of `image` for a
+ * flowchart, screenshot, or anything else meant to be read rather than a
+ * logo-style mark. Optional `logo: { src, alt }` on it renders a fixed
+ * 200x200 mark (e.g. a company logo) to the diagram's left, in the same
+ * row.
  *
  * `title` and `bullets` should always be present (title a non-empty
  * string, bullets an array — `[]` is fine). app.js degrades a missing one
@@ -38,8 +45,8 @@
  * malformed slide is still worth fixing properly.
  */
 
-// Shared skill.md skeleton — shown inline in the slide itself for the two
-// "template anchor" slides (13 & 32, see isTemplateAnchor below) AND reused
+// Shared skill.md skeleton — shown inline in the slide itself for the
+// "template anchor" slide (31, see isTemplateAnchor below) AND reused
 // by the floating "Skill Template" overlay, so it only has to be maintained
 // once.
 const SKILL_TEMPLATE_MD = `---
@@ -71,7 +78,7 @@ description: [beschrijving — dit bepaalt of de skill wordt getriggerd]
 - NOOIT [...]`;
 
 // Same skeleton, split into sections for the overlay (and for the
-// per-slide highlight while walking through the framework, slides 16-27).
+// per-slide highlight while walking through the framework, slides 20-29).
 const SKILL_TEMPLATE_SECTIONS = [
   {
     id: 'frontmatter',
@@ -145,67 +152,91 @@ const SLIDES = [
   },
   {
     id: 3,
+    title: 'Skills helpen mij bij',
+    icon: 'layers',
+    bullets: [
+      {
+        text: 'Taken om het modelleren heen',
+        subtext: "Userstories refinen, technische implementatie opties verkennen, demo's voorbereiden, testen schrijven, presentaties maken",
+      },
+      {
+        text: 'AI leren de abstractielaag van low-code te begrijpen',
+        subtext: 'Low-code werkt met een eigen abstractielaag om code in een schematisch weergave te kunnen lezen en schrijven',
+      },
+    ],
+    notes: ``,
+  },
+  {
+    id: 4,
+    title: 'Mendix',
+    icon: 'steps',
+    diagram: {
+      src: 'assets/MF_Voorbeeld.jpeg',
+      alt: 'Voorbeeld microflow',
+      logo: { src: 'assets/mendix-logo.jpeg', alt: 'Mendix logo' },
+    },
+    bullets: [
+      {
+        text: 'Logica zit in microflows',
+        subtext: 'Schematische weergave als een stroom diagram',
+      },
+    ],
+    notes: ``,
+  },
+  {
+    id: 5,
     title: 'Wat eten we vandaag?',
     icon: 'chat',
     bullets: [
       'Bijna elke dag dezelfde vraag van mijn kinderen',
     ],
-    notes: `Persoonlijke opener. Herkenbaar en luchtig — zet de menselijke toon voor de rest van de talk.`,
-  },
-  {
-    id: 4,
-    title: 'Dus vroeg ik het aan AI',
-    icon: 'alert',
-    bullets: [
-      '"Zeg Claude, wat kunnen we vanavond eten?"',
-      'Antwoord: generiek; geen rekening met voorkeuren, dieet, allergieën of wie er aanschuift',
-    ],
-    notes: `Brug naar het eigenlijke probleem: hoe krachtig het model ook is, een open vraag levert een generiek antwoord op.`,
-  },
-  {
-    id: 5,
-    title: 'Open vraag, generiek antwoord',
-    icon: 'target',
-    bullets: [
-      'Een open vraag aan AI levert een generiek antwoord op',
-      'Zeker als het een herhalende vraag is: telkens dezelfde open vraag, telkens weer een generiek antwoord',
-      'Vertel AI hoe de uitkomst eruit moet zien, en je krijgt iets bruikbaars',
-      'Precies daarom bestaan skills: het doel vastleggen, niet alleen de vraag',
-    ],
-    notes: `Kernles die de rest van de talk motiveert — bruggetje naar de volgende slide over skill engineering.`,
+    notes: ``,
   },
   {
     id: 6,
-    title: 'Intro',
-    icon: 'bulb',
+    title: 'Dus vroeg ik het aan AI',
+    icon: 'alert',
     bullets: [
-      'Skill engineering: één van de meest waardevolle AI-vaardigheden van 2026',
-      'De meeste AI aanbieders ondersteunen een vorm van skills',
+      {
+        text: '"Zeg Claude, wat kunnen we vanavond eten?"',
+        subtext: 'Antwoord: generiek; geen rekening met voorkeuren, dieet, allergieën of wie er aanschuift',
+      },
+      'Hoe krachtig het model ook is: zonder guard rails, context en instructies blijft het antwoord generiek',
+      'Skills leggen dat doel één keer vast — daarna hoef je het niet steeds opnieuw uit te leggen'
     ],
     notes: ``,
   },
   {
     id: 7,
-    title: 'Wat je leert',
-    icon: 'book',
+    title: 'Skill engineering',
+    icon: 'bulb',
     bullets: [
-      'Wat skills zijn en wanneer je ze inzet',
-      'Een manier om je eigen skills te bouwen',
+      'Een waardevolle AI-vaardigheid',
+      'De meeste AI aanbieders ondersteunen een vorm van skills',
     ],
     notes: ``,
   },
   {
     id: 8,
-    title: 'Het probleem',
-    icon: 'alert',
+    title: 'Wat je leert',
+    icon: 'book',
     bullets: [
-      'AI-modellen worden steeds krachtiger',
-      'Maar blijven guard rails, context en instructies nodig hebben',
+      'Wat skills zijn en wanneer je ze inzet',
+      'Je eigen skills bouwen',
     ],
     notes: ``,
   },
   {
     id: 9,
+    title: 'Wat is een skill?',
+    icon: 'folder',
+    bullets: [
+      'Herbruikbare workflow voor een AI-model',
+    ],
+    notes: ``,
+  },
+  {
+    id: 10,
     title: 'Prompts vs. skills',
     icon: 'compare',
     bullets: [
@@ -214,7 +245,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 10,
+    id: 11,
     title: 'Wanneer een prompt',
     icon: 'bolt',
     bullets: [
@@ -224,60 +255,51 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 11,
+    id: 12,
     title: 'Wanneer een skill',
     icon: 'repeat',
     bullets: [
       'Je hetzelfde proces herhaalt',
       'Consistente output belangrijk is',
       'Je het proces wilt kunnen verbeteren',
-    ],
-    notes: ``,
-  },
-  {
-    id: 12,
-    title: 'Wat is een skill?',
-    icon: 'folder',
-    disco: true,
-    discoMode: 'pause',
-    bullets: [
-      'Herbruikbare workflow voor een AI-model',
-      'skill.md markdown bestand',
-      'Verpakt in folder met reference files, voorbeelden van input/output, tools',
+      'Deel je de skill, dan groeit de impact mee',
     ],
     notes: ``,
   },
   {
     id: 13,
-    title: 'Zo ziet een skill.md eruit',
+    title: 'Zo ziet een skill eruit',
     icon: 'template',
-    isTemplateAnchor: true,
-    bullets: [],
-    notes: `
-    - een \`skill.md\` heeft een vaste basisvorm
-    - Frontmatter (name + description) + proces omschrijving
-    - De vorm van dit bestand is een framework dat je zou kunnen volgen`,
+    disco: true,
+    discoMode: 'pause',
+    bullets: [
+      'SKILL.md markdown bestand, dus tekst',
+      'Verpakt in een folder',
+    ],
+    diagram: { src: 'assets/skill_folder_structuur.jpg', alt: 'Voorbeeld van een skill-folderstructuur' },
+    notes: ``,
   },
   {
     id: 14,
     title: 'Voor en door AI',
     icon: 'chat',
-    disco: true,
-    discoMode: 'pause',
-    discoTitleLines: ['MAAR', 'HOE', 'DAN!?'],
     bullets: [
       'Skills kan je zelf schrijven...',
       '...maar met AI gaat het makkelijker.',
+      'Claude Desktop heeft daar een skill voor ;-)',
+      'Claude skill-creator skill maakt dit voor je aan en zet het op de juiste plek.',
     ],
     notes: ``,
   },
   {
     id: 15,
-    title: 'Simpel beginnen',
-    icon: 'seed',
+    title: 'Hoe kom je tot een skill?',
+    icon: 'checklist',
     bullets: [
-      'Begin met alleen een `skill.md`',
-      'Voeg later referentiebestanden toe naarmate de skill volwassener wordt',
+      'De skill-creator skill gebruiken (straks in demo)',
+      'Na een succesvolle chat Claude vragen er een skill voor te maken m.b.v. de skill-creator skill',
+      'Handmatig maken m.b.v. bijvoorbeeld Visual Studio Code',
+      'TIP: Skills van derden downloaden',
     ],
     notes: ``,
   },
@@ -309,7 +331,7 @@ const SLIDES = [
     title: 'Eén duidelijk doel',
     icon: 'target',
     bullets: [
-      'Veelgemaakte fout: één skill van 1500 regels voor een heel domein',
+      'Veelgemaakte fout: één grote skill voor een heel domein',
       'Geef een skill één duidelijk, afgebakend doel',
       'Twee/drie processen beschreven? Waarschijnlijk twee/drie skills',
     ],
@@ -319,8 +341,12 @@ const SLIDES = [
     id: 19,
     title: 'Het framework',
     icon: 'layers',
+    disco: true,
+    discoMode: 'pause',
+    discoTitleLines: ['MAAR', 'HOE', 'DAN!?'],
     bullets: [
       'Geen exacte wetenschap, maar een solide startpunt',
+      'Ook prettig leesbaar voor mensen, niet alleen voor het model',
     ],
     notes: ``,
   },
@@ -329,9 +355,6 @@ const SLIDES = [
     title: 'Frontmatter',
     icon: 'tag',
     templateSection: 'frontmatter',
-    disco: true,
-    discoMode: 'pause',
-    discoTitleLines: ['LEARN IT', 'SKILL IT', 'SHIP IT'],
     bullets: [
       'Name - de naam van de skill',
       'Description - wanneer de skill getriggerd wordt',
@@ -381,8 +404,8 @@ const SLIDES = [
     bullets: [
       'Proces stap voor stap uitleggen',
       '- actie',
-      '- benodigde informatie',
-      '- human-in-the-loop checkpoint'],
+      '- Benodigde informatie bij die actie',
+      '- Eventueel human-in-the-loop checkpoint'],
     notes: ``,
   },
   {
@@ -391,26 +414,15 @@ const SLIDES = [
     icon: 'checkpoint',
     templateSection: 'process',
     bullets: [
-      'Goed ontworpen skills ondersteunen human-in-the-loop momenten',
-      'Punten waar het model pauzeert voor een vraag of goedkeuring',
+      'Skills ondersteunen vaak human-in-the-loop momenten',
+      'Punten waar het model pauzeert voor een vraag, goedkeuring of feedback over voortgang',
       'Dit komt terug als checkpoint in de process-stappen',
-    ],
-    notes: ``,
-  },
-  {
-    id: 26,
-    title: 'Checkpoint',
-    icon: 'checkpoint',
-    templateSection: 'process',
-    bullets: [
-      'Vraag: vaak input veld of multi select',
-      'Update: wat er gebeurt en waar je in het proces zit',
       'Zo houdt de gebruiker eigenaarschap',
     ],
     notes: ``,
   },
   {
-    id: 27,
+    id: 26,
     title: 'Laatste proces stap: controle',
     icon: 'check',
     templateSection: 'process',
@@ -422,7 +434,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 28,
+    id: 27,
     title: 'Output',
     icon: 'output',
     templateSection: 'output',
@@ -434,7 +446,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 29,
+    id: 28,
     title: 'Rules',
     icon: 'rules',
     templateSection: 'rules',
@@ -446,7 +458,7 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 30,
+    id: 29,
     title: 'Rules: verbod + alternatief',
     icon: 'swap',
     templateSection: 'rules',
@@ -458,19 +470,16 @@ const SLIDES = [
     notes: ``,
   },
   {
-    id: 31,
-    title: 'Rules: groeit continu',
+    id: 30,
+    title: 'Skill groeit continu',
     icon: 'repeat',
-    templateSection: 'rules',
     bullets: [
-      'Groeit: bij gebruik van de skill kan je bevindingen toevoegen',
-      'Check per bevinding: losstaande rule, of hoort het ergens anders?',
-      'Herhaling van terugkerende issues in andere vorm kan werken',
+      'Elke keer dat je de skill gebruikt, is een kans om het te verbeteren',
     ],
     notes: ``,
   },
   {
-    id: 32,
+    id: 31,
     title: 'Het skeleton',
     icon: 'template',
     isTemplateAnchor: true,
@@ -479,33 +488,25 @@ const SLIDES = [
   },
   {
     id: 33,
-    title: 'Tips',
-    icon: 'ruler',
+    title: 'Tijd voor de live build',
+    icon: 'wrench',
+    disco: true,
+    discoMode: 'pause',
+    discoTitleLines: ['LEARN IT', 'SKILL IT', 'SHIP IT'],
     bullets: [
-      'Houd de `skill.md` gefocust op het proces',
-      'Al het andere hoort in referentiebestanden',
-      'Vuistregel: `skill.md` onder de 500 regels',
+      '"Wat eten we vandaag" wordt vanavond een echte skill',
+      'Rekening houdend met bijvoorbeeld dieet wensen, allergieën en wie er mee-eet',
+      'Het tegenovergestelde van het generieke AI-antwoord van net',
     ],
     notes: ``,
   },
   {
     id: 34,
-    title: 'Tijd voor de live build',
-    icon: 'wrench',
-    bullets: [
-      '"Wat eten we vandaag" wordt vanavond een echte skill',
-      'Rekening houdend met voorkeuren, dieet, allergieën en wie er mee-eet',
-      'Het tegenovergestelde van het generieke AI-antwoord van net',
-    ],
-    notes: `Transitie naar het live-bouwmoment. Start hier de timer. Geen scriptinhoud op de slide zelf — de build gebeurt live in de tool.`,
-  },
-  {
-    id: 35,
     title: 'Stel dat je maar drie dingen onthoudt',
     icon: 'flag',
     bullets: [
       'Geef elke skill één duidelijk, afgebakend doel — liever meerdere kleine skills dan één grote',
-      'Houd de `skill.md` gefocust op alleen het proces — de rest hoort in een referentiebestand',
+      'Houd de `SKILL.md` gefocust op alleen het proces — de rest hoort in een referentiebestand',
       'Bouw bewust human-in-the-loop checkpoints in',
     ],
     notes: ``,

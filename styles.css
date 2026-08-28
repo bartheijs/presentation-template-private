@@ -494,6 +494,14 @@ button {
   text-align: center;
 }
 
+/* Applied instead of the default width above when a slide has a
+   diagram+logo row (see buildSlideContentHTML) — that row needs more room
+   than the standard reading-width column to keep both legible side by
+   side. */
+.slide-inner--wide {
+  width: 100%;
+}
+
 .slide-content--align-left .slide-inner {
   align-items: flex-start;
   text-align: left;
@@ -647,6 +655,51 @@ button {
   object-fit: cover;
   border-radius: var(--radius-lg);
   box-shadow: 0 10px 24px rgba(36, 26, 34, 0.18);
+}
+
+/* Optional `diagram` (see buildSlideContentHTML) — a wide diagram/
+   screenshot below the bullet list, sized to stay fully readable instead of
+   being cropped like the fixed-square .slide-image. Both max-width (for a
+   wide/landscape image) and max-height (for a tall/portrait one, e.g. a
+   folder-tree screenshot) are capped — width/height stay auto so whichever
+   dimension is the binding constraint governs, instead of always forcing
+   full column width regardless of the resulting height. */
+.slide-diagram {
+  width: auto;
+  height: auto;
+  max-width: 36rem;
+  max-height: 20rem;
+  object-fit: contain;
+  margin-top: 1.75rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 24px rgba(36, 26, 34, 0.12);
+}
+/* A standalone diagram (no logo alongside it, see .slide-diagram-row below)
+   sits directly under the bullet list with less vertical room to spare
+   than the row layout — so it gets a shorter cap to avoid pushing the
+   slide into scroll territory. */
+.slide-inner > .slide-diagram {
+  max-height: 15rem;
+}
+
+/* Optional `diagram.logo` (see buildSlideContentHTML) — a fixed 200x200
+   mark (e.g. a company logo) placed to the left of the diagram, in the
+   same row, instead of the diagram alone taking the full width. */
+.slide-diagram-row {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  width: 100%;
+  margin-top: 1.75rem;
+}
+.slide-diagram-row .slide-image {
+  flex: 0 0 auto;
+}
+.slide-diagram-row .slide-diagram {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  margin-top: 0;
 }
 
 .slide-template-code {
@@ -1068,4 +1121,6 @@ button {
   .slide-inner { width: 100%; max-width: none; }
   .slide-row-with-image { flex-direction: column; align-items: center; }
   .slide-image { height: 6.5rem; width: 6.5rem; }
+  .slide-diagram { max-width: 100%; }
+  .slide-diagram-row { flex-direction: column; }
 }

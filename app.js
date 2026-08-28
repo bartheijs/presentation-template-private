@@ -249,10 +249,26 @@ function buildSlideContentHTML(slide) {
   // full bullet list sits in one column, the image(s) stacked in a second
   // column beside it, so the bullets keep their normal uniform gap instead
   // of a lead bullet being pushed into its own row sized by the (taller)
-  // image.
+  // image. Meant for a one-off mark like a photo/logo at a fixed 200x200
+  // square, not a wide diagram (see `diagram` below for that).
   const images = Array.isArray(slide.image)
     ? slide.image.filter((img) => img && img.src)
     : (slide.image && slide.image.src ? [slide.image] : []);
+
+  // Optional `diagram: { src, alt, logo }` — a wide diagram/screenshot
+  // rendered full-width below the bullet list, sized to stay readable
+  // (object-fit: contain) instead of being cropped like the fixed-square
+  // `image` marks. Optional `logo: { src, alt }` renders a fixed 200x200
+  // mark to its left, in the same row.
+  const diagramLogoBlock = slide.diagram && slide.diagram.logo && slide.diagram.logo.src
+    ? `<img class="slide-image" src="${escapeHtml(slide.diagram.logo.src)}" alt="${escapeHtml(slide.diagram.logo.alt || '')}">`
+    : '';
+  const diagramBlock = slide.diagram && slide.diagram.src
+    ? (diagramLogoBlock
+      ? `<div class="slide-diagram-row">${diagramLogoBlock}<img class="slide-diagram" src="${escapeHtml(slide.diagram.src)}" alt="${escapeHtml(slide.diagram.alt || '')}"></div>`
+      : `<img class="slide-diagram" src="${escapeHtml(slide.diagram.src)}" alt="${escapeHtml(slide.diagram.alt || '')}">`)
+    : '';
+
   if (images.length) {
     const imagesEl = images
       .map((img) => `<img class="slide-image" src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || '')}">`)
@@ -269,10 +285,18 @@ function buildSlideContentHTML(slide) {
     ${metaBlock}`;
   }
 
+  // A diagram+logo row needs more horizontal room than the standard
+  // reading-width column (66.6667%) to keep both legible at once, so it
+  // widens `.slide-inner` just for that slide — the row's own left edge
+  // still lines up with the heading/bullets above it since it stays inside
+  // the same column.
+  const innerClass = diagramLogoBlock ? ' slide-inner--wide' : '';
+
   return `
-    <div class="slide-inner">
+    <div class="slide-inner${innerClass}">
       ${headingBlock}
       ${bulletsBlock}
+      ${diagramBlock}
       ${templateBlock}
     </div>
     ${metaBlock}`;
