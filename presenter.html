@@ -15,6 +15,19 @@
     <h1>Presenter View</h1>
   </div>
 
+  <div class="header-timer" aria-label="Presentatietijd" data-i18n-aria-label="presentationTiming">
+    <div class="elapsed-block">
+      <span class="meta-label" data-i18n="timerLabel">Resterende tijd</span>
+      <input type="text" class="elapsed" data-elapsed inputmode="numeric" autocomplete="off"
+        aria-label="Tijdsduur instellen (MM:SS of minuten), alleen als de timer niet loopt"
+        data-i18n-aria-label="setTimerDuration">
+    </div>
+    <div class="timer-controls" aria-label="Timerbediening" data-i18n-aria-label="timerControls">
+      <button id="btn-presenter-timer-toggle" class="btn btn--primary" type="button" data-i18n="start">Start</button>
+      <button id="btn-presenter-timer-reset" class="btn btn--quiet" type="button" data-i18n="reset">Reset</button>
+    </div>
+  </div>
+
   <div class="clock-block presenter-clock">
     <span class="meta-label" data-i18n="localTime">Lokale tijd</span>
     <time class="clock" data-clock></time>
@@ -43,6 +56,13 @@
         <iframe id="current-preview" src="index.html?embed=preview" class="preview-frame" title="Voorbeeld van de huidige slide" data-i18n-title="currentPreviewTitle"></iframe>
       </div>
     </article>
+
+    <nav class="preview-nav" aria-label="Presentatiebediening" data-i18n-aria-label="presentationControls">
+      <div class="nav-controls">
+        <button id="btn-presenter-prev" class="btn btn--nav" type="button"><span aria-hidden="true">&#8592;</span> <span data-i18n="previous">Vorige</span></button>
+        <button id="btn-presenter-next" class="btn btn--primary btn--nav" type="button"><span data-i18n="next">Volgende</span> <span aria-hidden="true">&#8594;</span></button>
+      </div>
+    </nav>
 
     <article class="panel preview-card preview-card--next">
       <header class="panel-header">
@@ -77,41 +97,6 @@
     </article>
 
     <div class="presenter-sidebar">
-      <article class="panel progress-panel">
-        <div class="progress-timer" aria-label="Presentatietijd" data-i18n-aria-label="presentationTiming">
-          <div class="elapsed-block">
-            <span class="meta-label" data-i18n="elapsed">Verstreken</span>
-            <time class="elapsed" data-elapsed></time>
-          </div>
-          <div class="timer-controls" aria-label="Timerbediening" data-i18n-aria-label="timerControls">
-            <button id="btn-presenter-timer-start" class="btn btn--primary" type="button" data-i18n="start">Start</button>
-            <button id="btn-presenter-timer-pause" class="btn" type="button" data-i18n="pause">Pauze</button>
-            <button id="btn-presenter-timer-reset" class="btn btn--quiet" type="button" data-i18n="reset">Reset</button>
-          </div>
-        </div>
-
-        <header class="panel-header panel-header--compact progress-heading">
-          <div>
-            <span class="panel-kicker" data-i18n="progress">Voortgang</span>
-            <h2 data-i18n="onSchedule">Op schema</h2>
-          </div>
-          <span class="schedule-chip" data-schedule-delta></span>
-        </header>
-
-        <div class="progress-row">
-          <div class="progress-label"><span data-i18n="slides">Slides</span><strong data-slides-progress></strong></div>
-          <div class="progress-track" role="progressbar" aria-label="Voortgang slides" data-i18n-aria-label="slideProgress" aria-valuemin="0" aria-valuemax="100" data-slides-progressbar>
-            <span class="progress-fill progress-fill--slides" data-slides-progress-fill></span>
-          </div>
-        </div>
-        <div class="progress-row">
-          <div class="progress-label"><span data-i18n="time">Tijd</span><strong data-time-progress></strong></div>
-          <div class="progress-track" role="progressbar" aria-label="Voortgang tijd" data-i18n-aria-label="timeProgress" aria-valuemin="0" aria-valuemax="100" data-time-progressbar>
-            <span class="progress-fill progress-fill--time" data-time-progress-fill></span>
-          </div>
-        </div>
-      </article>
-
       <section class="panel controls-panel" aria-label="Weergaveopties" data-i18n-aria-label="displayOptions">
         <span class="panel-kicker" data-i18n="display">Weergave</span>
         <div class="display-controls">
@@ -137,13 +122,6 @@
           </button>
         </div>
       </section>
-
-      <nav class="panel nav-panel" aria-label="Presentatiebediening" data-i18n-aria-label="presentationControls">
-        <div class="nav-controls">
-          <button id="btn-presenter-prev" class="btn btn--nav" type="button"><span aria-hidden="true">&#8592;</span> <span data-i18n="previous">Vorige</span></button>
-          <button id="btn-presenter-next" class="btn btn--primary btn--nav" type="button"><span data-i18n="next">Volgende</span> <span aria-hidden="true">&#8594;</span></button>
-        </div>
-      </nav>
     </div>
   </section>
 </main>
