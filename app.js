@@ -67,8 +67,8 @@ const APP_I18N = {
     overlayTitle: 'Skill Template',
     backToDeckLabel: 'Terug naar de presentatie',
     presenterViewButton: 'Presenter View',
-    finishTitle: 'Klaar om te presenteren!',
-    finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
+    finishTitle: 'Demo tijd!',
+    finishBodyHtml: 'Wat eten we vandaag?',
     pauseOverlayText: '...',
   },
   en: {
@@ -492,6 +492,14 @@ function goTo(index, { animate = false, direction = null } = {}) {
   if (index === state.currentIndex && !pendingPause) return;
   if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid out/in animation
 
+  // The finish overlay opens on top of the last slide without changing
+  // state.currentIndex (see goNext()). goPrev() special-cases the plain
+  // "back" gesture itself (see below), but an explicit jump elsewhere
+  // (GO_TO_SLIDE from Presenter View's TOC/skip-ahead — it has no on-screen
+  // button to close the overlay, unlike the local keyboard handler's own
+  // guard) should still close the celebration on its way there.
+  if (!finishOverlayEl.hidden) closeFinishOverlay();
+
   const dir = direction || (index > state.currentIndex ? 'next' : 'prev');
 
   if (pendingPause) {
@@ -554,6 +562,22 @@ function goNext() {
     return;
   }
   goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
+}
+
+// Shared by the Prev button and PREVIOUS_SLIDE: the finish overlay is
+// conceptually one more step past the last slide (see goNext() above), so
+// going back from it should just reveal that last slide again — the same
+// thing its own "Terug naar de presentatie" button does — not ALSO step
+// past it to the slide before. goTo() is never even called in that case,
+// so state.currentIndex (already sitting on the last slide) is untouched;
+// a second "back" press, with the overlay now closed, behaves normally.
+function goPrev() {
+  if (!finishOverlayEl.hidden) {
+    closeFinishOverlay();
+    sendStateToPresenter();
+    return;
+  }
+  goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
 }
 
 /* Content up / notes down (out) -> swap content while off-screen ->
@@ -794,9 +818,7 @@ function resetAnimationState() {
 }
 
 document.getElementById('btn-next').addEventListener('click', goNext);
-document.getElementById('btn-prev').addEventListener('click', () =>
-  goTo(state.currentIndex - 1, { animate: true, direction: 'prev' })
-);
+document.getElementById('btn-prev').addEventListener('click', goPrev);
 
 // Both listeners below drive the real presentation's own navigation from
 // its own keyboard/click input. A preview iframe (?embed=preview) must stay
@@ -826,7 +848,7 @@ if (!isEmbedPreview) {
     }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
       e.preventDefault();
-      goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+      goPrev();
       return;
     }
     if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
@@ -1306,7 +1328,7 @@ if (!isEmbedPreview) {
 // `if (!handler) return;` check below correctly rejects it.
 const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   NEXT_SLIDE: () => goNext(),
-  PREVIOUS_SLIDE: () => goTo(state.currentIndex - 1, { animate: true, direction: 'prev' }),
+  PREVIOUS_SLIDE: () => goPrev(),
   GO_TO_SLIDE: (data) => {
     const slide = Number(data.slide);
     if (Number.isInteger(slide)) goTo(slide, { animate: false });

@@ -455,3 +455,45 @@ test.describe('disco still (Presenter View)', () => {
     await expect(presenter.locator('[data-disco-still]')).toBeHidden();
   });
 });
+
+test.describe('finish overlay interaction', () => {
+  test('Presenter View Vorige from the closing page just reveals the last slide; a second Vorige then steps back further', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    // Land on slide 2 first so there's somewhere to land two "back" steps
+    // later. #btn-next is hidden once Presenter View connects (its column
+    // is replaced by the presenter's own remote controls), so jump directly.
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => goTo(1, { animate: false }));
+    await presenter.waitForTimeout(300);
+
+    // #btn-timer-finish is likewise hidden once connected — open the overlay
+    // directly the same way goNext() does when you click Volgende once more
+    // on the real last slide, without moving state.currentIndex.
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => openFinishOverlay());
+    await expect(page.locator('#finish-overlay')).toBeVisible();
+    // eslint-disable-next-line no-undef
+    const indexBefore = await page.evaluate(() => state.currentIndex);
+
+    // Regression (part 1): PREVIOUS_SLIDE used to move state.currentIndex
+    // back without closing the finish overlay at all, so the Presentation
+    // View stayed stuck showing the celebration while Presenter View's own
+    // display had already moved on — nothing visibly changed for the
+    // audience. First Vorige from the closing page should just close it,
+    // revealing the last slide underneath (like its own "Terug naar de
+    // presentatie" button) — not ALSO step back past that slide.
+    await presenter.click('#btn-presenter-prev');
+    await expect(page.locator('#finish-overlay')).toBeHidden();
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(indexBefore);
+
+    // Regression (part 2): a second Vorige, now that the overlay is closed,
+    // must behave like ordinary back navigation and actually step back.
+    await presenter.click('#btn-presenter-prev');
+    await presenter.waitForTimeout(300);
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(indexBefore - 1);
+  });
+});
