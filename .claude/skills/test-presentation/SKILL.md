@@ -54,15 +54,21 @@ Bash (om `npm`/`npx playwright` te draaien). Geen MCP of sub-agents nodig.
    relevante engine-code te springen, in plaats van opnieuw context op te
    bouwen:
    - `tests/config-and-ui.spec.js` faalt → `config.js`-waarden of
-     `applyConfigStrings()`/`templateOverlay.enabled`-logica in `app.js`.
+     `applyConfigStrings()`/`templateOverlay.enabled`-logica in `app.js`; voor
+     de theme-tests specifiek → de inline `data-theme`-script in
+     `index.html`/`presenter.html`, of `:root[data-theme="conclusion"]` in
+     `themes/conclusion/theme.css`, of `.brand-chrome*` in `styles.css`.
    - `tests/disco-and-pause.spec.js` faalt → `isDiscoEnabledFor`/
      `isDiscoPauseFor`/`goTo`/`animateTransition`/`beginPausedTransition`/
      `resumePausedTransition`/`cancelPendingPause`/`resetAnimationState` in
      `app.js`, of de `.disco-bg`/`is-transitioning`-CSS in `styles.css`.
    - `tests/layout.spec.js` faalt → `resolveAlignFor`/`renderBulletItem`/
-     `buildSlideContentHTML` in `app.js`, of `.slide-inner`/
-     `.slide-content--align-left`/`.slide-bullet-*`/de 900px-breakpoint in
-     `styles.css`.
+     `buildSlideContentHTML`/`LAYOUT_RENDERERS`/de per-layout render-functies
+     (`renderTitleLayout`, `renderBulletsLayout`, `renderListImageLayout`,
+     `renderQuoteLayout`, `renderImageOnlyLayout`,
+     `renderTemplateReferenceLayout`) in `app.js`, of `.slide-inner`/
+     `.slide-content--align-left`/`.slide-bullet-*`/`.slide-quote-*`/
+     `.slide-image-stack--solo`/de 900px-breakpoint in `styles.css`.
    - `tests/notes-resize.spec.js` faalt → de `flex-grow`-transitie op
      `.slide-content` en de `stage-no-notes`-regel in `styles.css`.
    - `tests/notes-toggle.spec.js` faalt → `toggleNotesVisibility`/

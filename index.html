@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presentation Template Demo</title>
+<script src="config.js"></script>
+<script>document.documentElement.setAttribute('data-theme', (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default');</script>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="themes/conclusion/theme.css">
 </head>
 <body>
 
@@ -171,7 +174,17 @@
 
 <canvas id="confetti-canvas"></canvas>
 
-<script src="config.js"></script>
+<div class="brand-chrome" id="brand-chrome" aria-hidden="true">
+  <div class="brand-chrome-wordmark">
+    <span class="brand-chrome-line1">CONCLUSION</span>
+    <span class="brand-chrome-line2" id="brand-chrome-business-unit"></span>
+  </div>
+  <div class="brand-chrome-footer">
+    <span class="brand-chrome-stripe"></span>
+    <span class="brand-chrome-tagline" id="brand-chrome-tagline"></span>
+  </div>
+</div>
+
 <script src="slides-data.js"></script>
 <script src="app.js"></script>
 </body>

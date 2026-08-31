@@ -45,8 +45,10 @@ van inhoud kan leiden.
    inhoudelijk noodzakelijk icoon ontbreekt, voeg één symbol aan de sprite toe
    en meld dit. Combineer een icoon alleen met volledig links uitgelijnde
    inhoud; een gecentreerde titel heeft geen icoon.
-8. Controleer iedere toegevoegde of gewijzigde slide op een geldige `id`,
-   niet-lege `title`, `bullets`-array en `notes`-string. Test de presentatie
+8. Controleer iedere toegevoegde of gewijzigde slide op een geldige `id` en
+   `layout` (`'title'`, `'bullets'`, `'list-image'`, `'quote'`, `'image-only'`
+   of `'template-reference'`), niet-lege `title`, `bullets`-array en
+   `notes`-string. Test de presentatie
    daarna volgens `.claude/skills/test-presentation/SKILL.md` en bekijk de
    gewijzigde slides visueel.
 
@@ -57,14 +59,18 @@ van inhoud kan leiden.
   wijzigt. Bij een wissel tussen Nederlands en Engels moeten `lang` en de
   slide-inhoud samen wisselen; Presentation View en Presenter View volgen
   `CONFIG.lang` automatisch. Voeg geen taalwisselaar aan de UI toe.
-- Bewaar bestaande specialistische velden zoals `isTemplateAnchor`,
-  `templateSection`, `discoHoldMs`, `discoTitleLines` en `duration`, tenzij
-  de feedback ze daadwerkelijk raakt.
+- Bewaar bestaande specialistische velden zoals `templateSection`,
+  `discoHoldMs`, `discoTitleLines` en `duration`, tenzij de feedback ze
+  daadwerkelijk raakt. Verander een slide's `layout` alleen wanneer de
+  feedback de opbouw van die slide daadwerkelijk raakt — een tekstuele
+  wijziging alleen is geen reden om de layout te wijzigen.
 - Pas `duration` (seconden, presenter-only) aan wanneer de gebruiker een
   tijd voor een slide noemt of vraagt een eerdere schatting te corrigeren
   (bijv. na een droogloop met de presentatietimer in de Presenter View) —
   dit raakt alleen de schema-indicatie daar, nooit de zichtbare
   presentatie.
+- Behoud `CONFIG.theme` en `CONFIG.brand`, tenzij de gebruiker expliciet om
+  een ander thema of een andere business unit/tagline vraagt.
 - Pas ongerelateerde sleutels in `config.js` niet aan.
 - Schrijf onderwerpcontent nooit terug naar `main` of `develop`; alleen
   herbruikbare engineverbeteringen horen daar.

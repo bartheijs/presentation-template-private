@@ -12,6 +12,9 @@
   --accent-3: #06D6A0;    /* tertiary — checkpoints, success, check */
   --accent-4: #3AB0FF;    /* quaternary — tools/process accents */
   --accent-5: #8657FF;    /* extra — template overlay, confetti variety */
+  --accent-gradient-end: #FF7A59; /* .btn-next's gradient endpoint, kept as
+    its own token (rather than a hardcoded color) so a theme swapping
+    --accent doesn't end up with a mismatched hardcoded far end */
 
   --radius-lg: 22px;
   --radius-md: 16px;
@@ -19,6 +22,12 @@
 
   --shadow-soft: 0 10px 30px rgba(36, 26, 34, 0.08);
   --shadow-accent: 0 12px 28px rgba(255, 61, 110, 0.35);
+
+  /* Code-block colors (slide template block, notes code block, overlay
+     template code) — always a fixed dark/light pair regardless of theme, so
+     code stays readable even under the default theme's light surface. */
+  --code-bg: #1E1B2E;
+  --code-text: #F2ECFF;
 
   --font-sans: "Avenir Next", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -220,7 +229,7 @@ button {
   box-shadow: var(--shadow-soft);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.btn-floating:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 26px rgba(134, 87, 255, 0.35); }
+.btn-floating:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 26px color-mix(in srgb, var(--accent-5) 35%, transparent); }
 .btn-floating:active { transform: translateY(0) scale(0.99); }
 
 .timer-widget {
@@ -273,7 +282,7 @@ button {
   color: #fff;
   font-weight: 700;
   font-size: 0.9rem;
-  box-shadow: 0 6px 14px rgba(255, 61, 110, 0.28);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--accent) 28%, transparent);
   transition: transform 0.15s ease;
 }
 .btn-finish:hover { transform: translateY(-2px) scale(1.03); }
@@ -454,7 +463,7 @@ button {
   background: var(--surface);
   border-radius: var(--radius-lg);
   padding: 11vh 3rem 2.5rem;
-  box-shadow: 0 4px 10px rgba(36, 26, 34, 0.06);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--text) 6%, transparent);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -655,7 +664,56 @@ button {
   width: 200px;
   object-fit: cover;
   border-radius: var(--radius-lg);
-  box-shadow: 0 10px 24px rgba(36, 26, 34, 0.18);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+/* ---------- Quote layout ---------- */
+.slide-inner--quote {
+  width: min(80%, 72rem);
+  gap: 1.5rem;
+}
+.slide-quote-box {
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 3rem;
+  box-shadow: var(--shadow-soft);
+}
+.slide-quote-text {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+  line-height: 1.4;
+}
+.slide-quote-attribution {
+  margin: 1rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+.slide-quote-image-stack {
+  display: flex;
+  justify-content: center;
+}
+.slide-quote-image-stack .slide-image {
+  height: 260px;
+  width: 260px;
+}
+
+/* ---------- Image-only layout ---------- */
+.slide-inner--image-only {
+  width: 100%;
+}
+.slide-image-stack--solo {
+  width: 100%;
+  align-items: center;
+  margin-right: 0;
+}
+.slide-image-stack--solo .slide-image {
+  height: min(52vh, 32rem);
+  width: auto;
+  max-width: 100%;
 }
 
 .slide-template-code {
@@ -665,8 +723,8 @@ button {
   font-family: var(--font-mono);
   font-size: clamp(0.58rem, 1.3vh, 1.15rem);
   line-height: 1.35;
-  background: #1E1B2E;
-  color: #F2ECFF;
+  background: var(--code-bg);
+  color: var(--code-text);
   border-radius: var(--radius-md);
   padding: 0.9rem 1.1rem;
   overflow: auto;
@@ -733,8 +791,8 @@ button {
   font-family: var(--font-mono);
   font-size: 0.82rem;
   line-height: 1.5;
-  background: #1E1B2E;
-  color: #F2ECFF;
+  background: var(--code-bg);
+  color: var(--code-text);
   border-radius: var(--radius-md);
   padding: 1rem 1.1rem;
   overflow-x: auto;
@@ -778,7 +836,7 @@ button {
 }
 
 .btn-next {
-  background: linear-gradient(135deg, var(--accent), #FF7A59);
+  background: linear-gradient(135deg, var(--accent), var(--accent-gradient-end));
   color: #fff;
   padding: 2rem 1rem;
   font-size: 1.15rem;
@@ -921,8 +979,8 @@ button {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   line-height: 1.6;
-  background: #1E1B2E;
-  color: #F2ECFF;
+  background: var(--code-bg);
+  color: var(--code-text);
   border-radius: var(--radius-md);
   padding: 1.1rem 1.25rem;
   overflow-x: auto;
@@ -1053,6 +1111,59 @@ button {
   transform: translateX(0.14em);
 }
 
+/* ---------- Brand chrome (hidden by default; a theme opts in by setting
+   [data-theme="X"] .brand-chrome { display: flex; } in its own CSS file,
+   see themes/conclusion/theme.css) ---------- */
+.brand-chrome {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.brand-chrome-wordmark {
+  align-self: flex-end;
+  margin: 1.25rem 1.75rem 0 0;
+  text-align: right;
+  font-family: var(--font-heading);
+  line-height: 1.15;
+}
+.brand-chrome-line1 {
+  display: block;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
+.brand-chrome-line2 {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+.brand-chrome-line2:empty { display: none; }
+.brand-chrome-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+}
+.brand-chrome-stripe {
+  display: inline-block;
+  width: 3.5rem;
+  height: 0.6rem;
+  border-radius: 2px;
+}
+.brand-chrome-tagline {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.brand-chrome-tagline:empty { display: none; }
+
 /* ---------- Responsive fallback ---------- */
 @media (max-width: 900px) {
   /* Pane collapse is a desktop-rail concept, and below this width (must
@@ -1078,4 +1189,7 @@ button {
   .slide-inner { width: 100%; max-width: none; }
   .slide-row-with-image { flex-direction: column; align-items: center; }
   .slide-image { height: 6.5rem; width: 6.5rem; }
+  .slide-quote-box { padding: 1.5rem 1.75rem; }
+  .slide-quote-image-stack .slide-image { height: 6.5rem; width: 6.5rem; }
+  .slide-image-stack--solo .slide-image { height: 40vh; }
 }

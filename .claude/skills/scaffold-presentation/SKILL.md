@@ -47,16 +47,30 @@ slidevolgorde of technische presentatie-instellingen zijn niet vereist.
    voor een Engelstalige presentatie. Presentation View en Presenter View
    volgen deze instelling automatisch. Vertaal de inhoud van de presentatie
    naar dezelfde taal en voeg geen taalwisselaar aan de interface toe.
+5b. Vraag de gebruiker, in tegenstelling tot de taalkeuze hierboven, altijd
+   expliciet welk thema de presentatie moet gebruiken: `'default'` (het
+   bestaande lichte thema) of `'conclusion'` (het donkere
+   Conclusion-huisstijlthema, zie `themes/conclusion/theme.css`). Dit is een
+   stijlkeuze die niet uit de inhoud is af te leiden. Zet het antwoord in
+   `CONFIG.theme`. Kiest de gebruiker `'conclusion'` en noemt hij een
+   specifieke business unit of tagline, zet die dan in
+   `CONFIG.brand.businessUnit`/`tagline`; laat beide anders leeg voor een
+   generieke Conclusion-uitstraling.
 6. Schrijf de presentatie naar `config.js` en `slides-data.js`, als classic
    scripts zonder `import`/`export`. Laat `app.js` en `styles.css` intact voor
-   gewone inhoudswijzigingen.
+   gewone inhoudswijzigingen. Geef elke slide een expliciete `layout`
+   (`'title'`, `'bullets'`, `'list-image'`, `'quote'`, `'image-only'` of
+   `'template-reference'` — zie de README's "Slidegegevens" en
+   `slides-data.js`'s koptekst) in plaats van dit impliciet uit andere velden
+   af te leiden.
 7. Gebruik alleen iconen die als `<symbol id="icon-...">` in `index.html`
    bestaan. Ontbreekt een inhoudelijk noodzakelijk icoon, voeg dan één nieuw
    symbol aan die sprite toe en meld dit. Gebruik altijd één van deze
    composities: icoon met volledig links uitgelijnde inhoud, of een
    gecentreerde titel zonder icoon met links uitgelijnde bullets.
-8. Controleer iedere slide op een unieke oplopende `id`, een niet-lege
-   `title`, een `bullets`-array en een `notes`-string. Test daarna de volledige
+8. Controleer iedere slide op een unieke oplopende `id`, een geldige
+   `layout`, een niet-lege `title`, een `bullets`-array (leeg toegestaan bij
+   `layout`s die geen bullets tonen) en een `notes`-string. Test daarna de volledige
    presentatie volgens `.claude/skills/test-presentation/SKILL.md` en bekijk
    de relevante slides visueel.
 
@@ -66,12 +80,15 @@ Gebruik de bestaande bestanden als actuele bron voor alle opties. Een slide
 heeft minimaal:
 
 ```js
-{ id, title, bullets, notes }
+{ id, layout, title, bullets, notes }
 ```
 
-Ondersteunde opties zijn onder meer `icon`, `subtitle`, `meta`, `align`,
-`disco`, `discoMode`, `discoHoldMs`, `discoTitleLines`,
-`isTemplateAnchor`, `templateSection` en `duration`. Bullets mogen strings
+`layout` is verplicht en is één van `'title'`, `'bullets'`, `'list-image'`,
+`'quote'`, `'image-only'` of `'template-reference'` — kies de layout die bij
+de inhoud van die slide past, niet standaard overal `'bullets'`. Ondersteunde
+opties zijn onder meer `icon`, `subtitle`, `meta`, `image`, `quote`,
+`attribution`, `align`, `disco`, `discoMode`, `discoHoldMs`,
+`discoTitleLines`, `templateSection` en `duration`. Bullets mogen strings
 zijn of `{ text, subtext }`-objecten. Voeg alleen opties toe die het
 verhaal of de presentatie daadwerkelijk helpen; stel de technische keuzes
 niet als vragen aan de gebruiker wanneer een verstandige default volstaat.
@@ -90,8 +107,9 @@ verfijnen.
 ## Oplevering
 
 Meld kort hoeveel slides zijn gemaakt, welke inhoudelijke structuur is
-gekozen, of de reference-overlay wordt gebruikt, welke bestanden zijn
-gewijzigd en hoe de presentatie is gecontroleerd. Vermeld dat elke slide
+gekozen, welk thema (`CONFIG.theme`) is ingesteld, of de reference-overlay
+wordt gebruikt, welke bestanden zijn gewijzigd en hoe de presentatie is
+gecontroleerd. Vermeld dat elke slide
 een geschatte `duration` heeft gekregen voor de Presenter View's
 schema-indicatie, en dat de gebruiker die na een droogloop kan aanpassen.
 Beschrijf technische details alleen wanneer ze relevant zijn voor een
