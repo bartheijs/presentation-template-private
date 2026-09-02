@@ -132,7 +132,7 @@ const SLIDES = [
     subtitle: 'Wat "skillen" we vandaag?',
     bullets: [],
     meta: ['Bart Heijs', 'AI On Stage', '1 september 2026'],
-    notes: '',
+    notes: 'In de assets zitten de screenshots van de mini skill ter introductie',
   },
   {
     id: 2,
