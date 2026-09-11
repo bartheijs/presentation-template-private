@@ -268,3 +268,51 @@ toe, geen generieke content-structuur).
    achtergrond en de reference-overlay (openen, sluiten, highlight per
    slide) nog exact hetzelfde werken/ogen als voorheen — dit is een pure
    rename, geen gedrags- of visuele wijziging.
+
+---
+
+## Pauzeknop in Presenter View: keuze tussen statisch scherm en aftel-timer
+
+**Status:** gepland, nog niet uitgevoerd. Idee vanuit gebruikersfeedback.
+
+### Context
+
+De pauze-knop in Presenter View (`#btn-toggle-pause-overlay` in
+`presenter.html`, `TOGGLE_PAUSE_OVERLAY`-commando, `showPauseOverlay()`/
+`hidePauseOverlay()`/`isPauseOverlayVisible()` in `app.js`) doet nu altijd
+hetzelfde: het toont direct het statische pauzescherm (`#pause-overlay` met
+vaste tekst uit `CONFIG.ui.pauseOverlayText`), tot de presentator 'm zelf
+weer uitzet.
+
+Gewenst: op het moment van klikken een keuze aanbieden tussen twee opties.
+
+- **Statisch pauzescherm** — huidig gedrag, ongewijzigd: vaste tekst, de
+  presentator bepaalt zelf wanneer het weer verdwijnt.
+- **Aftel-timer** — de presentator geeft een tijdsduur op; het publiek ziet
+  een aftellende klok in plaats van (of naast) de statische pauzetekst.
+
+### Openstaande ontwerpvragen (bij uitvoering te beslissen)
+
+- Waar/hoe wordt de keuze gepresenteerd? Bijvoorbeeld: de pauze-knop opent
+  een klein keuzemenu/popover met de twee opties, in plaats van meteen te
+  togglen zoals nu.
+- Wat gebeurt er zodra de aftel-timer op 0 komt: sluit het pauzescherm dan
+  automatisch (presentatie hervat vanzelf), of blijft het scherm staan tot
+  de presentator het handmatig sluit (net als nu)?
+- Is de duur per keer vrij in te vullen, of een vaste/geconfigureerde
+  standaardwaarde (vergelijkbaar met `CONFIG.timer.defaultMinutes`) die je
+  kan overschrijven?
+- Moet deze aftel-timer een eigen, aparte state zijn, los van de bestaande
+  timer-widget in `app.js`'s rechterkolom en van Presenter View's eigen
+  sessietijd, om verwarring te voorkomen?
+
+### Kritieke bestanden (bij uitvoering)
+
+- `presenter.html`/`presenter.js` — de pauze-knop en het keuzemoment.
+- `app.js` — `showPauseOverlay()`/`hidePauseOverlay()`/
+  `isPauseOverlayVisible()`, `#pause-overlay`/`#pause-overlay-text` in
+  `index.html`, en het command-protocol (`TOGGLE_PAUSE_OVERLAY`/
+  `SHOW_PAUSE_OVERLAY`/`HIDE_PAUSE_OVERLAY`) dat mogelijk een extra payload
+  (de gekozen duur) moet kunnen meesturen.
+- `styles.css` — opmaak voor de aftellende klok binnen `.pause-overlay`.
+- `config.js` — eventuele standaardwaarde voor de aftel-duur.
