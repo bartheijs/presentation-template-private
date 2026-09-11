@@ -104,7 +104,7 @@ test('+5 min above the threshold rearms the warning for the next passage', async
   await expect(page.locator('#finish-overlay')).toBeHidden();
 });
 
-test('manual finish paths keep full confetti and show the finish overlay', async ({ page }) => {
+test('manual finish via the toolbar button shows the finish overlay', async ({ page }) => {
   await gotoPresentation(page);
   await page.click('#btn-timer-finish');
 
@@ -113,19 +113,24 @@ test('manual finish paths keep full confetti and show the finish overlay', async
     confettiActive: true,
     confettiPersistent: true,
   });
+});
 
-  await page.click('#btn-finish-back');
-  await page.evaluate(() => {
-    state.currentIndex = SLIDES.length - 1;
+test('pressing Next on the last slide is a plain no-op, not a finish-overlay trigger', async ({ page }) => {
+  await gotoPresentation(page);
+  const lastIndex = await page.evaluate(() => SLIDES.length - 1);
+  await page.evaluate((index) => {
+    state.currentIndex = index;
     renderSlide();
-    goNext();
-  });
+  }, lastIndex);
 
-  await expect(page.locator('#finish-overlay')).toBeVisible();
+  await page.evaluate(() => goNext());
+
+  await expect(page.locator('#finish-overlay')).toBeHidden();
   expect(await page.evaluate(() => ({ confettiActive, confettiPersistent }))).toEqual({
-    confettiActive: true,
-    confettiPersistent: true,
+    confettiActive: false,
+    confettiPersistent: false,
   });
+  expect(await page.evaluate(() => state.currentIndex)).toBe(lastIndex);
 });
 
 test('manual finish after a warning is not stopped by the old temporary timer', async ({ page }) => {

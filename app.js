@@ -204,7 +204,28 @@ function renderBulletItem(b) {
   return `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg>${body}</li>`;
 }
 
+// A persistent disco-styled slide: same rays/sparkles/title markup the
+// transient disco-reveal transition uses (see .disco-rays/.disco-title/
+// .disco-sparkle-N in styles.css), but rendered as the slide's own normal
+// content instead of a temporary overlay — so it stays visible for as long
+// as the slide is shown, no hold/hide timers involved.
+function buildDiscoSlideHTML(slide) {
+  const lines = Array.isArray(slide.discoTitleLines) && slide.discoTitleLines.length
+    ? slide.discoTitleLines
+    : [slide.title || ''];
+  const sparkles = Array.from(
+    { length: 12 },
+    (_, i) => `<svg class="icon icon--fill disco-sparkle disco-sparkle-${i + 1}"><use href="#icon-spark"></use></svg>`
+  ).join('');
+  return `
+    <div class="disco-rays"></div>
+    <div class="disco-title">${lines.map((line) => `<span>${escapeHtml(line)}</span>`).join('')}</div>
+    ${sparkles}`;
+}
+
 function buildSlideContentHTML(slide) {
+  if (slide.discoSlide) return buildDiscoSlideHTML(slide);
+
   // A malformed slide (e.g. a generation slip missing `bullets`/`title`)
   // degrades to blank-ish here instead of throwing — since renderTocOnce()
   // renders every slide's title in one pass at startup, one bad slide
@@ -319,6 +340,7 @@ function renderSlide() {
     'slide-content' +
     (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
     (Array.isArray(slide.timeline) && slide.timeline.length ? ' slide-content--timeline' : '') +
+    (slide.discoSlide ? ' slide-content--disco' : '') +
     (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
   const hasNotesText = Boolean(slide.notes && slide.notes.trim());
@@ -526,17 +548,13 @@ function goTo(index, { animate = false, direction = null } = {}) {
   sendStateToPresenter();
 }
 
-// Shared by the Next button, ArrowRight and Space: goTo() itself just
-// no-ops past the last slide (see its bounds guard above), so "next" on
-// the last slide instead opens the same finish/confetti celebration as
-// clicking the dedicated "Klaar!" button.
+// Shared by the Next button, ArrowRight and Space. "Next" on the last slide
+// is a plain no-op — the deck's own final slide is the ending, so nothing
+// pops up over it. The finish/confetti celebration is still available, just
+// only via the dedicated "Klaar!" button (openFinishOverlay()/launchConfetti()
+// below), never auto-triggered by navigation.
 function goNext() {
-  if (state.currentIndex >= SLIDES.length - 1) {
-    if (!finishOverlayEl.hidden) return;
-    launchConfetti();
-    openFinishOverlay();
-    return;
-  }
+  if (state.currentIndex >= SLIDES.length - 1) return;
   goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
 }
 

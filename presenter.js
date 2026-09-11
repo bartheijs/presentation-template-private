@@ -3,6 +3,51 @@
  * as app.js. See docs/superpowers/specs/2026-08-22-presenter-view-design.md.
  */
 
+// Same notes-formatting logic as app.js's renderNotesHTML/inlineMarkdown —
+// duplicated rather than shared because presenter.js and app.js are loaded
+// as separate classic scripts with no shared module. Speaker notes use
+// `- **Topic:** ...` bullets so the topic of each bullet stands out at a
+// glance; see the .presenter-notes li > strong:first-child rule in
+// presenter.css for the highlighted topic-label styling.
+function presenterEscapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function presenterInlineMarkdown(str) {
+  return presenterEscapeHtml(str)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.+?)`/g, '<code>$1</code>');
+}
+
+function renderPresenterNotesHTML(notesText) {
+  return notesText
+    .split(/```/)
+    .map((chunk, i) => {
+      if (i % 2 === 1) {
+        return `<pre class="notes-code"><code>${presenterEscapeHtml(chunk.trim())}</code></pre>`;
+      }
+      return chunk
+        .trim()
+        .split(/\n\n+/)
+        .filter(Boolean)
+        .map((block) => {
+          const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+          if (lines.length && lines.every((l) => /^[-*]\s/.test(l))) {
+            return `<ul>${lines.map((l) => `<li>${presenterInlineMarkdown(l.replace(/^[-*]\s/, ''))}</li>`).join('')}</ul>`;
+          }
+          if (lines.length && lines.every((l) => /^\d+\.\s/.test(l))) {
+            return `<ol>${lines.map((l) => `<li>${presenterInlineMarkdown(l.replace(/^\d+\.\s/, ''))}</li>`).join('')}</ol>`;
+          }
+          return `<p>${presenterInlineMarkdown(block)}</p>`;
+        })
+        .join('');
+    })
+    .join('');
+}
+
 const PRESENTER_I18N = {
   nl: {
     presenterMode: 'Presentatieweergave', localTime: 'Lokale tijd', connected: 'Verbonden',
@@ -12,14 +57,13 @@ const PRESENTER_I18N = {
     currentPreviewTitle: 'Voorbeeld van de huidige slide', upNext: 'Hierna', nextSlide: 'Volgende slide',
     nextPreviewTitle: 'Voorbeeld van de volgende slide', prepareOtherSlide: 'Andere slide klaarzetten?',
     restore: 'Herstel', skipOneSlide: 'Sla één slide over', onlyForYou: 'Alleen voor jou',
-    speakerNotes: 'Sprekersnotities', elapsed: 'Verstreken', start: 'Start', pause: 'Pauze', reset: 'Reset',
-    progress: 'Voortgang', onSchedule: 'Op schema', slides: 'Slides', time: 'Tijd', display: 'Weergave',
+    speakerNotes: 'Sprekersnotities', elapsed: 'Resterend', start: 'Start', pause: 'Pauze', reset: 'Reset',
     displayOptions: 'Weergaveopties', leftSidebar: 'Linker zijbalk', rightSidebar: 'Rechter zijbalk',
     pauseScreen: 'Pauzescherm', contextOverlay: 'Context-overlay', presentationControls: 'Presentatiebediening',
-    presentationTiming: 'Presentatietijd', timerControls: 'Timerbediening', slideProgress: 'Voortgang slides',
-    timeProgress: 'Voortgang tijd', previous: 'Vorige', next: 'Volgende', noNotes: 'Geen notities voor deze slide.',
-    on: 'Aan', off: 'Uit', elapsedSuffix: 'verstreken', aheadOfSchedule: 'voor op schema',
-    behindSchedule: 'achter op schema',
+    presentationTiming: 'Presentatietijd', timerControls: 'Timerbediening',
+    previous: 'Vorige', next: 'Volgende', noNotes: 'Geen notities voor deze slide.',
+    elapsedSuffix: 'resterend', setCountdownHint: 'Dubbelklik om het totaal aantal minuten opnieuw in te stellen',
+    setCountdownPrompt: 'Nieuw totaal aantal minuten',
   },
   en: {
     presenterMode: 'Presenter mode', localTime: 'Local time', connected: 'Connected',
@@ -29,14 +73,13 @@ const PRESENTER_I18N = {
     currentPreviewTitle: 'Preview of the current slide', upNext: 'Up next', nextSlide: 'Next slide',
     nextPreviewTitle: 'Preview of the next slide', prepareOtherSlide: 'Prepare a different slide?',
     restore: 'Restore', skipOneSlide: 'Skip one slide', onlyForYou: 'Only for you',
-    speakerNotes: 'Speaker notes', elapsed: 'Elapsed', start: 'Start', pause: 'Pause', reset: 'Reset',
-    progress: 'Progress', onSchedule: 'On schedule', slides: 'Slides', time: 'Time', display: 'Display',
+    speakerNotes: 'Speaker notes', elapsed: 'Remaining', start: 'Start', pause: 'Pause', reset: 'Reset',
     displayOptions: 'Display options', leftSidebar: 'Left sidebar', rightSidebar: 'Right sidebar',
     pauseScreen: 'Pause screen', contextOverlay: 'Context overlay', presentationControls: 'Presentation controls',
-    presentationTiming: 'Presentation timing', timerControls: 'Timer controls', slideProgress: 'Slide progress',
-    timeProgress: 'Time progress', previous: 'Previous', next: 'Next', noNotes: 'No notes for this slide.',
-    on: 'On', off: 'Off', elapsedSuffix: 'elapsed', aheadOfSchedule: 'ahead of schedule',
-    behindSchedule: 'behind schedule',
+    presentationTiming: 'Presentation timing', timerControls: 'Timer controls',
+    previous: 'Previous', next: 'Next', noNotes: 'No notes for this slide.',
+    elapsedSuffix: 'remaining', setCountdownHint: 'Double-click to set a new total number of minutes',
+    setCountdownPrompt: 'New total number of minutes',
   },
 };
 
@@ -229,67 +272,42 @@ function sendCommand(command, extra) {
 let pendingNextSlide = 1; // 0-based index; defaults to currentSlide + 1
 let lastJumpOriginIndex = null;
 
-function renderToggleState(buttonId, statusSelector, active) {
-  const button = document.getElementById(buttonId);
-  button.setAttribute('aria-pressed', String(active));
-  document.querySelector(statusSelector).textContent = active ? presenterText.on : presenterText.off;
+// The pressed/unpressed state is communicated by the button's own color
+// (see .btn--display-toggle[aria-pressed="true"] in presenter.css), not by
+// a separate "Aan"/"Uit" text label.
+function renderToggleState(buttonId, active) {
+  document.getElementById(buttonId).setAttribute('aria-pressed', String(active));
 }
 
 function renderState(newState) {
   const isFirstState = latestState === null;
+  const previousCurrentSlide = isFirstState ? null : latestState.currentSlide;
   latestState = newState;
   // Normalize pendingNextSlide before anything below reads it (the text
   // display and syncPreview() both need the up-to-date value, not the
-  // previous render's stale one).
-  if (isFirstState || pendingNextSlide <= newState.currentSlide) {
+  // previous render's stale one). Any actual navigation — forward, backward,
+  // or a direct jump — invalidates a previously staged skip: pendingNextSlide
+  // must track currentSlide + 1 again. Only compare against `pendingNextSlide
+  // <= currentSlide` here would miss the backward case (going back leaves
+  // pendingNextSlide stranded ahead of currentSlide + 1, so the next
+  // "Volgende" click misreads it as a fresh skip and jumps too far).
+  if (isFirstState || newState.currentSlide !== previousCurrentSlide) {
     pendingNextSlide = newState.currentSlide + 1;
   }
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
   document.querySelector('[data-total-slides]').textContent = String(newState.totalSlides);
-  renderToggleState('btn-toggle-left-aside', '[data-left-aside]', newState.leftAsideVisible);
-  renderToggleState('btn-toggle-right-aside', '[data-right-aside]', newState.rightAsideVisible);
-  renderToggleState('btn-toggle-pause-overlay', '[data-pause-overlay]', newState.pauseOverlayVisible);
-  renderToggleState('btn-toggle-context-overlay', '[data-context-overlay]', newState.contextOverlayVisible);
+  renderToggleState('btn-toggle-left-aside', newState.leftAsideVisible);
+  renderToggleState('btn-toggle-right-aside', newState.rightAsideVisible);
+  renderToggleState('btn-toggle-pause-overlay', newState.pauseOverlayVisible);
+  renderToggleState('btn-toggle-context-overlay', newState.contextOverlayVisible);
   document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());
   syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
 
-  document.getElementById('presenter-notes').textContent = SLIDES[newState.currentSlide].notes || '';
-
-  const slidesProgressPct = Math.round(((newState.currentSlide + 1) / newState.totalSlides) * 100);
-  document.querySelector('[data-slides-progress]').textContent =
-    `${newState.currentSlide + 1} / ${newState.totalSlides} (${slidesProgressPct}%)`;
-  document.querySelector('[data-slides-progress-fill]').style.width = `${slidesProgressPct}%`;
-  document.querySelector('[data-slides-progressbar]').setAttribute('aria-valuenow', String(slidesProgressPct));
-
-  renderTiming();
-}
-
-// Schedule-delta and time-progress depend on the clock (elapsedSeconds), not
-// just on the latest confirmed state, so this is called both from
-// renderState() (on navigation) and from renderClockAndElapsed() (every
-// 250ms) so the text keeps updating between navigations too.
-function renderTiming() {
-  if (!latestState) return;
-
-  const elapsedSeconds = getElapsedSeconds();
-  const delta = scheduleDelta(elapsedSeconds, latestState.currentSlide);
-  const deltaAbsMin = Math.floor(Math.abs(delta) / 60);
-  const deltaAbsSec = String(Math.abs(delta) % 60).padStart(2, '0');
-  document.querySelector('[data-schedule-delta]').textContent =
-    delta < 0
-      ? `${deltaAbsMin}:${deltaAbsSec} ${presenterText.aheadOfSchedule}`
-      : delta > 0
-        ? `${deltaAbsMin}:${deltaAbsSec} ${presenterText.behindSchedule}`
-        : presenterText.onSchedule;
-
-  const totalPlannedSeconds = totalPlannedMs() / 1000;
-  const timeProgressPct = Math.min(100, Math.round((elapsedSeconds / totalPlannedSeconds) * 100));
-  document.querySelector('[data-time-progress]').textContent = `${timeProgressPct}%`;
-  document.querySelector('[data-time-progress-fill]').style.width = `${timeProgressPct}%`;
-  document.querySelector('[data-time-progressbar]').setAttribute('aria-valuenow', String(timeProgressPct));
+  const currentNotes = SLIDES[newState.currentSlide].notes || '';
+  document.getElementById('presenter-notes').innerHTML = currentNotes ? renderPresenterNotesHTML(currentNotes) : '';
 }
 
 /* ---------- Presentation timer (presenter-only; separate from the
@@ -298,7 +316,14 @@ function renderTiming() {
  * a backgrounded tab can't drift it — matches app.js's own timer pattern.
  * Persisted to sessionStorage so a refresh of THIS tab doesn't lose
  * elapsed time; sessionStorage itself clears on a real close, so
- * close+reopen correctly starts fresh (see spec §10). */
+ * close+reopen correctly starts fresh (see spec §10).
+ *
+ * The header displays this as a countdown (time remaining), not a stopwatch
+ * (time elapsed): elapsed keeps counting up internally exactly as before —
+ * that's what start/pause/reset/persistence all operate on — and the
+ * countdown total (in minutes) is a separate, independently persisted value
+ * subtracted from it only at render time. Double-clicking the countdown
+ * lets the presenter set a fresh total and restarts the count from it. */
 
 const TIMER_STORAGE_KEY = 'presenterView.timer';
 
@@ -349,18 +374,66 @@ function resetPresenterTimer() {
   saveTimerState(timerState);
 }
 
+const COUNTDOWN_STORAGE_KEY = 'presenterView.countdownMinutes';
+
+function loadCountdownMinutes() {
+  try {
+    const raw = sessionStorage.getItem(COUNTDOWN_STORAGE_KEY);
+    const parsed = raw === null ? NaN : Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : CONFIG.timer.defaultMinutes;
+  } catch {
+    return CONFIG.timer.defaultMinutes;
+  }
+}
+
+function saveCountdownMinutes(minutes) {
+  try {
+    sessionStorage.setItem(COUNTDOWN_STORAGE_KEY, String(minutes));
+  } catch {
+    // sessionStorage write failed — silently ignore, matching the timer's own
+    // error-handling style above.
+  }
+}
+
+let countdownMinutes = loadCountdownMinutes();
+
+function getRemainingSeconds() {
+  return Math.round(countdownMinutes * 60) - getElapsedSeconds();
+}
+
+// Setting a new countdown total is "a fresh start": the total changes AND
+// the elapsed count resets to 0, so the countdown immediately reads the new
+// total, paused — rather than leaving the current elapsed position in place
+// and letting the remaining time jump (possibly negative) under the new total.
+function setCountdownMinutes(minutes) {
+  countdownMinutes = minutes;
+  saveCountdownMinutes(minutes);
+  resetPresenterTimer();
+  renderClockAndElapsed();
+}
+
+function promptForCountdownMinutes() {
+  const input = window.prompt(presenterText.setCountdownPrompt, String(countdownMinutes));
+  if (input === null) return; // cancelled
+  const minutes = parseFloat(input.trim().replace(',', '.'));
+  if (!Number.isFinite(minutes) || minutes <= 0) return; // unparsable — leave it untouched
+  setCountdownMinutes(minutes);
+}
+
 document.getElementById('btn-presenter-timer-start').addEventListener('click', startPresenterTimer);
 document.getElementById('btn-presenter-timer-pause').addEventListener('click', pausePresenterTimer);
 document.getElementById('btn-presenter-timer-reset').addEventListener('click', resetPresenterTimer);
+document.querySelector('[data-elapsed]').addEventListener('dblclick', promptForCountdownMinutes);
 
 function renderClockAndElapsed() {
   const now = new Date();
   document.querySelector('[data-clock]').textContent =
     `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const elapsed = getElapsedSeconds();
+  const remaining = getRemainingSeconds();
+  const sign = remaining < 0 ? '-' : '';
+  const absRemaining = Math.abs(remaining);
   document.querySelector('[data-elapsed]').textContent =
-    `${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')} ${presenterText.elapsedSuffix}`;
-  renderTiming();
+    `${sign}${String(Math.floor(absRemaining / 60)).padStart(2, '0')}:${String(absRemaining % 60).padStart(2, '0')} ${presenterText.elapsedSuffix}`;
 }
 setInterval(renderClockAndElapsed, 250);
 renderClockAndElapsed();

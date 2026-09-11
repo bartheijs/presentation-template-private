@@ -445,6 +445,24 @@ button {
   .disco-sparkle { animation: none; }
 }
 
+/* Persistent disco slide (slide.discoSlide): the same rays/title/sparkle
+   markup as the transient disco-reveal transition above, but rendered as
+   ordinary slide content so it just stays on screen — no hold/hide timers.
+   Only the vertical anchor needs overriding: .disco-rays/.disco-title are
+   pinned to "70% down" for the transition's full-stage (content+notes)
+   overlay, but here they live inside .slide-content alone, so centering on
+   its own box means 50%. */
+.slide-content--disco {
+  background: var(--disco-backdrop);
+  overflow: hidden;
+  padding: 0;
+  justify-content: center;
+}
+.slide-content--disco .disco-rays,
+.slide-content--disco .disco-title {
+  top: 50%;
+}
+
 .slide-content {
   position: relative;
   z-index: 1;

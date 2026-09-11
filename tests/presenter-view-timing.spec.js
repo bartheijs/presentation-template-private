@@ -138,44 +138,85 @@ test.describe('presentation timer persistence', () => {
   });
 });
 
-test.describe('continuous timing updates (renderTiming)', () => {
-  test('schedule-delta keeps updating every tick, not just on navigation/state broadcast', async ({ page }) => {
+test.describe('countdown total (manual entry via double-click)', () => {
+  test('starts at the configured total and counts down while running', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    const defaultMinutes = await page.evaluate(() => CONFIG.timer.defaultMinutes);
+    const suffix = await presenter.evaluate(() => presenterText.elapsedSuffix);
+    await expect(presenter.locator('[data-elapsed]')).toHaveText(
+      `${String(defaultMinutes).padStart(2, '0')}:00 ${suffix}`
+    );
+
+    await presenter.click('#btn-presenter-timer-start');
+    await presenter.waitForTimeout(1200);
+    const remaining = await presenter.evaluate(() => getRemainingSeconds());
+    expect(remaining).toBeLessThan(defaultMinutes * 60);
+    expect(remaining).toBeGreaterThanOrEqual(defaultMinutes * 60 - 3);
+  });
+
+  test('double-clicking sets a new total and restarts the countdown from it, paused', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     await presenter.click('#btn-presenter-timer-start');
+    await presenter.waitForTimeout(300);
 
-    // Let the presenter timer accumulate a bit before the first sample, so
-    // the very first reading isn't still "0:00 achter op schema" for both
-    // samples by coincidence.
-    await presenter.waitForTimeout(1200);
-    const first = await presenter.locator('[data-schedule-delta]').textContent();
+    await presenter.evaluate(() => {
+      window.prompt = () => '5';
+    });
+    await presenter.dblclick('[data-elapsed]');
 
-    // No navigation happens here — renderState() is not re-invoked. If the
-    // schedule-delta/time-progress text only updated inside renderState(),
-    // it would stay frozen at `first` despite the clock/elapsed ticking.
-    await presenter.waitForTimeout(1500);
-    const second = await presenter.locator('[data-schedule-delta]').textContent();
-
-    expect(second).not.toBe(first);
-    // Sanity check on the underlying clock too.
-    const elapsedAfter = await presenter.evaluate(() => getElapsedSeconds());
-    expect(elapsedAfter).toBeGreaterThanOrEqual(2);
+    const remaining = await presenter.evaluate(() => getRemainingSeconds());
+    expect(remaining).toBe(300);
+    const suffix = await presenter.evaluate(() => presenterText.elapsedSuffix);
+    await expect(presenter.locator('[data-elapsed]')).toHaveText(`05:00 ${suffix}`);
+    // Setting a new total is a fresh start, so the timer pauses again — the
+    // presenter has to explicitly hit Start, rather than it silently
+    // continuing to run against the new total.
+    expect(await presenter.evaluate(() => timerState.running)).toBe(false);
   });
 
-  test('delta === 0 renders a neutral "Op schema" state, not "achter"', async ({ page }) => {
-    await page.goto(PRESENTER_URL);
-    await page.evaluate(() => {
-      // eslint-disable-next-line no-undef
-      SLIDES.length = 0;
-      // eslint-disable-next-line no-undef
-      SLIDES.push({ id: 1, title: 'A', bullets: [], notes: '', duration: 100 });
-      // eslint-disable-next-line no-undef
-      latestState = { currentSlide: 0, totalSlides: 1 };
-      // eslint-disable-next-line no-undef
-      renderTiming();
+  test('cancelling the prompt (null) leaves the countdown unchanged', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    const before = await presenter.evaluate(() => getRemainingSeconds());
+
+    await presenter.evaluate(() => {
+      window.prompt = () => null;
     });
-    await expect(page.locator('[data-schedule-delta]')).toHaveText(
-      await page.evaluate(() => presenterText.onSchedule)
-    );
+    await presenter.dblclick('[data-elapsed]');
+
+    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(before);
+  });
+
+  test('an unparsable or non-positive value is ignored', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    const before = await presenter.evaluate(() => getRemainingSeconds());
+
+    await presenter.evaluate(() => {
+      window.prompt = () => 'not a number';
+    });
+    await presenter.dblclick('[data-elapsed]');
+    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(before);
+
+    await presenter.evaluate(() => {
+      window.prompt = () => '-5';
+    });
+    await presenter.dblclick('[data-elapsed]');
+    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(before);
+  });
+
+  test('a decimal number of minutes (comma or dot) is accepted', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    await presenter.evaluate(() => {
+      window.prompt = () => '2,5';
+    });
+    await presenter.dblclick('[data-elapsed]');
+
+    const remaining = await presenter.evaluate(() => getRemainingSeconds());
+    expect(remaining).toBe(150);
   });
 });

@@ -148,31 +148,23 @@ test.describe('command whitelist and state broadcast', () => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
 
-    await expect(presenter.locator('[data-right-aside]')).toHaveText(
-      await presenter.evaluate(() => presenterText.off)
-    );
+    // Pressed/unpressed state is communicated by the button's own color
+    // (aria-pressed drives the styling in presenter.css), not by a separate
+    // "Aan"/"Uit" text label.
+    await expect(presenter.locator('#btn-toggle-right-aside')).toHaveAttribute('aria-pressed', 'false');
     await presenter.click('#btn-toggle-right-aside');
     await expect(page.locator('#next-column')).toBeVisible();
     await expect(presenter.locator('#btn-toggle-right-aside')).toHaveAttribute('aria-pressed', 'true');
 
     await presenter.click('#btn-toggle-context-overlay');
     await expect(page.locator('#template-overlay')).toBeVisible();
-    await expect(presenter.locator('[data-context-overlay]')).toHaveText(
-      await presenter.evaluate(() => presenterText.on)
-    );
     await expect(presenter.locator('#btn-toggle-context-overlay')).toHaveAttribute('aria-pressed', 'true');
 
     await presenter.click('#btn-toggle-left-aside');
-    await expect(presenter.locator('[data-left-aside]')).toHaveText(
-      await presenter.evaluate(() => presenterText.off)
-    );
     await expect(presenter.locator('#btn-toggle-left-aside')).toHaveAttribute('aria-pressed', 'false');
 
     await presenter.click('#btn-toggle-pause-overlay');
     await expect(page.locator('#pause-overlay')).toBeVisible();
-    await expect(presenter.locator('[data-pause-overlay]')).toHaveText(
-      await presenter.evaluate(() => presenterText.on)
-    );
     await expect(presenter.locator('#btn-toggle-pause-overlay')).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -299,6 +291,36 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
     await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
     // eslint-disable-next-line no-undef
     expect(await page.evaluate(() => state.currentIndex)).toBe(0);
+  });
+
+  test('going back with the ordinary Vorige button does not stage a skip for the next Volgende', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    await presenter.click('#btn-presenter-next'); // slide 2
+    // eslint-disable-next-line no-undef
+    await expect.poll(() => page.evaluate(() => state.currentIndex)).toBe(1);
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-next'); // slide 3
+    // eslint-disable-next-line no-undef
+    await expect.poll(() => page.evaluate(() => state.currentIndex)).toBe(2);
+    await waitIdle(page);
+    await expect(presenter.locator('[data-pending-next-slide]')).toHaveText('4');
+
+    await presenter.click('#btn-presenter-prev'); // ordinary PREVIOUS_SLIDE, back to slide 2
+    // eslint-disable-next-line no-undef
+    await expect.poll(() => page.evaluate(() => state.currentIndex)).toBe(1);
+    await waitIdle(page);
+    // pendingNextSlide must re-track currentSlide + 1, not stay stranded at
+    // the slide that was "next" before going back — otherwise the following
+    // Volgende misreads the stale pointer as a deliberate skip and jumps
+    // straight to slide 4, silently skipping slide 3.
+    await expect(presenter.locator('[data-pending-next-slide]')).toHaveText('3');
+
+    await presenter.click('#btn-presenter-next');
+    // eslint-disable-next-line no-undef
+    await expect.poll(() => page.evaluate(() => state.currentIndex)).toBe(2);
   });
 
   test('Volgende with no skip pending sends NEXT_SLIDE and plays the real transition', async ({ page }) => {
