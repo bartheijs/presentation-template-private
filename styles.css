@@ -679,6 +679,39 @@ button {
   box-shadow: 0 10px 24px rgba(36, 26, 34, 0.18);
 }
 
+/* Optional slide-level `fullImage` (see buildSlideContentHTML) — the image
+   fills whatever height is left under the heading instead of sitting at a
+   small fixed size, so it scales with the available space. `.slide-inner`
+   growing to fill `.slide-content` (which itself has a definite height from
+   its flex-basis in .slide-stage) is what gives `.slide-full-image-frame` a
+   bounded height to fill; without it flex/object-fit would have nothing to
+   size against. Every slide using this field shares the same frame, so a
+   run of such slides keeps the image at the same place and size. */
+.slide-content--full-image {
+  padding-top: 3.5rem;
+}
+.slide-content--full-image .slide-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: min(82%, 60rem);
+}
+.slide-content--full-image .slide-heading {
+  margin-bottom: 1.25rem;
+}
+.slide-full-image-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slide-full-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .slide-template-code {
   margin: 0.5rem 0 0;
   width: 100%;
@@ -1206,6 +1239,10 @@ button {
   .slide-inner { width: 100%; max-width: none; }
   .slide-row-with-image { flex-direction: column; align-items: center; }
   .slide-image { height: 6.5rem; width: 6.5rem; }
+  /* .slide-content has no definite height once .app-shell switches to
+     `height: auto` rows here, so the flex-fill frame above has nothing to
+     size against — fall back to a fixed viewport-relative height instead. */
+  .slide-full-image-frame { flex: none; height: 42vh; }
   .slide-timeline {
     grid-template-columns: 1fr;
     gap: 0.7rem;

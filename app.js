@@ -304,6 +304,22 @@ function buildSlideContentHTML(slide) {
     ${metaBlock}`;
   }
 
+  // Optional slide-level `fullImage: { src, alt }` — unlike `image` above
+  // (a small side-by-side thumbnail next to bullets), this fills the rest
+  // of the slide's height below the heading, scaling with the available
+  // space. Every slide using it shares the same frame, so the image lands
+  // in the same place at the same size across a run of slides that use it.
+  if (slide.fullImage && slide.fullImage.src) {
+    return `
+    <div class="slide-inner">
+      ${headingBlock}
+      <div class="slide-full-image-frame">
+        <img class="slide-full-image" src="${escapeHtml(slide.fullImage.src)}" alt="${escapeHtml(slide.fullImage.alt || '')}">
+      </div>
+    </div>
+    ${metaBlock}`;
+  }
+
   return `
     <div class="slide-inner">
       ${headingBlock}
@@ -340,6 +356,7 @@ function renderSlide() {
     'slide-content' +
     (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
     (Array.isArray(slide.timeline) && slide.timeline.length ? ' slide-content--timeline' : '') +
+    (slide.fullImage && slide.fullImage.src ? ' slide-content--full-image' : '') +
     (slide.discoSlide ? ' slide-content--disco' : '') +
     (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
@@ -1245,7 +1262,20 @@ function applyConfigStrings() {
 let presenterRef = null;
 
 function openPresenterView() {
-  presenterRef = window.open('presenter.html', 'presenterView');
+  // Passing a features string (rather than none) is what makes browsers
+  // open this as its own OS window instead of a new tab in the current
+  // one — without it, the presentation tab can end up backgrounded next to
+  // Presenter View in the same window, which throttles its slide-transition
+  // animation and stalls the Next button (see animateTransition() above).
+  const width = Math.round(window.screen.availWidth * 0.9);
+  const height = Math.round(window.screen.availHeight * 0.9);
+  const left = Math.round((window.screen.availWidth - width) / 2);
+  const top = Math.round((window.screen.availHeight - height) / 2);
+  presenterRef = window.open(
+    'presenter.html',
+    'presenterView',
+    `popup=yes,width=${width},height=${height},left=${left},top=${top}`
+  );
 }
 
 function setPresenterConnected(connected) {
