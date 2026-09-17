@@ -202,7 +202,7 @@ verifiëren vóór afronding, en waar praktisch als Playwright-scenario):
 // by full snapshots instead.
 {
   type: "preview-state",
-  currentSlide: 8,             // or pendingNextSlide, for the next-preview iframe
+  currentSlide: 8,             // current + 1, or current + 2 while skip is armed
   contextOverlayVisible: true,
   leftAsideVisible: false,
   rightAsideVisible: true,
@@ -287,20 +287,25 @@ Presenter.js stuurt `GO_TO_SLIDE` voor navigatie plus een absolute
 `TOGGLE_*`, om de eerder genoemde desync te vermijden) naar elke iframe: de
 actuele-weergave-iframe krijgt exact de echte state gespiegeld (inclusief
 template-overlay en pauze-overlay, want het is letterlijk dezelfde
-rendering), de volgende-slide-iframe wordt naar `pendingNextSlide`
-gestuurd. Geen dubbele render-/businesslogica: de previews zijn passieve
-afnemers van hetzelfde protocol dat toch al nodig is voor de echte
-afstandsbediening.
+rendering). De volgende-slide-iframe toont normaal `currentSlide + 1` en,
+zolang de skipactie geactiveerd is, het skipdoel `currentSlide + 2`. Geen
+dubbele render-/businesslogica: de previews zijn passieve afnemers van
+hetzelfde protocol dat toch al nodig is voor de echte afstandsbediening.
 
-## 8. Skip-ahead (`pendingNextSlide`)
+## 8. Eén slide overslaan met bevestiging
 
-Leeft uitsluitend in `presenter.js`, raakt het echte venster nooit direct
-aan. "Skip" verhoogt `pendingNextSlide`, "Herstel" zet hem terug naar
-`currentSlide + 1`. Op "Volgende" stuurt Presenter View
-`GO_TO_SLIDE(pendingNextSlide)`; na de bevestigde state-update reset
-Presenter View `pendingNextSlide` naar `currentSlide + 1`. Overgeslagen
-slides worden nooit kort zichtbaar in de Presentation View — er wordt
-rechtstreeks genavigeerd, niet stap voor stap.
+De skipstatus leeft uitsluitend in `presenter.js` en verandert de echte
+presentatie pas na bevestiging. De eerste klik op "Sla over" activeert de
+knop voor vier seconden en laat in de volgende-slide-preview het skipdoel
+`currentSlide + 2` zien. Een tweede klik binnen die tijd stuurt
+`GO_TO_SLIDE(currentSlide + 2)` en springt rechtstreeks naar dat doel. Zo
+wordt de tussenliggende slide nooit kort zichtbaar voor het publiek.
+
+De activatie vervalt na vier seconden of zodra de presentator via een
+andere bediening navigeert. Direct na een bevestigde skipsprong brengt één
+klik op "Vorige" de presentatie terug naar de slide waar de sprong begon;
+daarna werkt "Vorige" weer als gewone navigatie. Aan het einde van de deck
+wordt het skipdoel begrensd op de laatste slide.
 
 ## 9. Speaker notes & timing-metadata
 
@@ -331,8 +336,8 @@ geplande duur van daadwerkelijk overgeslagen slides meegeteld in
 
 Nieuwe bestanden: `presenter.html`, `presenter.js`, optioneel
 `presenter.css` (mag bestaande tokens uit `styles.css` hergebruiken/
-`@import`en). Eigen state, uitsluitend presenter-side: `pendingNextSlide`,
-`lastJumpOriginIndex` (§5), timer start/pauze/reset (los van de *weergave*
+`@import`en). Eigen state, uitsluitend presenter-side: de geactiveerde
+skipknop met vervaltimer, `lastJumpOriginIndex` (§5), timer start/pauze/reset (los van de *weergave*
 van verstreken tijd, die timestamp-based is, niet een opgetelde teller),
 lokale klok (`setInterval` + `Date.now()`), en de "niet verbonden"-status
 (§3, scenario 6).

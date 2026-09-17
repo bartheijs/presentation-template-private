@@ -242,24 +242,30 @@ test.describe('reconnect resilience', () => {
 });
 
 test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
-  test('skipping twice then Volgende jumps directly, and Vorige returns to the jump origin', async ({ page }) => {
+  test('the first skip click arms the action, the second jumps one slide, and Vorige returns to the jump origin', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     // eslint-disable-next-line no-undef
     expect(await page.evaluate(() => state.currentIndex)).toBe(0); // slide 1
 
-    await presenter.click('#btn-presenter-skip'); // pending: 3
-    await presenter.click('#btn-presenter-skip'); // pending: 4
-    await expect(presenter.locator('[data-pending-next-slide]')).toHaveText('4');
+    await presenter.click('#btn-presenter-skip');
+    await expect(presenter.locator('#btn-presenter-skip')).toHaveClass(/is-armed/);
+    // Arming only changes Presenter View: the audience remains on slide 1,
+    // while the next-preview card shows the skip target (slide 3).
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(0);
+    await expect(
+      presenter.frameLocator('#next-preview').locator('.toc-item.is-active .toc-num')
+    ).toHaveText('03');
 
-    await presenter.click('#btn-presenter-next');
+    await presenter.click('#btn-presenter-skip');
     // Wait for the presenter's own confirmed-state display before reading
     // the opener's state directly — the command travels via postMessage,
     // so a bare page.evaluate() right after click() can race the delivery.
-    await expect(presenter.locator('[data-current-slide]')).toHaveText('4');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
+    await expect(presenter.locator('#btn-presenter-skip')).not.toHaveClass(/is-armed/);
     // eslint-disable-next-line no-undef
-    expect(await page.evaluate(() => state.currentIndex)).toBe(3); // slide 4, direct jump
-    await expect(presenter.locator('[data-pending-next-slide]')).toHaveText('5');
+    expect(await page.evaluate(() => state.currentIndex)).toBe(2); // slide 3, direct jump
 
     await presenter.click('#btn-presenter-prev'); // presenter's own Vorige
     await expect(presenter.locator('[data-current-slide]')).toHaveText('1');
@@ -267,17 +273,20 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
     expect(await page.evaluate(() => state.currentIndex)).toBe(0); // back to slide 1, not slide 3
   });
 
-  test('Herstel resets the pending selection without touching the real presentation', async ({ page }) => {
+  test('ordinary Volgende cancels an armed skip and advances by one slide', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     await presenter.click('#btn-presenter-skip');
-    await presenter.click('#btn-presenter-herstel');
-    await expect(presenter.locator('[data-pending-next-slide]')).toHaveText('2');
+    await expect(presenter.locator('#btn-presenter-skip')).toHaveClass(/is-armed/);
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+    await expect(presenter.locator('#btn-presenter-skip')).not.toHaveClass(/is-armed/);
     // eslint-disable-next-line no-undef
-    expect(await page.evaluate(() => state.currentIndex)).toBe(0);
+    expect(await page.evaluate(() => state.currentIndex)).toBe(1);
   });
 
-  test('Vorige with no pending jump uses ordinary PREVIOUS_SLIDE, unchanged', async ({ page }) => {
+  test('Vorige without a jump origin uses ordinary PREVIOUS_SLIDE, unchanged', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     await presenter.click('#btn-presenter-next'); // slide 2, no skip involved — now an animated NEXT_SLIDE
@@ -306,24 +315,18 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
     // eslint-disable-next-line no-undef
     await expect.poll(() => page.evaluate(() => state.currentIndex)).toBe(2);
     await waitIdle(page);
-    await expect(presenter.locator('[data-pending-next-slide]')).toHaveText('4');
 
     await presenter.click('#btn-presenter-prev'); // ordinary PREVIOUS_SLIDE, back to slide 2
     // eslint-disable-next-line no-undef
     await expect.poll(() => page.evaluate(() => state.currentIndex)).toBe(1);
     await waitIdle(page);
-    // pendingNextSlide must re-track currentSlide + 1, not stay stranded at
-    // the slide that was "next" before going back — otherwise the following
-    // Volgende misreads the stale pointer as a deliberate skip and jumps
-    // straight to slide 4, silently skipping slide 3.
-    await expect(presenter.locator('[data-pending-next-slide]')).toHaveText('3');
 
     await presenter.click('#btn-presenter-next');
     // eslint-disable-next-line no-undef
     await expect.poll(() => page.evaluate(() => state.currentIndex)).toBe(2);
   });
 
-  test('Volgende with no skip pending sends NEXT_SLIDE and plays the real transition', async ({ page }) => {
+  test('Volgende with no skip armed sends NEXT_SLIDE and plays the real transition', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
 
@@ -374,10 +377,8 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
     await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
     await waitIdle(page);
 
-    // Regression: pendingNextSlide used to only resync when it fell behind
-    // the new currentSlide, so going back left it 2 slides ahead instead of
-    // 1 — the next Volgende click then misread that gap as a deliberate
-    // skip-jump and landed on slide 5 instead of slide 4.
+    // Ordinary back navigation must not arm a skip: the following Volgende
+    // advances exactly one slide.
     await presenter.click('#btn-presenter-next');
     await expect(presenter.locator('[data-current-slide]')).toHaveText('4');
     // eslint-disable-next-line no-undef
@@ -386,7 +387,7 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
 });
 
 test.describe('preview iframes', () => {
-  test('current-preview mirrors the real slide/overlay state; next-preview shows pendingNextSlide', async ({ page }) => {
+  test('current-preview mirrors real state; next-preview shows the ordinary or armed skip target', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
     const mainUi = await page.evaluate(() => ({ toc: CONFIG.toc.heading, ...CONFIG.ui }));
