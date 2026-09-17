@@ -316,3 +316,53 @@ Gewenst: op het moment van klikken een keuze aanbieden tussen twee opties.
   (de gekozen duur) moet kunnen meesturen.
 - `styles.css` — opmaak voor de aftellende klok binnen `.pause-overlay`.
 - `config.js` — eventuele standaardwaarde voor de aftel-duur.
+
+---
+
+## Taalvlaggetje: taal live wisselen in plaats van vastzetten bij het maken
+
+**Status:** bewust niet uitgevoerd. Idee vanuit gebruikersfeedback, na
+onderzoek geparkeerd omdat de eigenlijke consequentie (tweetalige content)
+groter is dan de knop zelf.
+
+### Context
+
+Gevraagd: een vlaggetje in Presenter View waarmee je de taal van de
+interface live kan omzetten, in plaats van dat die vastligt bij het maken
+van de presentatie. Technisch is de knop zelf niet het probleem — zowel
+`app.js` (`APP_I18N`) als `presenter.js` (`PRESENTER_I18N`) hebben al
+complete `nl`/`en`-woordenboeken; `CONFIG.lang` wordt nu alleen éénmalig bij
+het laden gelezen (`app.js` rond regel 121, vergelijkbaar in
+`presenter.js`) om de UI-teksten te kiezen en daarna nooit meer aangeraakt.
+
+De gebruiker gaf zelf aan dat een taalvlaggetje eigenlijk ook zou betekenen
+dat de *inhoud* (`slides-data.js`: titels, bullets, quotes, notes) tweetalig
+moet worden — en dat is een heel andere, veel grotere klus dan het
+omwisselen van vaste UI-labels. Vandaar: niet oppakken totdat er behoefte is
+aan een echt tweetalige presentatie-inhoud.
+
+Ook relevant: `README.md` stelt nu expliciet dat taal een bewuste,
+eenmalige keuze is bij het maken van de presentatie, niet een
+runtime-instelling in de interface. Dit item draait die keuze om en moet
+dus ook de README bijwerken zodra het wordt opgepakt.
+
+### Openstaande ontwerpvragen (bij uitvoering te beslissen)
+
+- Wisselt het vlaggetje alleen Presenter View's eigen bediening, of ook het
+  publieksscherm (Presentatieweergave)? Het laatste vraagt een nieuw
+  postMessage-commando zodat Presenter View het hoofdscherm kan vertellen
+  om ook te wisselen, plus dezelfde re-render-logica daar.
+- Hoe wordt slide-content (`slides-data.js`) tweetalig? Twee losse
+  `SLIDES`-arrays, of per veld een `{ nl, en }`-object? Dit bepaalt hoe
+  groot de aanpassing aan `app.js`'s render-functies wordt.
+- Blijft `CONFIG.lang` de opstarttaal (eerste keer laden), met het
+  vlaggetje alleen als sessie-override, of verdwijnt `CONFIG.lang` als
+  concept?
+
+### Kritieke bestanden (bij uitvoering)
+
+- `app.js` — `APP_I18N`, de eenmalige taalkeuze rond regel 121,
+  `document.documentElement.lang`.
+- `presenter.js` — `PRESENTER_I18N`, dezelfde eenmalige-keuze-aanpak.
+- `slides-data.js` — enige content-structuur die tweetalig moet worden.
+- `README.md` — de huidige "taal ligt vast bij het maken"-regel.

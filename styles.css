@@ -35,10 +35,14 @@
   /* Font roles — each defaults to --font-sans so overriding one doesn't
      require touching the others. A new presentation can diverge titles,
      bullets, and body text independently, or override --font-sans itself
-     to change all three at once. */
+     to change all three at once. --font-italic defaults to --font-heading
+     (the default theme uses one sans stack for both) but a theme whose
+     heading font has no real italic (e.g. a display/black weight) should
+     override this separately rather than let italic text fake-slant it. */
   --font-heading: var(--font-sans);
   --font-bullet: var(--font-sans);
   --font-body: var(--font-sans);
+  --font-italic: var(--font-heading);
 
   /* Disco background — deliberately theme-independent (not overridden in the
      dark-mode block below), so it stays a fixed spectacle regardless of
@@ -461,6 +465,13 @@ button {
   min-height: 0;
   overflow-y: auto;
   background: var(--surface);
+  /* Explicit rather than left to inherit from body: a theme that rescopes
+     --text locally on .slide-content (see themes/conclusion/theme.css) needs
+     this declaration to actually pick up that local value — custom
+     properties cascade to any var() lookup in the subtree, but the `color`
+     property's own inheritance only carries a parent's already-computed
+     value, which wouldn't reflect a redefinition happening here. */
+  color: var(--text);
   border-radius: var(--radius-lg);
   padding: 11vh 3rem 2.5rem;
   box-shadow: 0 4px 10px color-mix(in srgb, var(--text) 6%, transparent);
@@ -483,6 +494,56 @@ button {
 .slide-content--compact .slide-heading {
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
+}
+
+/* Optional per-slide `background: { src, alt }` (see renderSlide() in
+   app.js, which sets --slide-bg-image and this class together). The dark
+   gradient is baked in rather than left to the author because every layout
+   above assumes light-on-dark or dark-on-light text sized for a flat
+   --surface — an arbitrary photo underneath needs guaranteed contrast, not
+   a per-photo tuning knob. Left-to-right rather than a uniform diagonal
+   wash: text lives in the left column (see .slide-inner below), so only
+   that side needs to stay dark, while the right side is left mostly clear
+   for the photo's own subject — the demo backgrounds (themes/conclusion/
+   assets/) all happen to place their focal point there too, but this isn't
+   dependent on that; it just needs the text side covered. */
+.slide-content.slide-content--has-bg {
+  background:
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.78) 35%,
+      rgba(0, 0, 0, 0.32) 60%,
+      rgba(0, 0, 0, 0) 88%
+    ),
+    var(--slide-bg-image) center / cover no-repeat;
+}
+/* Matches the gradient above: the text column moves into (and stays
+   confined to) the dark left side instead of sitting centered over an
+   arbitrary part of the photo. Overrides .slide-inner's own centered
+   default, and beats layout-specific width rules (e.g. .slide-inner--quote)
+   by specificity regardless of source order, since those only carry one
+   class. */
+.slide-content--has-bg .slide-inner {
+  align-self: flex-start;
+  width: min(50%, 38rem);
+  align-items: flex-start;
+  text-align: left;
+}
+.slide-content--has-bg .slide-heading {
+  justify-content: flex-start;
+}
+.slide-content--has-bg .slide-eyebrow,
+.slide-content--has-bg .slide-subtitle {
+  text-align: left;
+}
+.slide-content--has-bg .slide-heading h1,
+.slide-content--has-bg .slide-eyebrow,
+.slide-content--has-bg .slide-subtitle,
+.slide-content--has-bg .slide-bullets li,
+.slide-content--has-bg .slide-bullet-subtext,
+.slide-content--has-bg .slide-meta {
+  color: #fff;
 }
 
 .slide-stage.stage-no-notes .slide-content {
@@ -556,6 +617,18 @@ button {
   background-clip: text;
   color: transparent;
 }
+
+/* Short italic kicker above the title (e.g. a section label) — independent
+   of `.slide-subtitle` below, which is a longer descriptive tagline used
+   only by the title layout. */
+.slide-eyebrow {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-italic);
+  font-style: italic;
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
+  color: var(--text-muted);
+}
+.slide-content--align-left .slide-eyebrow { text-align: left; }
 
 /* When a subtitle follows, it takes over the heading's bottom spacing so
    the two don't stack their gaps on top of each other. */
@@ -681,7 +754,7 @@ button {
 }
 .slide-quote-text {
   margin: 0;
-  font-family: var(--font-heading);
+  font-family: var(--font-italic);
   font-style: italic;
   font-size: clamp(1.4rem, 2.6vw, 2.1rem);
   line-height: 1.4;
@@ -714,6 +787,31 @@ button {
   height: min(52vh, 32rem);
   width: auto;
   max-width: 100%;
+}
+
+/* ---------- Icon-grid layout (specimen slide, see `items` in README) ---------- */
+.slide-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2.5rem 1.5rem;
+  width: 100%;
+}
+.slide-icon-grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+}
+.slide-icon-grid-icon {
+  width: 3rem;
+  height: 3rem;
+  color: var(--accent);
+}
+.slide-icon-grid-label {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-muted);
 }
 
 .slide-template-code {
@@ -1113,56 +1211,41 @@ button {
 
 /* ---------- Brand chrome (hidden by default; a theme opts in by setting
    [data-theme="X"] .brand-chrome { display: flex; } in its own CSS file,
-   see themes/conclusion/theme.css) ---------- */
+   see themes/conclusion/theme.css) ----------
+ * A child of .slide-stage (not a viewport-level overlay) so the corner
+ * wordmark and footer stay pinned to the slide itself — its bounds track
+ * .slide-content/.slide-notes exactly, regardless of whether the TOC or
+ * controls pane is collapsed. z-index puts it above both of those (each
+ * z-index: 1) so it reads as chrome printed on the slide, not tucked behind
+ * it. */
 .brand-chrome {
   display: none;
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   flex-direction: column;
   justify-content: space-between;
 }
-.brand-chrome-wordmark {
+/* Sized as a share of the slide's own width (249/1920, the asset's native
+   scale) rather than a fixed height, so it stays proportional to the
+   bottombar image below — both assets were exported from the same
+   1920px-wide reference slide. */
+.brand-chrome-logo {
   align-self: flex-end;
   margin: 1.25rem 1.75rem 0 0;
-  text-align: right;
-  font-family: var(--font-heading);
-  line-height: 1.15;
+  width: 13%;
+  height: auto;
 }
-.brand-chrome-line1 {
+/* The real asset is a full-slide-width export (1940px, matching a 1920px
+   slide) — stretched to the slide's own width rather than sized by its
+   own intrinsic height, so it lines up with the slide edges at any
+   viewport size instead of floating at a fixed pixel height. */
+.brand-chrome-bottombar {
   display: block;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  color: var(--text);
+  width: 100%;
+  height: auto;
 }
-.brand-chrome-line2 {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--accent);
-}
-.brand-chrome-line2:empty { display: none; }
-.brand-chrome-footer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 1rem;
-}
-.brand-chrome-stripe {
-  display: inline-block;
-  width: 3.5rem;
-  height: 0.6rem;
-  border-radius: 2px;
-}
-.brand-chrome-tagline {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.brand-chrome-tagline:empty { display: none; }
 
 /* ---------- Responsive fallback ---------- */
 @media (max-width: 900px) {
@@ -1187,6 +1270,11 @@ button {
   .next-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .btn-next { padding: 1rem; }
   .slide-inner { width: 100%; max-width: none; }
+  /* Same specificity as the desktop rule above (two classes each), so this
+     wins by simply coming later in the file, but only inside this media
+     query — there's no room at this width for a left column plus a clear
+     right side, so the background-photo text goes back to full width. */
+  .slide-content--has-bg .slide-inner { width: 100%; }
   .slide-row-with-image { flex-direction: column; align-items: center; }
   .slide-image { height: 6.5rem; width: 6.5rem; }
   .slide-quote-box { padding: 1.5rem 1.75rem; }

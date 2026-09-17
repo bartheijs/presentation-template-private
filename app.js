@@ -217,12 +217,19 @@ function buildHeadingBlock(slide, { isTitleSlide = false } = {}) {
   const iconBlock = slide.icon
     ? `<svg class="icon"><use href="#icon-${slide.icon}"></use></svg>`
     : '';
+  // Optional `eyebrow` renders a short italic kicker line above the title,
+  // on any layout — independent of `subtitle` below, which is a longer
+  // tagline reserved for the title slide.
+  const eyebrowBlock = slide.eyebrow
+    ? `<p class="slide-eyebrow">${inlineMarkdown(slide.eyebrow)}</p>`
+    : '';
   // Optional `subtitle` renders a tagline under the title — for a title
   // slide's tagline, not a general-purpose per-slide field.
   const subtitleBlock = slide.subtitle
     ? `<p class="slide-subtitle${isTitleSlide ? ' slide-subtitle--accent' : ''}">${inlineMarkdown(slide.subtitle)}</p>`
     : '';
   return `
+      ${eyebrowBlock}
       <div class="slide-heading${slide.subtitle ? ' slide-heading--with-subtitle' : ''}">
         ${iconBlock}
         <h1${isTitleSlide ? ' class="slide-title-accent"' : ''}>${escapeHtml(slide.title || '')}</h1>
@@ -326,6 +333,28 @@ function renderImageOnlyLayout(slide) {
     ${buildMetaBlock(slide)}`;
 }
 
+// Requires `items: [{ icon, label }]` — a labeled grid of sprite icons
+// (see index.html), for a specimen/overview slide rather than any one
+// piece of content. Reuses buildHeadingBlock so it gets the same
+// title/eyebrow treatment as every other layout.
+function buildIconGridBlock(slide) {
+  const items = Array.isArray(slide.items) ? slide.items : [];
+  return `<div class="slide-icon-grid">${items.map((item) => `
+      <div class="slide-icon-grid-item">
+        <svg class="icon slide-icon-grid-icon"><use href="#icon-${item.icon}"></use></svg>
+        <span class="slide-icon-grid-label">${escapeHtml(item.label || '')}</span>
+      </div>`).join('')}</div>`;
+}
+
+function renderIconGridLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      ${buildIconGridBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
 function renderTemplateReferenceLayout(slide) {
   return `
     <div class="slide-inner slide-inner--fill">
@@ -341,6 +370,7 @@ const LAYOUT_RENDERERS = {
   'list-image': renderListImageLayout,
   quote: renderQuoteLayout,
   'image-only': renderImageOnlyLayout,
+  'icon-grid': renderIconGridLayout,
   'template-reference': renderTemplateReferenceLayout,
 };
 
@@ -377,11 +407,21 @@ function renderSlide() {
   const slide = SLIDES[state.currentIndex];
   const align = resolveAlignFor(slide);
   const layout = slide.layout || 'bullets';
+  const hasBackground = Boolean(slide.background && slide.background.src);
   slideContentEl.className =
     'slide-content' +
     ` slide-content--layout-${layout}` +
     (layout === 'template-reference' ? ' slide-content--compact' : '') +
-    (align === 'left' ? ' slide-content--align-left' : '');
+    (align === 'left' ? ' slide-content--align-left' : '') +
+    (hasBackground ? ' slide-content--has-bg' : '');
+  // Set unconditionally (not just when present) so a slide without a
+  // `background` never inherits the previous slide's image via this custom
+  // property — only the .slide-content--has-bg class above gates whether it
+  // actually renders.
+  slideContentEl.style.setProperty(
+    '--slide-bg-image',
+    hasBackground ? `url("${slide.background.src}")` : 'none'
+  );
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
   const hasNotesText = Boolean(slide.notes && slide.notes.trim());
   const showNotes = shouldShowNotes(slide);
@@ -921,6 +961,17 @@ if (!isEmbedPreview) {
     if (!item) return;
     goTo(Number(item.dataset.index), { animate: false });
   });
+
+  // Scrollbar stays hidden until the list is actually being scrolled (see
+  // .toc-list.is-scrolling in themes/conclusion/theme.css), then fades out
+  // again shortly after scrolling stops — rather than sitting permanently
+  // visible next to the slide numbers.
+  let tocScrollHideTimer = null;
+  tocListEl.addEventListener('scroll', () => {
+    tocListEl.classList.add('is-scrolling');
+    clearTimeout(tocScrollHideTimer);
+    tocScrollHideTimer = setTimeout(() => tocListEl.classList.remove('is-scrolling'), 900);
+  });
 }
 
 /* ---------- Timer ---------- */
@@ -1304,11 +1355,6 @@ function applyConfigStrings() {
   document.getElementById('toc-heading').textContent = CONFIG.toc.heading;
   renderDiscoTitle(CONFIG.disco.titleLines);
 
-  // Blank by default (see config.js) — CSS hides these :empty, so an
-  // unfilled business unit/tagline just doesn't render anything.
-  document.getElementById('brand-chrome-business-unit').textContent = CONFIG.brand.businessUnit;
-  document.getElementById('brand-chrome-tagline').textContent = CONFIG.brand.tagline;
-
   document.getElementById('btn-template-label').textContent = CONFIG.ui.templateButton;
   document.getElementById('btn-template').setAttribute('aria-label', CONFIG.ui.templateButton);
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
@@ -1426,10 +1472,16 @@ window.addEventListener('message', (e) => {
       if (!overlayEl.hidden !== e.data.contextOverlayVisible) {
         e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
       }
-      if (tocCollapsed !== !e.data.leftAsideVisible) toggleTocCollapse();
-      // Presenter previews should mirror the audience screen exactly. While
-      // Presenter View is connected, a hidden right aside disappears there
-      // completely; it is not the ordinary collapsed icon rail.
+      // Deliberately NOT mirroring leftAsideVisible here (unlike the right
+      // aside below) — the TOC's slide titles are unreadable at preview
+      // thumbnail scale anyway, and collapsing it always gives the actual
+      // slide more of the small preview box regardless of the real
+      // screen's own TOC state.
+      if (!tocCollapsed) toggleTocCollapse();
+      // Presenter previews should otherwise mirror the audience screen
+      // exactly. While Presenter View is connected, a hidden right aside
+      // disappears there completely; it is not the ordinary collapsed icon
+      // rail.
       nextCollapsed = false;
       presenterHidesControls = !e.data.rightAsideVisible;
       renderNextPaneState();

@@ -3,8 +3,17 @@
   --presenter-max-width: 1680px;
 }
 
+/* height:100% + overflow:hidden (rather than the page's natural
+   min-height:100% + growing block flow) so the page itself never scrolls —
+   only .presenter-notes does, once the flex/grid chain below propagates a
+   real bound down to it (each link needs min-height: 0, since flex/grid
+   items default to a content-based minimum that ignores the parent's
+   height and would otherwise still push the page taller). */
 body {
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   margin: 0;
   padding: clamp(1rem, 2vw, 2rem);
   background:
@@ -26,17 +35,13 @@ input { font: inherit; }
 }
 
 .presenter-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 2rem;
   margin-bottom: 1.25rem;
 }
 
 .header-timer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 1rem;
   padding: 0.75rem 1.1rem;
   border: 1px solid var(--border);
@@ -62,15 +67,6 @@ input.elapsed:focus-visible {
   border-radius: 4px;
 }
 
-.presenter-heading h1,
-.panel-header h2 {
-  margin: 0;
-  font-family: var(--font-heading);
-  line-height: 1.1;
-}
-
-.presenter-heading h1 { font-size: clamp(1.5rem, 2.5vw, 2.25rem); }
-
 .presenter-kicker,
 .panel-kicker,
 .meta-label {
@@ -85,10 +81,8 @@ input.elapsed:focus-visible {
 
 .presenter-kicker { color: var(--accent); }
 
-.clock-block,
-.elapsed-block { min-width: 6.5rem; }
-
-.presenter-clock { text-align: right; }
+.elapsed-block,
+.clock-block { min-width: 6.5rem; }
 
 .clock,
 .elapsed {
@@ -100,6 +94,10 @@ input.elapsed:focus-visible {
 }
 
 .clock { font-size: clamp(1.7rem, 3vw, 2.6rem); }
+.clock--compact {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+}
 
 .elapsed {
   color: var(--text-muted);
@@ -186,6 +184,9 @@ input:focus-visible {
 
 .presenter-main {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 1rem;
 }
 
@@ -196,11 +197,14 @@ input:focus-visible {
 }
 
 .preview-grid { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.detail-grid { min-height: 0; }
 
 .preview-nav {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.75rem;
 }
 .detail-grid {
   grid-template-columns: minmax(0, 1.3fr) minmax(22rem, 0.7fr);
@@ -229,7 +233,6 @@ input:focus-visible {
 }
 
 .panel-header--compact { margin-bottom: 0.75rem; }
-.panel-header h2 { font-size: clamp(1.05rem, 1.5vw, 1.3rem); }
 
 .slide-chip {
   flex: 0 0 auto;
@@ -239,11 +242,6 @@ input:focus-visible {
   color: var(--accent);
   font-size: 0.78rem;
   font-weight: 800;
-}
-
-.slide-chip--next {
-  background: color-mix(in srgb, var(--accent-5) 11%, var(--surface));
-  color: var(--accent-5);
 }
 
 .preview-viewport {
@@ -308,30 +306,10 @@ input:focus-visible {
   pointer-events: none;
 }
 
-.skip-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 0.75rem;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 650;
-}
-
-.skip-controls > div {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.skip-controls .btn {
-  min-height: 2.3rem;
-  padding: 0.55rem 0.75rem;
-}
-
 .notes-panel {
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .presenter-notes {
@@ -368,6 +346,50 @@ input:focus-visible {
 }
 
 .btn--nav { min-width: 7.5rem; }
+
+/* Skip button starts looking like plain text (no visible border/background)
+   so it doesn't compete visually with Vorige/Volgende — a first click
+   "arms" it into a real button (see .is-armed, toggled in presenter.js),
+   and only a second click while armed actually jumps. Box-model (min-width/
+   min-height/padding) is IDENTICAL in both states on purpose — only color/
+   border/text-decoration differ — so arming it never resizes the button
+   and reflows Vorige/Volgende above it (they share this column's width via
+   flex stretch, see .nav-controls). */
+#btn-presenter-skip {
+  min-height: 2.65rem;
+  min-width: 7.5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  background: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+#btn-presenter-skip:hover {
+  transform: none;
+  box-shadow: none;
+  color: var(--text);
+}
+/* Matches .btn--primary (Volgende) directly rather than relying on that
+   class's cascade — #btn-presenter-skip's own ID-scoped base rule above
+   would otherwise outrank a plain .btn--primary class regardless of which
+   classes are added in JS, since an ID always wins over a class. Same
+   blue-and-white treatment on purpose: once armed, this is just as real an
+   action as Volgende, so it should read that way. */
+#btn-presenter-skip.is-armed {
+  border-color: transparent;
+  background: var(--accent);
+  box-shadow: var(--shadow-accent);
+  color: #fff;
+  font-weight: 750;
+  text-decoration: none;
+}
+#btn-presenter-skip.is-armed:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+}
 
 .controls-panel .panel-kicker { margin-bottom: 0.65rem; }
 
@@ -431,11 +453,6 @@ input:focus-visible {
 
   .preview-grid,
   .detail-grid { grid-template-columns: 1fr; }
-
-  .skip-controls {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 }
 
 @media (max-width: 520px) {

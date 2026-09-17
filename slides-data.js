@@ -100,6 +100,7 @@ const SLIDES = [
     subtitle: 'Lever je verhaal aan als tekst. AI doet de rest.',
     bullets: [],
     meta: ['Van ruwe inhoud', 'naar een werkende presentatie'],
+    background: { src: 'themes/conclusion/assets/conclusion-tower.jpg', alt: 'Het kantoorgebouw van Conclusion' },
     notes: `Deze demo laat zien wat het template kan. Voor een nieuwe presentatie hoeft de gebruiker alleen de inhoud en context aan te leveren.`,
     duration: 60,
   },
@@ -114,7 +115,17 @@ const SLIDES = [
       'Voor wie is hij bedoeld?',
       'Wat moet het publiek na afloop begrijpen, voelen of doen?',
     ],
-    notes: `Meer hoeft niet om te beginnen. Als duur, taal of toon belangrijk zijn, kunnen die er gewoon in normale taal bij.`,
+    notes: `Meer hoeft niet om te beginnen. Als duur, taal of toon belangrijk zijn, kunnen die er gewoon in normale taal bij.
+
+Dit is een langere testnotitie om te controleren of het notities-paneel in Presenter View netjes scrollt zodra de tekst niet meer past. Herhaal dit een paar keer met wat extra tekst erbij.
+
+Ten eerste: leg uit waarom deze drie vragen de kern vormen van elke goede briefing. Zonder onderwerp, doelgroep en gewenste uitkomst gaat AI onnodig veel aannames doen, en die aannames zijn zelden precies wat de presentator bedoelde.
+
+Ten tweede: benadruk dat dit geen strak format is. Een presentator die alleen een onderwerp aanlevert, krijgt gewoon een eerste opzet — de andere twee vragen mogen ontbreken en worden dan impliciet ingevuld op basis van de aangeleverde tekst.
+
+Ten derde: geef een concreet voorbeeld uit een eerdere sessie, bijvoorbeeld een workshop-uitnodiging die in twee alinea's tekst is aangeleverd en in enkele minuten is omgezet naar een volledige sldedeck met sprekersnotities en een passende structuur.
+
+Tot slot: sluit af met de brug naar de volgende slide — vanaf hier bouwt de presentatie logisch verder op deze drie antwoorden, dus herhaal ze kort voordat je doorklikt.`,
     duration: 90,
   },
   {
@@ -216,6 +227,7 @@ const SLIDES = [
     discoMode: 'auto',
     discoHoldMs: 1600,
     discoTitleLines: ['KORTE', 'ENERGIE'],
+    background: { src: 'themes/conclusion/assets/conclusion-blender.jpg', alt: 'Een blender met spattende, kleurrijke verf' },
     bullets: [
       'Eén klik is genoeg',
       'De overgang speelt af en de volgende slide verschijnt vanzelf',
@@ -321,7 +333,26 @@ const SLIDES = [
     title: 'Quote',
     quote: 'Een presentatie is geslaagd zodra het publiek de kernboodschap kan navertellen.',
     attribution: 'Voorbeeldcitaat',
+    background: { src: 'themes/conclusion/assets/conclusion-clouds-color.jpg', alt: 'Kleurrijke rookwolken in de huisstijlkleuren' },
     notes: `Dit is de 'quote'-layout: een uitgelichte quote in een kleurvlak. Zet er optioneel een 'image' bij voor de foto-variant.`,
+  },
+  {
+    id: 20,
+    layout: 'icon-grid',
+    title: 'Iconenset',
+    items: [
+      { icon: 'target', label: 'Doel' },
+      { icon: 'chat', label: 'Gesprek' },
+      { icon: 'flag', label: 'Resultaat' },
+      { icon: 'steps', label: 'Stappen' },
+      { icon: 'clock', label: 'Tijd' },
+      { icon: 'spark', label: 'Hoogtepunt' },
+      { icon: 'book', label: 'Naslag' },
+      { icon: 'ruler', label: 'Meetbaar' },
+      { icon: 'layers', label: 'Structuur' },
+      { icon: 'inbox', label: 'Levering' },
+    ],
+    notes: `Dit is de 'icon-grid'-layout: een specimen-slide die de volledige iconenset toont (zie index.html voor de sprite). Handig als stijlreferentie, niet bedoeld om in de echte presentatie te laten staan.`,
   },
   {
     id: 19,

@@ -115,20 +115,28 @@ Elk object in `SLIDES` heeft minimaal:
 - `'quote'` — een uitgelicht citaat (`quote` + optioneel `attribution`) in
   een kleurvlak, optioneel met `image` erbij.
 - `'image-only'` — titel + één dominante afbeelding, geen bullets.
+- `'icon-grid'` — titel + gelabeld rooster van sprite-iconen (`items`),
+  vooral bedoeld als specimen-/stijlslide.
 - `'template-reference'` — toont de Presentatiebrief-inhoud inline op de
   slide zelf (interne legacy-functie, was voorheen `isTemplateAnchor: true`).
 
-Beide thema's (`default` en `conclusion`) gebruiken dezelfde zes layouts —
+Beide thema's (`default` en `conclusion`) gebruiken dezelfde layouts —
 alleen de kleuren verschillen per thema.
 
 Ondersteunde optionele velden:
 
 - `icon` — naam van een SVG-symbol uit `index.html`; alleen gebruiken op
   links uitgelijnde slides.
+- `eyebrow` — korte cursieve regel boven de titel, op elke layout te
+  gebruiken (los van `subtitle` hieronder).
 - `subtitle` en `meta` — aanvullende tekst voor een titelslide.
 - `image: { src, alt }` of een array daarvan — gebruikt door `'list-image'`,
   `'quote'` en `'image-only'`.
+- `background: { src, alt }` — optionele full-bleed achtergrondfoto achter
+  de slide-inhoud, op elke layout; de engine legt er automatisch een
+  donkere overlay overheen zodat titel/bullets leesbaar blijven.
 - `quote` en `attribution` — gebruikt door de `'quote'`-layout.
+- `items: [{ icon, label }]` — gebruikt door de `'icon-grid'`-layout.
 - `align: 'center' | 'left'` — override van `CONFIG.layout.align`.
 - `disco: true | false` — flashy transition per slide aan of uit.
 - `discoMode: 'auto' | 'pause'` — automatisch afspelen of bij vooruit
