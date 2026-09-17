@@ -270,7 +270,11 @@ function buildSlideContentHTML(slide) {
   const subtitleBlock = slide.subtitle
     ? `<p class="slide-subtitle${isTitleSlide ? ' slide-subtitle--accent' : ''}">${inlineMarkdown(slide.subtitle)}</p>`
     : '';
-  const headingBlock = `
+  // `hideTitle` only removes the heading visually. The title remains in the
+  // TOC/Presenter View and in the slide DOM for assistive technology.
+  const headingBlock = slide.hideTitle
+    ? `<h1 class="slide-title-visually-hidden">${escapeHtml(slide.title || '')}</h1>`
+    : `
       <div class="slide-heading${slide.subtitle ? ' slide-heading--with-subtitle' : ''}">
         ${iconBlock}
         <h1${isTitleSlide ? ' class="slide-title-accent"' : ''}>${escapeHtml(slide.title || '')}</h1>
@@ -361,6 +365,7 @@ function renderSlide() {
     (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
     (Array.isArray(slide.timeline) && slide.timeline.length ? ' slide-content--timeline' : '') +
     (slide.fullImage && slide.fullImage.src ? ' slide-content--full-image' : '') +
+    (slide.hideTitle ? ' slide-content--title-hidden' : '') +
     (slide.discoSlide ? ' slide-content--disco' : '') +
     (align === 'left' ? ' slide-content--align-left' : '');
   slideContentEl.innerHTML = buildSlideContentHTML(slide);

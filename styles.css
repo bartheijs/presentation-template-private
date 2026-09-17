@@ -494,6 +494,20 @@ button {
   padding-bottom: 0.5rem;
 }
 
+/* A hidden slide title remains in the DOM and in navigation, while the
+   visible slide can devote its space to image-led content. */
+.slide-title-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .slide-content--timeline {
   justify-content: center;
   padding-top: 2.5rem;
@@ -697,6 +711,13 @@ button {
 }
 .slide-content--full-image .slide-heading {
   margin-bottom: 1.25rem;
+}
+.slide-content--full-image.slide-content--title-hidden {
+  padding: 2rem;
+}
+.slide-content--full-image.slide-content--title-hidden .slide-inner {
+  width: 100%;
+  max-width: none;
 }
 .slide-full-image-frame {
   flex: 1 1 auto;
@@ -1253,6 +1274,7 @@ button {
      `height: auto` rows here, so the flex-fill frame above has nothing to
      size against — fall back to a fixed viewport-relative height instead. */
   .slide-full-image-frame { flex: none; height: 42vh; }
+  .slide-content--title-hidden .slide-full-image-frame { height: 65vh; }
   .slide-timeline {
     grid-template-columns: 1fr;
     gap: 0.7rem;

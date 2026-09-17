@@ -260,3 +260,35 @@ test.describe('isTemplateAnchor slides', () => {
     await expect(page.locator('.slide-template-code')).toBeVisible();
   });
 });
+
+test.describe('fullImage slides', () => {
+  test('hideTitle preserves the heading accessibly and gives the image more space', async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      SLIDES[4] = {
+        id: 'test-4',
+        title: 'Still available to navigation',
+        bullets: [],
+        fullImage: { src: 'assets/01-profile-flip-card-skeleton.jpg', alt: 'Test' },
+      };
+      state.currentIndex = 4;
+      renderSlide();
+    });
+
+    const image = page.locator('.slide-full-image');
+    await expect(image).toBeVisible();
+    const regularBox = await image.boundingBox();
+
+    await page.evaluate(() => {
+      SLIDES[4].hideTitle = true;
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--title-hidden/);
+    await expect(page.locator('.slide-title-visually-hidden')).toHaveText('Still available to navigation');
+    const expandedBox = await image.boundingBox();
+    expect(expandedBox.width * expandedBox.height).toBeGreaterThan(regularBox.width * regularBox.height);
+    expect(expandedBox.height).toBeGreaterThan(regularBox.height);
+    expect(expandedBox.width).toBeGreaterThan(regularBox.width);
+  });
+});

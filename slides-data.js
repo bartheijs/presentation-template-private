@@ -148,6 +148,7 @@ node -v
   {
     id: 9,
     title: 'Widget-opbouw (1/5): volledig overzicht',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -158,6 +159,7 @@ node -v
   {
     id: 10,
     title: 'Widget-opbouw (2/5): properties',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -168,6 +170,7 @@ node -v
   {
     id: 11,
     title: 'Widget-opbouw (3/5): component tree',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -178,6 +181,7 @@ node -v
   {
     id: 12,
     title: 'Widget-opbouw (4/5): skeleton',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -188,6 +192,7 @@ node -v
   {
     id: 13,
     title: 'Widget-opbouw (5/5): overige bestanden',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
