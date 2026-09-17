@@ -38,8 +38,11 @@ npx playwright test
 ## What each file covers
 
 - `config-and-ui.spec.js` — `config.js` values applied to the DOM at
-  startup (`applyConfigStrings()`), and the `templateOverlay.enabled`
-  toggle (button visibility + `ArrowDown` shortcut).
+  startup (`applyConfigStrings()`), the `templateOverlay.enabled`
+  toggle (button visibility + `ArrowDown` shortcut), and the theme system:
+  `CONFIG.theme` driving `<html data-theme>`, the `[data-theme="conclusion"]`
+  CSS override winning regardless of `prefers-color-scheme`, brand-chrome
+  visibility/strings, and Presenter View inheriting the same colors.
 - `disco-and-pause.spec.js` — global/per-slide `disco` enable, per-slide
   auto-mode hold timing, `auto` vs
   `pause` transition mode, and the pause state machine: freeze, resume on a
@@ -48,7 +51,9 @@ npx playwright test
 - `layout.spec.js` — `CONFIG.layout.align`/per-slide `align`, the 8/12
   column `.slide-inner` wrapper staying centered regardless of alignment,
   the 900px responsive breakpoint, bullet subtext rendering (plain string
-  vs `{ text, subtext }`), and the `isTemplateAnchor` compact slides.
+  vs `{ text, subtext }`), each of the six `layout` renderers
+  (`title`/`bullets`/`list-image`/`quote`/`image-only`/`template-reference`),
+  and the fallback for an unrecognized `layout` value.
 - `notes-resize.spec.js` — the `flex-grow` transition on `#slide-content`
   that smooths the resize when speaker-notes presence differs between the
   outgoing and incoming slide, across all with/without combinations.
@@ -81,13 +86,13 @@ context from scratch.
 
 Most tests only assume "at least a handful of slides exist" and mutate
 `SLIDES`/`CONFIG` in-page, so they work regardless of what the actual
-content is. One exception: `layout.spec.js`'s `isTemplateAnchor` test
-assumes slide index 8 (the 9th slide) is a `isTemplateAnchor: true` slide
-with an inline `.slide-template-code` block — in the demo this is used for
-the generic Presentation brief reference (see
-`scaffold-presentation`/`update-slides`'s skill docs). A presentation forked
-for a different topic that doesn't use that concept should remove or adapt
-that one test; it isn't testing generic engine behavior.
+content is. One exception: `layout.spec.js`'s layout-renderer tests look up
+a slide by `findIndex((s) => s.layout === '...')` for each of
+`template-reference`/`list-image`/`quote`/`image-only` — a presentation
+forked for a different topic must keep at least one slide using each of
+those layouts (or remove/adapt the corresponding test) for those specific
+tests to keep passing; the plain `bullets`/`title` tests don't have this
+requirement.
 
 ## Manual verification (not automated)
 

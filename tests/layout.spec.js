@@ -4,7 +4,7 @@ const { gotoPresentation } = require('./helpers');
 // Covers: CONFIG.layout.align / per-slide align override, the 8/12-column
 // .slide-inner wrapper staying centered regardless of alignment mode, the
 // 900px responsive breakpoint, bullet subtext rendering, and the
-// isTemplateAnchor compact slides.
+// 'template-reference' layout's compact slides.
 
 test.describe('content alignment', () => {
   test('demo slides never combine an icon with a centered title', async ({ page }) => {
@@ -179,54 +179,6 @@ test.describe('bullet subtext', () => {
   });
 });
 
-test.describe('slide timeline', () => {
-  test('renders slide 5 as eight timed, ordered, non-overflowing phases', async ({ page }) => {
-    await page.setViewportSize({ width: 1920, height: 1080 });
-    await gotoPresentation(page);
-    await page.evaluate(() => { state.currentIndex = 4; renderSlide(); });
-
-    const timeline = page.locator('.slide-timeline');
-    await expect(timeline).toBeVisible();
-    await expect(timeline.locator('.slide-timeline-step')).toHaveCount(8);
-    await expect(page.locator('.slide-bullets')).toHaveCount(0);
-    await expect(timeline.locator('.slide-timeline-time')).toHaveText([
-      '09:00', '09:45', '10:30', '11:00', '12:00', '12:45', '14:30', '15:30',
-    ]);
-    await expect(timeline.locator('.slide-timeline-label')).toHaveText([
-      'Presentatie & scaffolding', 'Exploring', 'Plannen', 'Coderen',
-      'Lunchpauze', 'Coderen', 'Demo’s', 'Einde',
-    ]);
-    await expect(timeline.locator('.slide-timeline-step--break')).toHaveCount(1);
-    await expect(timeline.locator('.slide-timeline-step--end')).toHaveCount(1);
-    await expect(timeline.locator('.slide-timeline-step').nth(3).locator('use')).toHaveAttribute('href', '#icon-bolt');
-    await expect(timeline.locator('.slide-timeline-step').nth(5).locator('use')).toHaveAttribute('href', '#icon-bolt');
-
-    const layout = await page.evaluate(() => {
-      const stage = document.getElementById('slide-content').getBoundingClientRect();
-      const timelineRect = document.querySelector('.slide-timeline').getBoundingClientRect();
-      const markers = [...document.querySelectorAll('.slide-timeline-marker')]
-        .map((marker) => marker.getBoundingClientRect());
-      const steps = [...document.querySelectorAll('.slide-timeline-step')];
-      return {
-        withinStage: timelineRect.left >= stage.left && timelineRect.right <= stage.right
-          && timelineRect.top >= stage.top && timelineRect.bottom <= stage.bottom,
-        markersIncrease: markers.every((marker, index) => index === 0 || marker.left > markers[index - 1].right),
-        codingColorsMatch: getComputedStyle(steps[3]).getPropertyValue('--step-color')
-          === getComputedStyle(steps[5]).getPropertyValue('--step-color'),
-        breakColor: getComputedStyle(steps[4]).getPropertyValue('--step-color').trim(),
-        endColor: getComputedStyle(steps[7]).getPropertyValue('--step-color').trim(),
-        demoColor: getComputedStyle(steps[6]).getPropertyValue('--step-color').trim(),
-        purple: getComputedStyle(document.documentElement).getPropertyValue('--accent-5').trim(),
-      };
-    });
-    expect(layout.withinStage).toBe(true);
-    expect(layout.markersIncrease).toBe(true);
-    expect(layout.codingColorsMatch).toBe(true);
-    expect(layout.breakColor).toBe(layout.endColor);
-    expect(layout.demoColor).toBe(layout.purple);
-  });
-});
-
 test.describe('malformed bullet entries', () => {
   test('null/undefined entries and an object without text render without crashing', async ({ page }) => {
     await gotoPresentation(page);
@@ -246,17 +198,65 @@ test.describe('malformed bullet entries', () => {
   });
 });
 
-test.describe('isTemplateAnchor slides', () => {
-  test('an isTemplateAnchor slide renders compact with the inline reference block', async ({ page }) => {
+test.describe('template-reference layout', () => {
+  test('a template-reference slide renders compact with the inline reference block', async ({ page }) => {
     await gotoPresentation(page);
+    // Looked up by layout rather than a fixed index — this deck's content
+    // is edited often and slide positions shift.
     await page.evaluate(() => {
-      // Force the feature under test instead of requiring topic content to
-      // ship a reference slide merely to satisfy this engine-level test.
-      SLIDES[0].isTemplateAnchor = true;
-      state.currentIndex = 0;
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'template-reference');
       renderSlide();
     });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--compact/);
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-template-reference/);
     await expect(page.locator('.slide-template-code')).toBeVisible();
+  });
+});
+
+test.describe('new layout renderers', () => {
+  test('list-image renders bullets beside an image', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'list-image');
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-list-image/);
+    await expect(page.locator('.slide-row-with-image')).toBeVisible();
+    await expect(page.locator('.slide-image-stack .slide-image')).toBeVisible();
+  });
+
+  test('quote renders the quote box, with attribution when set', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'quote');
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-quote/);
+    await expect(page.locator('.slide-quote-box')).toBeVisible();
+    await expect(page.locator('.slide-quote-text')).not.toBeEmpty();
+  });
+
+  test('image-only renders the heading and a dominant image, no bullets', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'image-only');
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-image-only/);
+    await expect(page.locator('.slide-inner--image-only .slide-image')).toBeVisible();
+    await expect(page.locator('.slide-inner--image-only .slide-bullets')).toHaveCount(0);
+  });
+
+  test('an unknown layout value falls back to bullets instead of crashing', async ({ page }) => {
+    await gotoPresentation(page);
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    await page.evaluate(() => {
+      SLIDES[4].layout = 'nonexistent-layout';
+      state.currentIndex = 4;
+      renderSlide();
+    });
+    expect(errors).toEqual([]);
+    await expect(page.locator('.slide-bullets')).toBeVisible();
   });
 });

@@ -3,6 +3,43 @@
  *
  * Audience-facing copy stays concise; Presenter View contains the detailed
  * facilitation guidance supplied for every slide.
+ *
+ * Each slide requires { id, title, bullets, notes, layout }. `layout` is one
+ * of:
+ * - 'title': centered heading + subtitle, no bullets (the deck's opening
+ *   slide style)
+ * - 'bullets': heading + bullet list — the default, general-purpose layout
+ * - 'list-image': bullets in one column, `image` stacked beside them
+ * - 'quote': a colored quote box (`quote` + optional `attribution`),
+ *   optionally with `image` alongside it
+ * - 'image-only': heading + one dominant image, no bullets
+ * - 'icon-grid': a labeled grid of sprite icons (`items: [{ icon, label }]`)
+ * - 'template-reference': shows the Presentatiebrief content inline on the
+ *   slide itself (legacy internal use)
+ * - 'timeline' (deck-specific, see app.js/styles.css): a left-to-right
+ *   sequence of steps (`timeline: [{ label, icon, time?, tools?, kind? }]`)
+ * - 'disco' (deck-specific, see app.js/styles.css): a persistent version of
+ *   the disco-transition rays/title, for a slide that should just stay on
+ *   that look rather than flash through it
+ *
+ * Other optional fields:
+ * - icon: name from the SVG sprite in index.html. Use icons only on
+ *   left-aligned slides; centered headings deliberately have no icon.
+ * - subtitle / meta: title-slide supporting copy
+ * - image: { src, alt } (or an array of those) — used by 'list-image',
+ *   'quote' and 'image-only'
+ * - quote / attribution: used by the 'quote' layout
+ * - align: 'center' or 'left' (overrides CONFIG.layout.align)
+ * - disco: enables/disables the flashy transition for this slide
+ * - discoMode: 'auto' or 'pause'
+ * - discoTitleLines: per-slide transition copy (also used by layout: 'disco')
+ * - discoHoldMs: extra fully-visible time in auto mode after panels leave
+ * - duration: presenter-only planned time for this slide, in seconds (used
+ *   for the Presenter View's schedule-adherence indicator; falls back to an
+ *   even split of CONFIG.timer.defaultMinutes when omitted)
+ * - templateSection: highlights one Presentatiebrief section when the
+ *   overlay is opened from this slide (independent of `layout`)
+ * - bullets may be strings or { text, subtext } objects
  */
 
 const SKILL_TEMPLATE_MD = '';
@@ -11,6 +48,7 @@ const SKILL_TEMPLATE_SECTIONS = [];
 const SLIDES = [
   {
     id: 1,
+    layout: 'title',
     title: 'AI codeert,\njij regisseert',
     subtitle: 'Mendix Pluggable Widgets bouwen met AI',
     bullets: [],
@@ -23,6 +61,7 @@ const SLIDES = [
   },
   {
     id: 2,
+    layout: 'bullets',
     title: 'Waarom deze workshop',
     icon: 'target',
     align: 'left',
@@ -39,6 +78,7 @@ const SLIDES = [
   },
   {
     id: 3,
+    layout: 'bullets',
     title: 'Voor wie',
     icon: 'chat',
     align: 'left',
@@ -53,6 +93,7 @@ const SLIDES = [
   },
   {
     id: 4,
+    layout: 'bullets',
     title: 'Wat je vandaag (mee)maakt',
     icon: 'output',
     align: 'left',
@@ -67,6 +108,7 @@ const SLIDES = [
   },
   {
     id: 5,
+    layout: 'timeline',
     title: 'De dag in vogelvlucht',
     align: 'center',
     bullets: [],
@@ -85,6 +127,7 @@ const SLIDES = [
   },
   {
     id: 6,
+    layout: 'timeline',
     title: 'Het proces in één plaatje',
     align: 'center',
     bullets: [],
@@ -101,6 +144,7 @@ const SLIDES = [
   },
   {
     id: 7,
+    layout: 'bullets',
     title: 'Fase 1: Scaffolding',
     icon: 'wrench',
     align: 'left',
@@ -134,6 +178,7 @@ node -v
   },
   {
     id: 8,
+    layout: 'bullets',
     title: 'Fase 1: Scaffolding — skills klaarzetten',
     icon: 'checklist',
     align: 'left',
@@ -147,56 +192,62 @@ node -v
   },
   {
     id: 9,
+    layout: 'image-only',
     title: 'Widget-opbouw (1/5): volledig overzicht',
     icon: 'layers',
     align: 'left',
     bullets: [],
-    fullImage: { src: 'assets/01-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de volledige widget-opbouw' },
+    image: { src: 'assets/01-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de volledige widget-opbouw' },
     notes: ``,
     duration: 60,
   },
   {
     id: 10,
+    layout: 'image-only',
     title: 'Widget-opbouw (2/5): properties',
     icon: 'layers',
     align: 'left',
     bullets: [],
-    fullImage: { src: 'assets/02-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de widget-properties' },
+    image: { src: 'assets/02-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de widget-properties' },
     notes: ``,
     duration: 60,
   },
   {
     id: 11,
+    layout: 'image-only',
     title: 'Widget-opbouw (3/5): component tree',
     icon: 'layers',
     align: 'left',
     bullets: [],
-    fullImage: { src: 'assets/03-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de component tree' },
+    image: { src: 'assets/03-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de component tree' },
     notes: ``,
     duration: 60,
   },
   {
     id: 12,
+    layout: 'image-only',
     title: 'Widget-opbouw (4/5): skeleton',
     icon: 'layers',
     align: 'left',
     bullets: [],
-    fullImage: { src: 'assets/04-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de widget-skeleton' },
+    image: { src: 'assets/04-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de widget-skeleton' },
     notes: ``,
     duration: 60,
   },
   {
     id: 13,
+    layout: 'image-only',
     title: 'Widget-opbouw (5/5): overige bestanden',
     icon: 'layers',
     align: 'left',
     bullets: [],
-    fullImage: { src: 'assets/05-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de overige widget-bestanden' },
+    image: { src: 'assets/05-profile-flip-card-skeleton.jpg', alt: 'Schematisch overzicht van de overige widget-bestanden' },
     notes: ``,
     duration: 60,
   },
   {
     id: 14,
+    layout: 'bullets',
     title: 'Even rondkijken: waar leeft de code?',
     icon: 'folder',
     align: 'left',
@@ -212,6 +263,7 @@ node -v
   },
   {
     id: 15,
+    layout: 'bullets',
     title: 'Projectmechanica naast de widget-code',
     icon: 'layers',
     align: 'left',
@@ -228,6 +280,7 @@ node -v
   },
   {
     id: 16,
+    layout: 'bullets',
     title: 'Bonus: wat zit er nog meer in de widget-XML?',
     icon: 'spark',
     align: 'left',
@@ -242,6 +295,7 @@ node -v
   },
   {
     id: 17,
+    layout: 'bullets',
     title: 'Fase 2: Exploring',
     icon: 'question',
     align: 'left',
@@ -256,6 +310,7 @@ node -v
   },
   {
     id: 18,
+    layout: 'bullets',
     title: 'Fase 3: Plannen',
     icon: 'steps',
     align: 'left',
@@ -269,6 +324,7 @@ node -v
   },
   {
     id: 19,
+    layout: 'bullets',
     title: 'Fase 4: Coderen — wat AI doet',
     icon: 'bolt',
     align: 'left',
@@ -283,6 +339,7 @@ node -v
   },
   {
     id: 20,
+    layout: 'bullets',
     title: 'Fase 4: Coderen — wat jij doet',
     icon: 'checkpoint',
     align: 'left',
@@ -297,6 +354,7 @@ node -v
   },
   {
     id: 21,
+    layout: 'bullets',
     title: 'De bouw- en testcyclus',
     icon: 'repeat',
     align: 'left',
@@ -313,6 +371,7 @@ node -v
   },
   {
     id: 22,
+    layout: 'bullets',
     title: 'Fase 5: Releasen',
     icon: 'output',
     align: 'left',
@@ -328,6 +387,7 @@ node -v
   },
   {
     id: 23,
+    layout: 'bullets',
     title: 'Jouw rol als regisseur',
     align: 'center',
     bullets: [
@@ -340,6 +400,7 @@ node -v
   },
   {
     id: 24,
+    layout: 'bullets',
     title: 'Praktische afspraken voor vandaag',
     icon: 'clock',
     align: 'left',
@@ -355,6 +416,7 @@ node -v
   },
   {
     id: 25,
+    layout: 'bullets',
     title: 'Start',
     icon: 'flag',
     align: 'left',
@@ -368,14 +430,10 @@ node -v
   },
   {
     id: 26,
+    layout: 'disco',
     title: 'Go Make It!',
     align: 'center',
     bullets: [],
-    // Persistent disco look (not the transient disco-reveal transition):
-    // this slide's own content renders the disco rays/sparkles/title, so it
-    // stays visible for as long as the slide is shown, arriving and leaving
-    // via the ordinary slide transition like any other slide.
-    discoSlide: true,
     discoTitleLines: ['GO', 'MAKE', 'IT!'],
     notes: ``,
     duration: 20,

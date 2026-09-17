@@ -1,17 +1,35 @@
 /*
  * Presentation-wide configuration. Classic script (not a module), loaded
- * before slides-data.js and app.js so CONFIG is available as a bare global
- * — same pattern app.js already uses to depend on SLIDES.
+ * from <head> (before styles.css) in both index.html and presenter.html so
+ * the active theme can be applied before first paint — see the inline
+ * data-theme script right after this file's <script> tag in each HTML file.
+ * It's still loaded before slides-data.js and app.js too, so CONFIG is
+ * available as a bare global — same pattern app.js already uses to depend
+ * on SLIDES.
  *
  * A new presentation branch should only need to edit THIS file plus
- * slides-data.js. Theme colors (incl. --disco-* tokens) still live in the
- * :root block of styles.css — that's the one deliberate exception, see
+ * slides-data.js. `theme` picks which palette applies; the actual color
+ * values (incl. --disco-* tokens) live in styles.css's :root block
+ * (`default` theme) and themes/<name>/theme.css (every other theme) — see
  * README.md.
  */
 
 const CONFIG = {
   lang: 'nl',
   title: 'Mendix Pluggable Widgets bouwen met AI',
+
+  // 'default' or 'conclusion' (see themes/conclusion/theme.css). Chosen once
+  // when the presentation is set up and not meant to change at runtime — see
+  // README.md for how to add a new theme.
+  theme: 'conclusion',
+
+  // Only rendered when a theme's chrome uses it (currently just
+  // `conclusion`'s corner wordmark + footer tagline). Leave blank for a
+  // generic Conclusion look, or fill in for a specific business unit.
+  brand: {
+    businessUnit: 'Low Code Company',
+    tagline: 'Business done differently',
+  },
 
   layout: {
     align: 'center', // 'center' (default) | 'left' — global default for the

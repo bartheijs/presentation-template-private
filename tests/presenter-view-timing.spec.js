@@ -111,112 +111,46 @@ test.describe('timing math (plannedStartOfSlide / totalPlannedMs)', () => {
 });
 
 test.describe('presentation timer persistence', () => {
-  test('elapsed time survives a Presenter View refresh while running', async ({ page }) => {
+  test('the countdown keeps decreasing across a Presenter View refresh while running', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
-    await presenter.click('#btn-presenter-timer-start');
+    const initialRemaining = await presenter.evaluate(() => getRemainingSeconds());
+    await presenter.click('#btn-presenter-timer-toggle');
     await presenter.waitForTimeout(1100);
 
     await presenter.reload();
-    const elapsedAfterReload = await presenter.evaluate(() => getElapsedSeconds());
-    expect(elapsedAfterReload).toBeGreaterThanOrEqual(1);
+    const remainingAfterReload = await presenter.evaluate(() => getRemainingSeconds());
+    expect(remainingAfterReload).toBeLessThan(initialRemaining);
   });
 
-  test('reset zeroes the timer and clears sessionStorage', async ({ page }) => {
+  test('reset restores the configured duration, not zero', async ({ page }) => {
     await gotoPresentation(page);
     const presenter = await openPresenterView(page);
-    await presenter.click('#btn-presenter-timer-start');
-    await presenter.waitForTimeout(300);
+    await presenter.fill('[data-elapsed]', '5:00');
+    await presenter.dispatchEvent('[data-elapsed]', 'blur');
+    await presenter.click('#btn-presenter-timer-toggle');
+    await presenter.waitForTimeout(1100);
     await presenter.click('#btn-presenter-timer-reset');
-    const elapsed = await presenter.evaluate(() => getElapsedSeconds());
-    expect(elapsed).toBe(0);
+    const remaining = await presenter.evaluate(() => getRemainingSeconds());
+    expect(remaining).toBe(300);
+  });
+
+  test('typing a new duration while paused updates the countdown, but is ignored while running', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    await presenter.fill('[data-elapsed]', '2:00');
+    await presenter.dispatchEvent('[data-elapsed]', 'blur');
+    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(120);
+
+    await presenter.click('#btn-presenter-timer-toggle');
+    await expect(presenter.locator('[data-elapsed]')).toBeDisabled();
+
+    await presenter.click('#btn-presenter-timer-toggle'); // same button — now pauses
+    await expect(presenter.locator('[data-elapsed]')).toBeEnabled();
   });
 
   test('the clock renders and updates', async ({ page }) => {
     await page.goto(PRESENTER_URL);
     await expect(page.locator('[data-clock]')).not.toHaveText('');
-  });
-});
-
-test.describe('countdown total (manual entry via double-click)', () => {
-  test('starts at the configured total and counts down while running', async ({ page }) => {
-    await gotoPresentation(page);
-    const presenter = await openPresenterView(page);
-    const defaultMinutes = await page.evaluate(() => CONFIG.timer.defaultMinutes);
-    const suffix = await presenter.evaluate(() => presenterText.elapsedSuffix);
-    await expect(presenter.locator('[data-elapsed]')).toHaveText(
-      `${String(defaultMinutes).padStart(2, '0')}:00 ${suffix}`
-    );
-
-    await presenter.click('#btn-presenter-timer-start');
-    await presenter.waitForTimeout(1200);
-    const remaining = await presenter.evaluate(() => getRemainingSeconds());
-    expect(remaining).toBeLessThan(defaultMinutes * 60);
-    expect(remaining).toBeGreaterThanOrEqual(defaultMinutes * 60 - 3);
-  });
-
-  test('double-clicking sets a new total and restarts the countdown from it, paused', async ({ page }) => {
-    await gotoPresentation(page);
-    const presenter = await openPresenterView(page);
-    await presenter.click('#btn-presenter-timer-start');
-    await presenter.waitForTimeout(300);
-
-    await presenter.evaluate(() => {
-      window.prompt = () => '5';
-    });
-    await presenter.dblclick('[data-elapsed]');
-
-    const remaining = await presenter.evaluate(() => getRemainingSeconds());
-    expect(remaining).toBe(300);
-    const suffix = await presenter.evaluate(() => presenterText.elapsedSuffix);
-    await expect(presenter.locator('[data-elapsed]')).toHaveText(`05:00 ${suffix}`);
-    // Setting a new total is a fresh start, so the timer pauses again — the
-    // presenter has to explicitly hit Start, rather than it silently
-    // continuing to run against the new total.
-    expect(await presenter.evaluate(() => timerState.running)).toBe(false);
-  });
-
-  test('cancelling the prompt (null) leaves the countdown unchanged', async ({ page }) => {
-    await gotoPresentation(page);
-    const presenter = await openPresenterView(page);
-    const before = await presenter.evaluate(() => getRemainingSeconds());
-
-    await presenter.evaluate(() => {
-      window.prompt = () => null;
-    });
-    await presenter.dblclick('[data-elapsed]');
-
-    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(before);
-  });
-
-  test('an unparsable or non-positive value is ignored', async ({ page }) => {
-    await gotoPresentation(page);
-    const presenter = await openPresenterView(page);
-    const before = await presenter.evaluate(() => getRemainingSeconds());
-
-    await presenter.evaluate(() => {
-      window.prompt = () => 'not a number';
-    });
-    await presenter.dblclick('[data-elapsed]');
-    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(before);
-
-    await presenter.evaluate(() => {
-      window.prompt = () => '-5';
-    });
-    await presenter.dblclick('[data-elapsed]');
-    expect(await presenter.evaluate(() => getRemainingSeconds())).toBe(before);
-  });
-
-  test('a decimal number of minutes (comma or dot) is accepted', async ({ page }) => {
-    await gotoPresentation(page);
-    const presenter = await openPresenterView(page);
-
-    await presenter.evaluate(() => {
-      window.prompt = () => '2,5';
-    });
-    await presenter.dblclick('[data-elapsed]');
-
-    const remaining = await presenter.evaluate(() => getRemainingSeconds());
-    expect(remaining).toBe(150);
   });
 });

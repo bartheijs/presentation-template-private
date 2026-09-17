@@ -15,6 +15,8 @@
 const CONFIG_DEFAULTS = {
   lang: 'nl',
   title: 'Presentatie',
+  theme: 'default',
+  brand: { businessUnit: '', tagline: '' },
   toc: { heading: 'Inhoud' },
   layout: { align: 'center' },
   disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
@@ -204,12 +206,203 @@ function renderBulletItem(b) {
   return `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg>${body}</li>`;
 }
 
-// A persistent disco-styled slide: same rays/sparkles/title markup the
+// Shared sub-pieces reused by more than one layout renderer below. Each
+// stays a plain function of `slide` (never `layout`) so a renderer only
+// pulls in the pieces it actually needs — there's no shared conditional
+// logic left for a new layout to accidentally trip over.
+
+function buildHeadingBlock(slide, { isTitleSlide = false } = {}) {
+  // `icon` is optional — a title slide can omit it to show just the
+  // heading text, with no icon glyph taking up space next to it.
+  const iconBlock = slide.icon
+    ? `<svg class="icon"><use href="#icon-${slide.icon}"></use></svg>`
+    : '';
+  // Optional `eyebrow` renders a short italic kicker line above the title,
+  // on any layout — independent of `subtitle` below, which is a longer
+  // tagline reserved for the title slide.
+  const eyebrowBlock = slide.eyebrow
+    ? `<p class="slide-eyebrow">${inlineMarkdown(slide.eyebrow)}</p>`
+    : '';
+  // Optional `subtitle` renders a tagline under the title — for a title
+  // slide's tagline, not a general-purpose per-slide field.
+  const subtitleBlock = slide.subtitle
+    ? `<p class="slide-subtitle${isTitleSlide ? ' slide-subtitle--accent' : ''}">${inlineMarkdown(slide.subtitle)}</p>`
+    : '';
+  return `
+      ${eyebrowBlock}
+      <div class="slide-heading${slide.subtitle ? ' slide-heading--with-subtitle' : ''}">
+        ${iconBlock}
+        <h1${isTitleSlide ? ' class="slide-title-accent"' : ''}>${escapeHtml(slide.title || '')}</h1>
+      </div>
+      ${subtitleBlock}`;
+}
+
+// Optional `meta: [line, ...]` — a small byline (speaker / event / date)
+// pinned to the bottom-left corner of the slide card, independent of the
+// centered heading/bullets column above it. A sibling of `.slide-inner`,
+// not nested inside it, in every layout that uses it.
+function buildMetaBlock(slide) {
+  return Array.isArray(slide.meta) && slide.meta.length
+    ? `<div class="slide-meta">${slide.meta.map((line) => `<span>${escapeHtml(line)}</span>`).join('')}</div>`
+    : '';
+}
+
+function buildBulletsBlock(slide) {
+  // A malformed slide (e.g. a generation slip missing `bullets`/`title`)
+  // degrades to blank-ish here instead of throwing — since renderTocOnce()
+  // renders every slide's title in one pass at startup, one bad slide
+  // anywhere in the deck would otherwise crash the entire presentation
+  // before it ever shows anything.
+  const bullets = slide.bullets || [];
+  return bullets.length
+    ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
+    : '';
+}
+
+// Optional slide-level `image: { src, alt }` (or an array of those).
+function buildImagesBlock(slide) {
+  const images = Array.isArray(slide.image)
+    ? slide.image.filter((img) => img && img.src)
+    : (slide.image && slide.image.src ? [slide.image] : []);
+  return images
+    .map((img) => `<img class="slide-image" src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || '')}">`)
+    .join('');
+}
+
+function renderTitleLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide, { isTitleSlide: true })}
+      ${buildBulletsBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+function renderBulletsLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      ${buildBulletsBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// The full bullet list sits in one column, the image(s) stacked in a
+// second column beside it, so the bullets keep their normal uniform gap
+// instead of a lead bullet being pushed into its own row sized by the
+// (taller) image.
+function renderListImageLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      <div class="slide-row-with-image">
+        ${buildBulletsBlock(slide)}
+        <div class="slide-image-stack">${buildImagesBlock(slide)}</div>
+      </div>
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Requires `quote` (string); `attribution` (string) and `image` are both
+// optional — setting `image` reproduces the deck's "quote + photo" variant,
+// otherwise the quote box sits alone on the theme's background.
+function renderQuoteLayout(slide) {
+  const imageBlock = slide.image
+    ? `<div class="slide-quote-image-stack">${buildImagesBlock(slide)}</div>`
+    : '';
+  return `
+    <div class="slide-inner slide-inner--quote">
+      <div class="slide-quote-box">
+        <blockquote class="slide-quote-text">${inlineMarkdown(slide.quote || '')}</blockquote>
+        ${slide.attribution ? `<p class="slide-quote-attribution">${escapeHtml(slide.attribution)}</p>` : ''}
+      </div>
+      ${imageBlock}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Deliberately keeps the heading (unlike a true full-bleed variant) so this
+// stays visually consistent with the other layouts and can reuse
+// buildHeadingBlock as-is; the image still gets the dominant remaining space.
+function renderImageOnlyLayout(slide) {
+  return `
+    <div class="slide-inner slide-inner--image-only">
+      ${buildHeadingBlock(slide)}
+      <div class="slide-image-stack slide-image-stack--solo">${buildImagesBlock(slide)}</div>
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Requires `items: [{ icon, label }]` — a labeled grid of sprite icons
+// (see index.html), for a specimen/overview slide rather than any one
+// piece of content. Reuses buildHeadingBlock so it gets the same
+// title/eyebrow treatment as every other layout.
+function buildIconGridBlock(slide) {
+  const items = Array.isArray(slide.items) ? slide.items : [];
+  return `<div class="slide-icon-grid">${items.map((item) => `
+      <div class="slide-icon-grid-item">
+        <svg class="icon slide-icon-grid-icon"><use href="#icon-${item.icon}"></use></svg>
+        <span class="slide-icon-grid-label">${escapeHtml(item.label || '')}</span>
+      </div>`).join('')}</div>`;
+}
+
+function renderIconGridLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      ${buildIconGridBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+function renderTemplateReferenceLayout(slide) {
+  return `
+    <div class="slide-inner slide-inner--fill">
+      ${buildHeadingBlock(slide)}
+      <pre class="slide-template-code"><code>${buildTemplateSectionsHtml(null)}</code></pre>
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Requires `timeline: [{ label, icon, time?, tools?, kind? }]` — a
+// left-to-right (top-to-bottom on narrow screens) sequence of steps, each
+// with a colored marker. `time` defaults to a 1-based step number when
+// omitted; `tools` is an optional small muted line under the label (e.g.
+// which tools that step needs); `kind: 'break' | 'end'` recolors that one
+// step. Not part of the generic template's own content — kept here as a
+// deck-specific extension alongside `disco` below.
+function renderTimelineLayout(slide) {
+  const steps = Array.isArray(slide.timeline)
+    ? slide.timeline.filter((step) => step && typeof step.label === 'string')
+    : [];
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      <ol class="slide-timeline${steps.length > 6 ? ' slide-timeline--dense' : ''}" style="--timeline-count: ${steps.length}" aria-label="${escapeHtml(slide.title || 'Tijdlijn')}">${steps.map((step, index) => `
+        <li class="slide-timeline-step${step.kind === 'break' ? ' slide-timeline-step--break' : ''}${step.kind === 'end' ? ' slide-timeline-step--end' : ''}">
+          <span class="slide-timeline-time">${escapeHtml(step.time || String(index + 1).padStart(2, '0'))}</span>
+          <span class="slide-timeline-marker">
+            <svg class="icon"><use href="#icon-${escapeHtml(step.icon || 'spark')}"></use></svg>
+          </span>
+          <span class="slide-timeline-label">${escapeHtml(step.label)}</span>${
+            typeof step.tools === 'string' && step.tools
+              ? `<span class="slide-timeline-tools">${escapeHtml(step.tools)}</span>`
+              : ''
+          }
+        </li>`).join('')}
+      </ol>
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// A persistent disco-styled slide: the same rays/sparkles/title markup the
 // transient disco-reveal transition uses (see .disco-rays/.disco-title/
 // .disco-sparkle-N in styles.css), but rendered as the slide's own normal
 // content instead of a temporary overlay — so it stays visible for as long
-// as the slide is shown, no hold/hide timers involved.
-function buildDiscoSlideHTML(slide) {
+// as the slide is shown, no hold/hide timers involved. Uses
+// `discoTitleLines` (falling back to `title`) for its big display text; not
+// part of the generic template, kept here alongside `timeline` above.
+function renderDiscoLayout(slide) {
   const lines = Array.isArray(slide.discoTitleLines) && slide.discoTitleLines.length
     ? slide.discoTitleLines
     : [slide.title || ''];
@@ -223,115 +416,26 @@ function buildDiscoSlideHTML(slide) {
     ${sparkles}`;
 }
 
+const LAYOUT_RENDERERS = {
+  title: renderTitleLayout,
+  bullets: renderBulletsLayout,
+  'list-image': renderListImageLayout,
+  quote: renderQuoteLayout,
+  'image-only': renderImageOnlyLayout,
+  'icon-grid': renderIconGridLayout,
+  'template-reference': renderTemplateReferenceLayout,
+  timeline: renderTimelineLayout,
+  disco: renderDiscoLayout,
+};
+
 function buildSlideContentHTML(slide) {
-  if (slide.discoSlide) return buildDiscoSlideHTML(slide);
-
-  // A malformed slide (e.g. a generation slip missing `bullets`/`title`)
-  // degrades to blank-ish here instead of throwing — since renderTocOnce()
-  // renders every slide's title in one pass at startup, one bad slide
-  // anywhere in the deck would otherwise crash the entire presentation
-  // before it ever shows anything.
-  const bullets = slide.bullets || [];
-  const bulletsBlock = bullets.length
-    ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
-    : '';
-  const timelineSteps = Array.isArray(slide.timeline)
-    ? slide.timeline.filter((step) => step && typeof step.label === 'string')
-    : [];
-  const timelineBlock = timelineSteps.length
-    ? `<ol class="slide-timeline${timelineSteps.length > 6 ? ' slide-timeline--dense' : ''}" style="--timeline-count: ${timelineSteps.length}" aria-label="${escapeHtml(slide.title || 'Tijdlijn')}">${timelineSteps.map((step, index) => `
-        <li class="slide-timeline-step${step.kind === 'break' ? ' slide-timeline-step--break' : ''}${step.kind === 'end' ? ' slide-timeline-step--end' : ''}">
-          <span class="slide-timeline-time">${escapeHtml(step.time || String(index + 1).padStart(2, '0'))}</span>
-          <span class="slide-timeline-marker">
-            <svg class="icon"><use href="#icon-${escapeHtml(step.icon || 'spark')}"></use></svg>
-          </span>
-          <span class="slide-timeline-label">${escapeHtml(step.label)}</span>${
-            typeof step.tools === 'string' && step.tools
-              ? `<span class="slide-timeline-tools">${escapeHtml(step.tools)}</span>`
-              : ''
-          }
-        </li>`).join('')}
-      </ol>`
-    : '';
-  const templateBlock = slide.isTemplateAnchor
-    ? `<pre class="slide-template-code"><code>${escapeHtml(SKILL_TEMPLATE_MD)}</code></pre>`
-    : '';
-  // `icon` is optional — a title slide can omit it to show just the
-  // heading text, with no icon glyph taking up space next to it. A slide
-  // with no icon and a subtitle reads as the deck's title slide, so it
-  // gets the gradient-accent treatment on its own instead of a separate
-  // opt-in flag.
-  const isTitleSlide = !slide.icon && Boolean(slide.subtitle);
-  const iconBlock = slide.icon
-    ? `<svg class="icon"><use href="#icon-${slide.icon}"></use></svg>`
-    : '';
-  // Optional `subtitle` renders a tagline under the title — for a title
-  // slide's tagline, not a general-purpose per-slide field.
-  const subtitleBlock = slide.subtitle
-    ? `<p class="slide-subtitle${isTitleSlide ? ' slide-subtitle--accent' : ''}">${inlineMarkdown(slide.subtitle)}</p>`
-    : '';
-  const headingBlock = `
-      <div class="slide-heading${slide.subtitle ? ' slide-heading--with-subtitle' : ''}">
-        ${iconBlock}
-        <h1${isTitleSlide ? ' class="slide-title-accent"' : ''}>${escapeHtml(slide.title || '')}</h1>
-      </div>
-      ${subtitleBlock}`;
-
-  // Optional `meta: [line, ...]` — a small byline (speaker / event / date)
-  // pinned to the bottom-left corner of the slide card, independent of the
-  // centered heading/bullets column above it.
-  const metaBlock = Array.isArray(slide.meta) && slide.meta.length
-    ? `<div class="slide-meta">${slide.meta.map((line) => `<span>${escapeHtml(line)}</span>`).join('')}</div>`
-    : '';
-
-  // Optional slide-level `image: { src, alt }` (or an array of those) — the
-  // full bullet list sits in one column, the image(s) stacked in a second
-  // column beside it, so the bullets keep their normal uniform gap instead
-  // of a lead bullet being pushed into its own row sized by the (taller)
-  // image.
-  const images = Array.isArray(slide.image)
-    ? slide.image.filter((img) => img && img.src)
-    : (slide.image && slide.image.src ? [slide.image] : []);
-  if (images.length) {
-    const imagesEl = images
-      .map((img) => `<img class="slide-image" src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || '')}">`)
-      .join('');
-    return `
-    <div class="slide-inner">
-      ${headingBlock}
-      <div class="slide-row-with-image">
-        ${bulletsBlock}
-        <div class="slide-image-stack">${imagesEl}</div>
-      </div>
-      ${templateBlock}
-    </div>
-    ${metaBlock}`;
+  const layout = slide.layout || 'bullets';
+  const renderer = LAYOUT_RENDERERS[layout];
+  if (!renderer) {
+    console.warn(`Unknown slide layout "${layout}" on slide "${slide.title || slide.id}" — falling back to "bullets".`);
+    return renderBulletsLayout(slide);
   }
-
-  // Optional slide-level `fullImage: { src, alt }` — unlike `image` above
-  // (a small side-by-side thumbnail next to bullets), this fills the rest
-  // of the slide's height below the heading, scaling with the available
-  // space. Every slide using it shares the same frame, so the image lands
-  // in the same place at the same size across a run of slides that use it.
-  if (slide.fullImage && slide.fullImage.src) {
-    return `
-    <div class="slide-inner">
-      ${headingBlock}
-      <div class="slide-full-image-frame">
-        <img class="slide-full-image" src="${escapeHtml(slide.fullImage.src)}" alt="${escapeHtml(slide.fullImage.alt || '')}">
-      </div>
-    </div>
-    ${metaBlock}`;
-  }
-
-  return `
-    <div class="slide-inner">
-      ${headingBlock}
-      ${bulletsBlock}
-      ${timelineBlock}
-      ${templateBlock}
-    </div>
-    ${metaBlock}`;
+  return renderer(slide);
 }
 
 // A slide's own `align` overrides CONFIG.layout.align. Unlike
@@ -356,13 +460,22 @@ function shouldShowNotes(slide) {
 function renderSlide() {
   const slide = SLIDES[state.currentIndex];
   const align = resolveAlignFor(slide);
+  const layout = slide.layout || 'bullets';
+  const hasBackground = Boolean(slide.background && slide.background.src);
   slideContentEl.className =
     'slide-content' +
-    (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
-    (Array.isArray(slide.timeline) && slide.timeline.length ? ' slide-content--timeline' : '') +
-    (slide.fullImage && slide.fullImage.src ? ' slide-content--full-image' : '') +
-    (slide.discoSlide ? ' slide-content--disco' : '') +
-    (align === 'left' ? ' slide-content--align-left' : '');
+    ` slide-content--layout-${layout}` +
+    (layout === 'template-reference' ? ' slide-content--compact' : '') +
+    (align === 'left' ? ' slide-content--align-left' : '') +
+    (hasBackground ? ' slide-content--has-bg' : '');
+  // Set unconditionally (not just when present) so a slide without a
+  // `background` never inherits the previous slide's image via this custom
+  // property — only the .slide-content--has-bg class above gates whether it
+  // actually renders.
+  slideContentEl.style.setProperty(
+    '--slide-bg-image',
+    hasBackground ? `url("${slide.background.src}")` : 'none'
+  );
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
   const hasNotesText = Boolean(slide.notes && slide.notes.trim());
   const showNotes = shouldShowNotes(slide);
@@ -525,6 +638,14 @@ function goTo(index, { animate = false, direction = null } = {}) {
   if (index === state.currentIndex && !pendingPause) return;
   if (animate && isAnimatingSlide) return; // ignore rapid double-triggers mid out/in animation
 
+  // The finish overlay opens on top of the last slide without changing
+  // state.currentIndex (see goNext()). goPrev() special-cases the plain
+  // "back" gesture itself (see below), but an explicit jump elsewhere
+  // (GO_TO_SLIDE from Presenter View's TOC/skip-ahead — it has no on-screen
+  // button to close the overlay, unlike the local keyboard handler's own
+  // guard) should still close the celebration on its way there.
+  if (!finishOverlayEl.hidden) closeFinishOverlay();
+
   const dir = direction || (index > state.currentIndex ? 'next' : 'prev');
 
   if (pendingPause) {
@@ -551,32 +672,58 @@ function goTo(index, { animate = false, direction = null } = {}) {
   }
 
   const destSlide = SLIDES[index];
-  const discoOn = isDiscoEnabledFor(destSlide);
-  // Pause reveals are a forward-presenting device. Going back should stay
-  // corrective and immediate: keep the visual transition, but never freeze
-  // halfway and require a second click.
-  const pauseOn = dir === 'next' && discoOn && isDiscoPauseFor(destSlide);
+  // Disco is a forward-presenting device — revisiting a slide by going
+  // back should be quick and unobtrusive, not replay its flash/title (or,
+  // in 'pause' mode, freeze on it) a second time.
+  const discoOn = dir === 'next' && isDiscoEnabledFor(destSlide);
+  const pauseOn = discoOn && isDiscoPauseFor(destSlide);
 
-  if (discoOn) renderDiscoTitle(destSlide.discoTitleLines || CONFIG.disco.titleLines);
+  // Tracked separately from isAnimatingSlide/pendingPause so
+  // sendStateToPresenter() can tell Presenter View exactly what disco text
+  // (if any) the audience is currently looking at — including during a
+  // paused hold, where isAnimatingSlide is already back to false but the
+  // disco is still fully visible, frozen.
+  activeDiscoTitleLines = discoOn ? (destSlide.discoTitleLines || CONFIG.disco.titleLines) : null;
+  if (discoOn) renderDiscoTitle(activeDiscoTitleLines);
 
   if (pauseOn) {
     beginPausedTransition(dir, index); // does NOT advance state.currentIndex yet
   } else {
     state.currentIndex = index;
-    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide));
+    animateTransition(dir, renderSlide, resolveDiscoHoldMsFor(destSlide), discoOn);
   }
   updateTocActiveState();
   sendStateToPresenter();
 }
 
-// Shared by the Next button, ArrowRight and Space. "Next" on the last slide
-// is a plain no-op — the deck's own final slide is the ending, so nothing
-// pops up over it. The finish/confetti celebration is still available, just
-// only via the dedicated "Klaar!" button (openFinishOverlay()/launchConfetti()
-// below), never auto-triggered by navigation.
+// Shared by the Next button, ArrowRight and Space: goTo() itself just
+// no-ops past the last slide (see its bounds guard above), so "next" on
+// the last slide instead opens the same finish/confetti celebration as
+// clicking the dedicated "Klaar!" button.
 function goNext() {
-  if (state.currentIndex >= SLIDES.length - 1) return;
+  if (state.currentIndex >= SLIDES.length - 1) {
+    if (!finishOverlayEl.hidden) return;
+    launchConfetti();
+    openFinishOverlay();
+    return;
+  }
   goTo(state.currentIndex + 1, { animate: true, direction: 'next' });
+}
+
+// Shared by the Prev button and PREVIOUS_SLIDE: the finish overlay is
+// conceptually one more step past the last slide (see goNext() above), so
+// going back from it should just reveal that last slide again — the same
+// thing its own "Terug naar de presentatie" button does — not ALSO step
+// past it to the slide before. goTo() is never even called in that case,
+// so state.currentIndex (already sitting on the last slide) is untouched;
+// a second "back" press, with the overlay now closed, behaves normally.
+function goPrev() {
+  if (!finishOverlayEl.hidden) {
+    closeFinishOverlay();
+    sendStateToPresenter();
+    return;
+  }
+  goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
 }
 
 /* Content up / notes down (out) -> swap content while off-screen ->
@@ -587,6 +734,10 @@ function goNext() {
  * and (b) is fully faded out well before the panels finish landing — with
  * a comfortable buffer, not a race against the panels' own transition. */
 let isAnimatingSlide = false;
+// Non-null exactly while the audience is looking at a disco transition —
+// animating or frozen mid-'pause'-mode hold. See goTo() (where it's set)
+// and sendStateToPresenter() (where Presenter View reads it).
+let activeDiscoTitleLines = null;
 const ANIM_OUT_MS = CONFIG.transitions.outMs;
 const ANIM_IN_MS = CONFIG.transitions.inMs;
 const DISCO_REVEAL_DELAY_MS = CONFIG.transitions.discoRevealDelayMs; // background starts fading in this long after "out" begins
@@ -626,12 +777,15 @@ function renderDiscoTitle(lines) {
     .join('');
 }
 
-function animateTransition(dir, applyFn, holdMs = 0) {
+// `discoOn` comes from goTo() (already gated on dir === 'next' there) rather
+// than being recomputed here from the now-current SLIDES[state.currentIndex]
+// — recomputing would silently ignore that gating and flash disco on a
+// backward revisit of a disco-enabled slide.
+function animateTransition(dir, applyFn, holdMs = 0, discoOn = false) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
   if (!slideNotesEl.hidden) slideNotesEl.classList.add('notes-anim-out');
 
-  const discoOn = isDiscoEnabledFor(SLIDES[state.currentIndex]);
   pendingRevealTimer = discoOn
     ? setTimeout(() => slideStageEl.classList.add('is-transitioning'), DISCO_REVEAL_DELAY_MS)
     : null;
@@ -668,6 +822,8 @@ function animateTransition(dir, applyFn, holdMs = 0) {
           slideContentEl.classList.remove('content-anim-in');
           slideNotesEl.classList.remove('notes-anim-in');
           isAnimatingSlide = false;
+          activeDiscoTitleLines = null;
+          sendStateToPresenter();
         },
         { once: true }
       );
@@ -746,6 +902,8 @@ function resumePausedTransition() {
       slideContentEl.classList.remove('content-anim-in');
       slideNotesEl.classList.remove('notes-anim-in');
       isAnimatingSlide = false;
+      activeDiscoTitleLines = null;
+      sendStateToPresenter();
     },
     { once: true }
   );
@@ -790,6 +948,7 @@ function cancelPendingPause() {
 function resetAnimationState() {
   pendingPause = null;
   isAnimatingSlide = false;
+  activeDiscoTitleLines = null;
   if (pendingRevealTimer) {
     clearTimeout(pendingRevealTimer);
     pendingRevealTimer = null;
@@ -808,9 +967,7 @@ function resetAnimationState() {
 }
 
 document.getElementById('btn-next').addEventListener('click', goNext);
-document.getElementById('btn-prev').addEventListener('click', () =>
-  goTo(state.currentIndex - 1, { animate: true, direction: 'prev' })
-);
+document.getElementById('btn-prev').addEventListener('click', goPrev);
 
 // Both listeners below drive the real presentation's own navigation from
 // its own keyboard/click input. A preview iframe (?embed=preview) must stay
@@ -840,7 +997,7 @@ if (!isEmbedPreview) {
     }
     if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
       e.preventDefault();
-      goTo(state.currentIndex - 1, { animate: true, direction: 'prev' });
+      goPrev();
       return;
     }
     if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
@@ -857,6 +1014,17 @@ if (!isEmbedPreview) {
     const item = e.target.closest('.toc-item');
     if (!item) return;
     goTo(Number(item.dataset.index), { animate: false });
+  });
+
+  // Scrollbar stays hidden until the list is actually being scrolled (see
+  // .toc-list.is-scrolling in themes/conclusion/theme.css), then fades out
+  // again shortly after scrolling stops — rather than sitting permanently
+  // visible next to the slide numbers.
+  let tocScrollHideTimer = null;
+  tocListEl.addEventListener('scroll', () => {
+    tocListEl.classList.add('is-scrolling');
+    clearTimeout(tocScrollHideTimer);
+    tocScrollHideTimer = setTimeout(() => tocListEl.classList.remove('is-scrolling'), 900);
   });
 }
 
@@ -1141,7 +1309,11 @@ function stopConfetti() {
 
 /* ---------- Skill template overlay ---------- */
 
-function renderTemplateOverlay(highlightId) {
+// Shared by the overlay and the 'template-reference' layout renderer
+// (renderTemplateReferenceLayout) so both render SKILL_TEMPLATE_SECTIONS with
+// the same per-section heading colors (.tpl-block--<id> .tpl-heading in
+// styles.css) instead of one of them drifting into a flat, uncolored copy.
+function buildTemplateSectionsHtml(highlightId) {
   const blocks = SKILL_TEMPLATE_SECTIONS.map((s) => {
     const [headingLine, ...rest] = s.body.split('\n');
     const highlightClass = s.id === highlightId ? ' is-highlighted' : '';
@@ -1149,7 +1321,11 @@ function renderTemplateOverlay(highlightId) {
       rest.length ? '\n' + escapeHtml(rest.join('\n')) : ''
     }</span>`;
   });
-  overlayBodyEl.innerHTML = `<pre class="template-code"><code>${blocks.join('\n\n')}</code></pre>`;
+  return blocks.join('\n\n');
+}
+
+function renderTemplateOverlay(highlightId) {
+  overlayBodyEl.innerHTML = `<pre class="template-code"><code>${buildTemplateSectionsHtml(highlightId)}</code></pre>`;
 }
 
 function openTemplateOverlay() {
@@ -1266,20 +1442,7 @@ function applyConfigStrings() {
 let presenterRef = null;
 
 function openPresenterView() {
-  // Passing a features string (rather than none) is what makes browsers
-  // open this as its own OS window instead of a new tab in the current
-  // one — without it, the presentation tab can end up backgrounded next to
-  // Presenter View in the same window, which throttles its slide-transition
-  // animation and stalls the Next button (see animateTransition() above).
-  const width = Math.round(window.screen.availWidth * 0.9);
-  const height = Math.round(window.screen.availHeight * 0.9);
-  const left = Math.round((window.screen.availWidth - width) / 2);
-  const top = Math.round((window.screen.availHeight - height) / 2);
-  presenterRef = window.open(
-    'presenter.html',
-    'presenterView',
-    `popup=yes,width=${width},height=${height},left=${left},top=${top}`
-  );
+  presenterRef = window.open('presenter.html', 'presenterView');
 }
 
 function setPresenterConnected(connected) {
@@ -1325,7 +1488,7 @@ if (!isEmbedPreview) {
 // `if (!handler) return;` check below correctly rejects it.
 const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   NEXT_SLIDE: () => goNext(),
-  PREVIOUS_SLIDE: () => goTo(state.currentIndex - 1, { animate: true, direction: 'prev' }),
+  PREVIOUS_SLIDE: () => goPrev(),
   GO_TO_SLIDE: (data) => {
     const slide = Number(data.slide);
     if (Number.isInteger(slide)) goTo(slide, { animate: false });
@@ -1363,10 +1526,16 @@ window.addEventListener('message', (e) => {
       if (!overlayEl.hidden !== e.data.contextOverlayVisible) {
         e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
       }
-      if (tocCollapsed !== !e.data.leftAsideVisible) toggleTocCollapse();
-      // Presenter previews should mirror the audience screen exactly. While
-      // Presenter View is connected, a hidden right aside disappears there
-      // completely; it is not the ordinary collapsed icon rail.
+      // Deliberately NOT mirroring leftAsideVisible here (unlike the right
+      // aside below) — the TOC's slide titles are unreadable at preview
+      // thumbnail scale anyway, and collapsing it always gives the actual
+      // slide more of the small preview box regardless of the real
+      // screen's own TOC state.
+      if (!tocCollapsed) toggleTocCollapse();
+      // Presenter previews should otherwise mirror the audience screen
+      // exactly. While Presenter View is connected, a hidden right aside
+      // disappears there completely; it is not the ordinary collapsed icon
+      // rail.
       nextCollapsed = false;
       presenterHidesControls = !e.data.rightAsideVisible;
       renderNextPaneState();
@@ -1410,6 +1579,11 @@ function sendStateToPresenter() {
       leftAsideVisible: !tocCollapsed,
       rightAsideVisible: !nextCollapsed && !presenterHidesControls,
       pauseOverlayVisible: isPauseOverlayVisible(),
+      // Non-null for the whole time the audience sees a disco transition
+      // (animating, or frozen mid-'pause'-mode hold) — never set for an
+      // ordinary non-disco transition. Presenter View shows this as a still
+      // (the title text on a disco-colored card), not a live mirror.
+      discoTitleLines: activeDiscoTitleLines,
     },
     '*'
   );

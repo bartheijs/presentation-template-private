@@ -3,83 +3,42 @@
  * as app.js. See docs/superpowers/specs/2026-08-22-presenter-view-design.md.
  */
 
-// Same notes-formatting logic as app.js's renderNotesHTML/inlineMarkdown —
-// duplicated rather than shared because presenter.js and app.js are loaded
-// as separate classic scripts with no shared module. Speaker notes use
-// `- **Topic:** ...` bullets so the topic of each bullet stands out at a
-// glance; see the .presenter-notes li > strong:first-child rule in
-// presenter.css for the highlighted topic-label styling.
-function presenterEscapeHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function presenterInlineMarkdown(str) {
-  return presenterEscapeHtml(str)
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/`(.+?)`/g, '<code>$1</code>');
-}
-
-function renderPresenterNotesHTML(notesText) {
-  return notesText
-    .split(/```/)
-    .map((chunk, i) => {
-      if (i % 2 === 1) {
-        return `<pre class="notes-code"><code>${presenterEscapeHtml(chunk.trim())}</code></pre>`;
-      }
-      return chunk
-        .trim()
-        .split(/\n\n+/)
-        .filter(Boolean)
-        .map((block) => {
-          const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
-          if (lines.length && lines.every((l) => /^[-*]\s/.test(l))) {
-            return `<ul>${lines.map((l) => `<li>${presenterInlineMarkdown(l.replace(/^[-*]\s/, ''))}</li>`).join('')}</ul>`;
-          }
-          if (lines.length && lines.every((l) => /^\d+\.\s/.test(l))) {
-            return `<ol>${lines.map((l) => `<li>${presenterInlineMarkdown(l.replace(/^\d+\.\s/, ''))}</li>`).join('')}</ol>`;
-          }
-          return `<p>${presenterInlineMarkdown(block)}</p>`;
-        })
-        .join('');
-    })
-    .join('');
-}
-
 const PRESENTER_I18N = {
   nl: {
-    presenterMode: 'Presentatieweergave', localTime: 'Lokale tijd', connected: 'Verbonden',
+    presenterMode: 'Presentatieweergave', connected: 'Verbonden',
     disconnected: 'Niet verbonden',
     connectionHint: 'Open deze pagina via de Presentatieweergave (de Presenter View-knop of Shift+P), niet rechtstreeks.',
-    slidePreviews: 'Slidevoorbeelden', nowVisible: 'Nu zichtbaar', currentSlide: 'Huidige slide',
-    currentPreviewTitle: 'Voorbeeld van de huidige slide', upNext: 'Hierna', nextSlide: 'Volgende slide',
-    nextPreviewTitle: 'Voorbeeld van de volgende slide', prepareOtherSlide: 'Andere slide klaarzetten?',
-    restore: 'Herstel', skipOneSlide: 'Sla één slide over', onlyForYou: 'Alleen voor jou',
-    speakerNotes: 'Sprekersnotities', elapsed: 'Resterend', start: 'Start', pause: 'Pauze', reset: 'Reset',
+    slidePreviews: 'Slidevoorbeelden',
+    currentPreviewTitle: 'Voorbeeld van de huidige slide',
+    nextPreviewTitle: 'Voorbeeld van de volgende slide',
+    skipOneSlide: 'Sla over', skipOneSlideHint: 'Eerst klikken om te activeren, dan nogmaals om één slide over te slaan',
+    speakerNotes: 'Sprekersnotities', timerLabel: 'Resterende tijd', currentTime: 'Huidige tijd',
+    start: 'Start', pause: 'Pauze', reset: 'Reset',
+    display: 'Weergave',
     displayOptions: 'Weergaveopties', leftSidebar: 'Linker zijbalk', rightSidebar: 'Rechter zijbalk',
     pauseScreen: 'Pauzescherm', contextOverlay: 'Context-overlay', presentationControls: 'Presentatiebediening',
     presentationTiming: 'Presentatietijd', timerControls: 'Timerbediening',
+    setTimerDuration: 'Tijdsduur instellen (MM:SS of minuten), alleen als de timer niet loopt',
     previous: 'Vorige', next: 'Volgende', noNotes: 'Geen notities voor deze slide.',
-    elapsedSuffix: 'resterend', setCountdownHint: 'Dubbelklik om het totaal aantal minuten opnieuw in te stellen',
-    setCountdownPrompt: 'Nieuw totaal aantal minuten',
+    on: 'Aan', off: 'Uit', discoStillLabel: 'Dit ziet je publiek nu — een still, niet live',
   },
   en: {
-    presenterMode: 'Presenter mode', localTime: 'Local time', connected: 'Connected',
+    presenterMode: 'Presenter mode', connected: 'Connected',
     disconnected: 'Not connected',
     connectionHint: 'Open this page from Presentation View (the Presenter View button or Shift+P), not directly.',
-    slidePreviews: 'Slide previews', nowVisible: 'Now showing', currentSlide: 'Current slide',
-    currentPreviewTitle: 'Preview of the current slide', upNext: 'Up next', nextSlide: 'Next slide',
-    nextPreviewTitle: 'Preview of the next slide', prepareOtherSlide: 'Prepare a different slide?',
-    restore: 'Restore', skipOneSlide: 'Skip one slide', onlyForYou: 'Only for you',
-    speakerNotes: 'Speaker notes', elapsed: 'Remaining', start: 'Start', pause: 'Pause', reset: 'Reset',
+    slidePreviews: 'Slide previews',
+    currentPreviewTitle: 'Preview of the current slide',
+    nextPreviewTitle: 'Preview of the next slide',
+    skipOneSlide: 'Skip', skipOneSlideHint: 'Click once to arm, click again to skip one slide',
+    speakerNotes: 'Speaker notes', timerLabel: 'Time remaining', currentTime: 'Current time',
+    start: 'Start', pause: 'Pause', reset: 'Reset',
+    display: 'Display',
     displayOptions: 'Display options', leftSidebar: 'Left sidebar', rightSidebar: 'Right sidebar',
     pauseScreen: 'Pause screen', contextOverlay: 'Context overlay', presentationControls: 'Presentation controls',
     presentationTiming: 'Presentation timing', timerControls: 'Timer controls',
+    setTimerDuration: 'Set the duration (MM:SS or minutes) — only while the timer is not running',
     previous: 'Previous', next: 'Next', noNotes: 'No notes for this slide.',
-    elapsedSuffix: 'remaining', setCountdownHint: 'Double-click to set a new total number of minutes',
-    setCountdownPrompt: 'New total number of minutes',
+    on: 'On', off: 'Off', discoStillLabel: 'This is what your audience sees now — a still, not live',
   },
 };
 
@@ -175,6 +134,7 @@ let latestState = null;
 const presenterMainEl = document.getElementById('presenter-main');
 const currentPreviewEl = document.getElementById('current-preview');
 const nextPreviewEl = document.getElementById('next-preview');
+const skipBtn = document.getElementById('btn-presenter-skip');
 
 // Keep the embedded presentation at its native 1280 x 800 canvas and scale
 // that canvas to the responsive viewport around it. A transform on the
@@ -230,10 +190,9 @@ function currentFlags() {
 // The next-preview iframe shows a slide the audience hasn't actually
 // reached yet, so it never shows an overlay that's only meaningful "on
 // screen right now" — the design doc's §7 wording only promises an exact
-// mirror for the current-preview iframe; the next-preview "wordt naar
-// pendingNextSlide gestuurd" (just navigated there). Aside visibility is
-// persistent presenter chrome rather than something tied to this instant,
-// so that part still mirrors real state.
+// mirror for the current-preview iframe. Aside visibility is persistent
+// presenter chrome rather than something tied to this instant, so that
+// part still mirrors real state.
 function nextPreviewFlags() {
   return Object.assign(currentFlags(), {
     contextOverlayVisible: false,
@@ -257,7 +216,7 @@ function resyncPreviewOnLoad(iframeEl, getSlideIndex, getFlags) {
   });
 }
 resyncPreviewOnLoad(currentPreviewEl, () => latestState.currentSlide, currentFlags);
-resyncPreviewOnLoad(nextPreviewEl, () => pendingNextSlide, nextPreviewFlags);
+resyncPreviewOnLoad(nextPreviewEl, pendingNextIndex, nextPreviewFlags);
 
 function sendCommand(command, extra) {
   const target = refreshPresentationRef();
@@ -269,77 +228,95 @@ function sendCommand(command, extra) {
   target.postMessage(Object.assign({ type: 'command', command }, extra), '*');
 }
 
-let pendingNextSlide = 1; // 0-based index; defaults to currentSlide + 1
+// Set right before a skip-jump (see btn-presenter-skip below) so one
+// following Vorige click can undo it by returning to this index instead of
+// just stepping back one slide from the post-skip position. Cleared on the
+// next ordinary Volgende click — the undo window is exactly one click.
 let lastJumpOriginIndex = null;
 
-// The pressed/unpressed state is communicated by the button's own color
-// (see .btn--display-toggle[aria-pressed="true"] in presenter.css), not by
-// a separate "Aan"/"Uit" text label.
-function renderToggleState(buttonId, active) {
-  document.getElementById(buttonId).setAttribute('aria-pressed', String(active));
+// While the skip button is armed (see btn-presenter-skip below), the
+// next-preview card should show what a confirmed skip would actually land
+// on (currentSlide + 2), not the ordinary next slide — so the presenter can
+// see the target before committing to it with the second click.
+function pendingNextIndex() {
+  const step = skipBtn.classList.contains('is-armed') ? 2 : 1;
+  return Math.min(latestState.currentSlide + step, latestState.totalSlides - 1);
+}
+
+function renderToggleState(buttonId, statusSelector, active) {
+  const button = document.getElementById(buttonId);
+  button.setAttribute('aria-pressed', String(active));
+  document.querySelector(statusSelector).textContent = active ? presenterText.on : presenterText.off;
+}
+
+const discoStillEl = document.querySelector('[data-disco-still]');
+const discoStillTitleEl = document.querySelector('[data-disco-still-title]');
+
+// `lines` is app.js's discoTitleLines array (or null/undefined when no
+// disco is currently up) — one <span> per line, same shape as app.js's own
+// renderDiscoTitle(), but this is a still: it renders once per state
+// broadcast, never animates.
+function renderDiscoStill(lines) {
+  discoStillEl.hidden = !lines;
+  if (!lines) return;
+  discoStillTitleEl.replaceChildren(
+    ...lines.map((line) => {
+      const span = document.createElement('span');
+      span.textContent = line;
+      return span;
+    })
+  );
 }
 
 function renderState(newState) {
-  const isFirstState = latestState === null;
-  const previousCurrentSlide = isFirstState ? null : latestState.currentSlide;
   latestState = newState;
-  // Normalize pendingNextSlide before anything below reads it (the text
-  // display and syncPreview() both need the up-to-date value, not the
-  // previous render's stale one). Any actual navigation — forward, backward,
-  // or a direct jump — invalidates a previously staged skip: pendingNextSlide
-  // must track currentSlide + 1 again. Only compare against `pendingNextSlide
-  // <= currentSlide` here would miss the backward case (going back leaves
-  // pendingNextSlide stranded ahead of currentSlide + 1, so the next
-  // "Volgende" click misreads it as a fresh skip and jumps too far).
-  if (isFirstState || newState.currentSlide !== previousCurrentSlide) {
-    pendingNextSlide = newState.currentSlide + 1;
-  }
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
   document.querySelector('[data-total-slides]').textContent = String(newState.totalSlides);
-  renderToggleState('btn-toggle-left-aside', newState.leftAsideVisible);
-  renderToggleState('btn-toggle-right-aside', newState.rightAsideVisible);
-  renderToggleState('btn-toggle-pause-overlay', newState.pauseOverlayVisible);
-  renderToggleState('btn-toggle-context-overlay', newState.contextOverlayVisible);
-  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
+  renderToggleState('btn-toggle-left-aside', '[data-left-aside]', newState.leftAsideVisible);
+  renderToggleState('btn-toggle-right-aside', '[data-right-aside]', newState.rightAsideVisible);
+  renderToggleState('btn-toggle-pause-overlay', '[data-pause-overlay]', newState.pauseOverlayVisible);
+  renderToggleState('btn-toggle-context-overlay', '[data-context-overlay]', newState.contextOverlayVisible);
+  renderDiscoStill(newState.discoTitleLines);
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());
-  syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
+  syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
 
-  const currentNotes = SLIDES[newState.currentSlide].notes || '';
-  document.getElementById('presenter-notes').innerHTML = currentNotes ? renderPresenterNotesHTML(currentNotes) : '';
+  document.getElementById('presenter-notes').textContent = SLIDES[newState.currentSlide].notes || '';
 }
 
 /* ---------- Presentation timer (presenter-only; separate from the
  * existing countdown timer widget in app.js's right column) ----------
- * Timestamp-based, not a per-second +1 counter, so browser throttling of
- * a backgrounded tab can't drift it — matches app.js's own timer pattern.
- * Persisted to sessionStorage so a refresh of THIS tab doesn't lose
- * elapsed time; sessionStorage itself clears on a real close, so
- * close+reopen correctly starts fresh (see spec §10).
- *
- * The header displays this as a countdown (time remaining), not a stopwatch
- * (time elapsed): elapsed keeps counting up internally exactly as before —
- * that's what start/pause/reset/persistence all operate on — and the
- * countdown total (in minutes) is a separate, independently persisted value
- * subtracted from it only at render time. Double-clicking the countdown
- * lets the presenter set a fresh total and restarts the count from it. */
+ * A countdown you set yourself — click the time to type a new duration —
+ * instead of an up-counting elapsed clock. Timestamp-based (endAt), not a
+ * per-second -1 counter, so background-tab throttling can't drift it;
+ * matches app.js's own timer.remainingMs/endAt pattern. Persisted to
+ * sessionStorage so a refresh of THIS tab keeps counting down correctly;
+ * sessionStorage itself clears on a real close, so close+reopen correctly
+ * starts fresh. */
 
 const TIMER_STORAGE_KEY = 'presenterView.timer';
+const DEFAULT_PRESENTER_TIMER_MS = CONFIG.timer.defaultMinutes * 60 * 1000;
 
 function loadTimerState() {
+  const fresh = { durationMs: DEFAULT_PRESENTER_TIMER_MS, remainingMs: DEFAULT_PRESENTER_TIMER_MS, running: false, endAt: null };
   try {
     const raw = sessionStorage.getItem(TIMER_STORAGE_KEY);
-    if (!raw) return { accumulatedMs: 0, running: false, startEpoch: null };
-    return JSON.parse(raw);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || typeof parsed.durationMs !== 'number' || typeof parsed.remainingMs !== 'number') return fresh;
+    if (!parsed.running || !parsed.endAt) return parsed;
+    // Was still counting down when the tab last saved state — recompute
+    // from endAt rather than trusting the stale remainingMs.
+    const remainingMs = Math.max(0, parsed.endAt - Date.now());
+    return { durationMs: parsed.durationMs, remainingMs, running: remainingMs > 0, endAt: remainingMs > 0 ? parsed.endAt : null };
   } catch {
-    return { accumulatedMs: 0, running: false, startEpoch: null };
+    return fresh;
   }
 }
 
-function saveTimerState(timerState) {
+function saveTimerState(state) {
   try {
-    sessionStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timerState));
+    sessionStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(state));
   } catch {
     // sessionStorage write failed (storage disabled, quota exceeded, etc.) —
     // silently ignore, matching loadTimerState's error-handling style.
@@ -347,96 +324,127 @@ function saveTimerState(timerState) {
 }
 
 let timerState = loadTimerState();
+let presenterTimerIntervalId = null;
+const elapsedInputEl = document.querySelector('[data-elapsed]');
+const timerToggleBtn = document.getElementById('btn-presenter-timer-toggle');
 
-function getElapsedSeconds() {
-  const runningMs = timerState.running ? Date.now() - timerState.startEpoch : 0;
-  return Math.floor((timerState.accumulatedMs + runningMs) / 1000);
+function getRemainingSeconds() {
+  return Math.ceil(timerState.remainingMs / 1000);
+}
+
+function renderTimerDisplay() {
+  const totalSec = getRemainingSeconds();
+  const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+  const s = String(totalSec % 60).padStart(2, '0');
+  elapsedInputEl.value = `${m}:${s}`;
+}
+
+// The duration can only be typed in while the countdown isn't running, so a
+// stray click mid-talk can't derail it — pause or let it finish first. One
+// button does both start and pause (like app.js's own timer toggle) — its
+// label just reflects whichever action is next.
+function updateTimerControlsUI() {
+  elapsedInputEl.disabled = timerState.running;
+  timerToggleBtn.textContent = timerState.running ? presenterText.pause : presenterText.start;
+}
+
+function toggleTimerRunning() {
+  if (timerState.running) {
+    pausePresenterTimer();
+  } else {
+    startPresenterTimer();
+  }
 }
 
 function startPresenterTimer() {
-  if (timerState.running) return;
-  timerState = { accumulatedMs: timerState.accumulatedMs, running: true, startEpoch: Date.now() };
+  if (timerState.running || timerState.remainingMs <= 0) return;
+  timerState = { ...timerState, running: true, endAt: Date.now() + timerState.remainingMs };
   saveTimerState(timerState);
+  presenterTimerIntervalId = setInterval(presenterTimerTick, 250);
+  updateTimerControlsUI();
 }
 
 function pausePresenterTimer() {
   if (!timerState.running) return;
-  timerState = {
-    accumulatedMs: timerState.accumulatedMs + (Date.now() - timerState.startEpoch),
-    running: false,
-    startEpoch: null,
-  };
+  const remainingMs = Math.max(0, timerState.endAt - Date.now());
+  timerState = { ...timerState, running: false, remainingMs, endAt: null };
   saveTimerState(timerState);
+  clearInterval(presenterTimerIntervalId);
+  presenterTimerIntervalId = null;
+  updateTimerControlsUI();
+  renderTimerDisplay();
 }
 
+// Restores the originally-typed duration rather than zeroing it — after a
+// break, the presenter almost always wants to run the same countdown again,
+// not retype it.
 function resetPresenterTimer() {
-  timerState = { accumulatedMs: 0, running: false, startEpoch: null };
+  if (presenterTimerIntervalId) {
+    clearInterval(presenterTimerIntervalId);
+    presenterTimerIntervalId = null;
+  }
+  timerState = { durationMs: timerState.durationMs, remainingMs: timerState.durationMs, running: false, endAt: null };
   saveTimerState(timerState);
+  updateTimerControlsUI();
+  renderTimerDisplay();
 }
 
-const COUNTDOWN_STORAGE_KEY = 'presenterView.countdownMinutes';
-
-function loadCountdownMinutes() {
-  try {
-    const raw = sessionStorage.getItem(COUNTDOWN_STORAGE_KEY);
-    const parsed = raw === null ? NaN : Number(raw);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : CONFIG.timer.defaultMinutes;
-  } catch {
-    return CONFIG.timer.defaultMinutes;
+function presenterTimerTick() {
+  timerState.remainingMs = Math.max(0, timerState.endAt - Date.now());
+  renderTimerDisplay();
+  if (timerState.remainingMs <= 0) {
+    clearInterval(presenterTimerIntervalId);
+    presenterTimerIntervalId = null;
+    timerState = { ...timerState, running: false, endAt: null };
+    saveTimerState(timerState);
+    updateTimerControlsUI();
   }
 }
 
-function saveCountdownMinutes(minutes) {
-  try {
-    sessionStorage.setItem(COUNTDOWN_STORAGE_KEY, String(minutes));
-  } catch {
-    // sessionStorage write failed — silently ignore, matching the timer's own
-    // error-handling style above.
+// Accepts "MM:SS" (matching the display) or a bare number of minutes (e.g.
+// "20"), for typing convenience. Anything else is rejected rather than
+// guessed at.
+function parseDurationInput(raw) {
+  const trimmed = raw.trim();
+  if (/^\d+:\d{1,2}$/.test(trimmed)) {
+    const [m, s] = trimmed.split(':').map(Number);
+    if (s > 59) return null;
+    return (m * 60 + s) * 1000;
   }
+  if (/^\d+$/.test(trimmed)) return Number(trimmed) * 60 * 1000;
+  return null;
 }
 
-let countdownMinutes = loadCountdownMinutes();
-
-function getRemainingSeconds() {
-  return Math.round(countdownMinutes * 60) - getElapsedSeconds();
+function commitDurationEdit() {
+  const parsedMs = parseDurationInput(elapsedInputEl.value);
+  if (parsedMs === null || parsedMs <= 0) {
+    renderTimerDisplay(); // invalid — revert to the current value
+    return;
+  }
+  timerState = { durationMs: parsedMs, remainingMs: parsedMs, running: false, endAt: null };
+  saveTimerState(timerState);
+  renderTimerDisplay();
 }
 
-// Setting a new countdown total is "a fresh start": the total changes AND
-// the elapsed count resets to 0, so the countdown immediately reads the new
-// total, paused — rather than leaving the current elapsed position in place
-// and letting the remaining time jump (possibly negative) under the new total.
-function setCountdownMinutes(minutes) {
-  countdownMinutes = minutes;
-  saveCountdownMinutes(minutes);
-  resetPresenterTimer();
-  renderClockAndElapsed();
-}
+elapsedInputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); elapsedInputEl.blur(); }
+  if (e.key === 'Escape') { e.preventDefault(); renderTimerDisplay(); elapsedInputEl.blur(); }
+});
+elapsedInputEl.addEventListener('blur', commitDurationEdit);
 
-function promptForCountdownMinutes() {
-  const input = window.prompt(presenterText.setCountdownPrompt, String(countdownMinutes));
-  if (input === null) return; // cancelled
-  const minutes = parseFloat(input.trim().replace(',', '.'));
-  if (!Number.isFinite(minutes) || minutes <= 0) return; // unparsable — leave it untouched
-  setCountdownMinutes(minutes);
-}
-
-document.getElementById('btn-presenter-timer-start').addEventListener('click', startPresenterTimer);
-document.getElementById('btn-presenter-timer-pause').addEventListener('click', pausePresenterTimer);
+timerToggleBtn.addEventListener('click', toggleTimerRunning);
 document.getElementById('btn-presenter-timer-reset').addEventListener('click', resetPresenterTimer);
-document.querySelector('[data-elapsed]').addEventListener('dblclick', promptForCountdownMinutes);
 
-function renderClockAndElapsed() {
+updateTimerControlsUI();
+renderTimerDisplay();
+
+function renderClock() {
   const now = new Date();
   document.querySelector('[data-clock]').textContent =
     `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const remaining = getRemainingSeconds();
-  const sign = remaining < 0 ? '-' : '';
-  const absRemaining = Math.abs(remaining);
-  document.querySelector('[data-elapsed]').textContent =
-    `${sign}${String(Math.floor(absRemaining / 60)).padStart(2, '0')}:${String(absRemaining % 60).padStart(2, '0')} ${presenterText.elapsedSuffix}`;
 }
-setInterval(renderClockAndElapsed, 250);
-renderClockAndElapsed();
+setInterval(renderClock, 250);
+renderClock();
 
 window.addEventListener('message', (e) => {
   if (!presentationRef) return; // no opener at all — see §3 scenario 6
@@ -446,37 +454,51 @@ window.addEventListener('message', (e) => {
   renderState(e.data);
 });
 
-document.getElementById('btn-presenter-skip').addEventListener('click', () => {
-  pendingNextSlide += 1;
-  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
-  if (!latestState) return;
-  syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
-});
+// Arm-then-confirm: this jumps straight over a slide with no undo-by-typo
+// safety net, so a single ordinary click must not fire it. The button
+// starts looking like plain text; a first click only turns it into a real
+// button (.is-armed, styled like Volgende so it reads as a genuine action)
+// without navigating, and a second click (while armed) performs the skip.
+// Arming auto-expires so it can't stay live and get triggered by an
+// unrelated later click.
+let skipArmTimer = null;
 
-document.getElementById('btn-presenter-herstel').addEventListener('click', () => {
+function disarmSkip() {
+  skipBtn.classList.remove('is-armed');
+  clearTimeout(skipArmTimer);
+  skipArmTimer = null;
+  if (latestState) syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
+}
+
+skipBtn.addEventListener('click', () => {
   if (!latestState) return;
-  pendingNextSlide = latestState.currentSlide + 1;
-  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
-  syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
+  if (!skipBtn.classList.contains('is-armed')) {
+    skipBtn.classList.add('is-armed');
+    // Show the actual skip target in the next-preview card now, before
+    // it's committed, so the presenter can see what they're about to jump
+    // to (see pendingNextIndex()).
+    syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
+    skipArmTimer = setTimeout(disarmSkip, 4000);
+    return;
+  }
+  const target = pendingNextIndex();
+  disarmSkip();
+  lastJumpOriginIndex = latestState.currentSlide;
+  sendCommand('GO_TO_SLIDE', { slide: target });
 });
 
 document.getElementById('btn-presenter-next').addEventListener('click', () => {
   if (!latestState) return;
-  const isSkipJump = pendingNextSlide !== latestState.currentSlide + 1;
-  lastJumpOriginIndex = isSkipJump ? latestState.currentSlide : null;
-  if (isSkipJump) {
-    // Skip-jumps must land directly on pendingNextSlide with no intermediate
-    // slides shown, so keep using GO_TO_SLIDE.
-    sendCommand('GO_TO_SLIDE', { slide: pendingNextSlide });
-  } else {
-    // Ordinary one-step advance: use NEXT_SLIDE so the real goNext() plays
-    // the normal transition/disco effect and can reach the finish overlay
-    // on the last slide, exactly like the physical Next button.
-    sendCommand('NEXT_SLIDE');
-  }
+  disarmSkip(); // an armed-but-uncommitted skip no longer applies once you navigate some other way
+  lastJumpOriginIndex = null;
+  // Use NEXT_SLIDE (not GO_TO_SLIDE) so the real goNext() plays the normal
+  // transition/disco effect and can reach the finish overlay on the last
+  // slide, exactly like the physical Next button.
+  sendCommand('NEXT_SLIDE');
 });
 
 document.getElementById('btn-presenter-prev').addEventListener('click', () => {
+  disarmSkip();
   if (lastJumpOriginIndex !== null) {
     sendCommand('GO_TO_SLIDE', { slide: lastJumpOriginIndex });
     lastJumpOriginIndex = null;

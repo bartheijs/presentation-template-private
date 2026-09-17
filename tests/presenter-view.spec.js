@@ -353,6 +353,36 @@ test.describe('skip-ahead and presenter-local back-to-jump-origin', () => {
     // eslint-disable-next-line no-undef
     expect(await page.evaluate(() => state.currentIndex)).toBe(1);
   });
+
+  test('plain Vorige then Volgende (no skip involved) lands back on the same slide, not one ahead', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('2');
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('4');
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-prev');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('3');
+    await waitIdle(page);
+
+    // Regression: pendingNextSlide used to only resync when it fell behind
+    // the new currentSlide, so going back left it 2 slides ahead instead of
+    // 1 — the next Volgende click then misread that gap as a deliberate
+    // skip-jump and landed on slide 5 instead of slide 4.
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-current-slide]')).toHaveText('4');
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(3);
+  });
 });
 
 test.describe('preview iframes', () => {
@@ -415,5 +445,101 @@ test.describe('preview iframes', () => {
     await expect(currentPreviewFrame.locator('.toc-item.is-active .toc-num')).toHaveText('01');
     // eslint-disable-next-line no-undef
     expect(await page.evaluate(() => state.currentIndex)).toBe(0);
+  });
+});
+
+test.describe('disco still (Presenter View)', () => {
+  test('shows a still of the disco title while the audience sees it, hides once it settles', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => { CONFIG.disco.enabled = true; CONFIG.disco.titleLines = ['SKILL IT']; });
+
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-disco-still]')).toBeVisible();
+    await expect(presenter.locator('[data-disco-still-title]')).toHaveText('SKILL IT');
+
+    await waitIdle(page);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+  });
+
+  test('does not show for an ordinary transition with disco disabled', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => { CONFIG.disco.enabled = false; });
+
+    await presenter.click('#btn-presenter-next');
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+    await waitIdle(page);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+  });
+
+  test('does not show when navigating back to a disco-enabled slide (forward-only device)', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => { CONFIG.disco.enabled = true; });
+
+    await presenter.click('#btn-presenter-next'); // forward onto index1: shows the still
+    await expect(presenter.locator('[data-disco-still]')).toBeVisible();
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-next'); // forward onto index2, so there's somewhere to go back from
+    await waitIdle(page);
+
+    await presenter.click('#btn-presenter-prev'); // back onto index1, the same disco slide
+    // A plain toBeHidden() here would still pass even if this briefly
+    // flashed visible mid-transition (it retries until hidden) — check
+    // partway through the transition instead, matching the equivalent
+    // app.js-level test in disco-and-pause.spec.js.
+    await presenter.waitForTimeout(150);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+    await waitIdle(page);
+    await expect(presenter.locator('[data-disco-still]')).toBeHidden();
+  });
+});
+
+test.describe('finish overlay interaction', () => {
+  test('Presenter View Vorige from the closing page just reveals the last slide; a second Vorige then steps back further', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+
+    // Land on slide 2 first so there's somewhere to land two "back" steps
+    // later. #btn-next is hidden once Presenter View connects (its column
+    // is replaced by the presenter's own remote controls), so jump directly.
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => goTo(1, { animate: false }));
+    await presenter.waitForTimeout(300);
+
+    // #btn-timer-finish is likewise hidden once connected — open the overlay
+    // directly the same way goNext() does when you click Volgende once more
+    // on the real last slide, without moving state.currentIndex.
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => openFinishOverlay());
+    await expect(page.locator('#finish-overlay')).toBeVisible();
+    // eslint-disable-next-line no-undef
+    const indexBefore = await page.evaluate(() => state.currentIndex);
+
+    // Regression (part 1): PREVIOUS_SLIDE used to move state.currentIndex
+    // back without closing the finish overlay at all, so the Presentation
+    // View stayed stuck showing the celebration while Presenter View's own
+    // display had already moved on — nothing visibly changed for the
+    // audience. First Vorige from the closing page should just close it,
+    // revealing the last slide underneath (like its own "Terug naar de
+    // presentatie" button) — not ALSO step back past that slide.
+    await presenter.click('#btn-presenter-prev');
+    await expect(page.locator('#finish-overlay')).toBeHidden();
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(indexBefore);
+
+    // Regression (part 2): a second Vorige, now that the overlay is closed,
+    // must behave like ordinary back navigation and actually step back.
+    await presenter.click('#btn-presenter-prev');
+    await presenter.waitForTimeout(300);
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => state.currentIndex)).toBe(indexBefore - 1);
   });
 });
