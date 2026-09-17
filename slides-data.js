@@ -331,8 +331,10 @@ node -v
       'Werk in je duo — of alleen, als je dat liever hebt',
       '09:00–15:30 · lunch 12:00–12:45 · demo’s & lessons learned met hapjes om 14:30',
       'AI, je buren of ik kunnen helpen als je vastloopt',
+      'Sluit je sessie af met een `pw-skills-usage-report`',
     ],
-    notes: `TIP: leg ondertussen vast wat je hebt geleerd in een md-file, of vraag voor het sluiten van de sessie aan AI om dat terug te geven. Dat maakt het (laten) voorbereiden van de demo makkelijker.`,
+    notes: `TIP: leg ondertussen vast wat je hebt geleerd in een md-file, of vraag voor het sluiten van de sessie aan AI om dat terug te geven. Dat maakt het (laten) voorbereiden van de demo makkelijker.
+- **pw-skills-usage-report:** Laat AI bij het afsluiten van de sessie deze skill draaien voor een rapport over hoe de pw-*-skills zijn gebruikt en hoe effectief dat was.`,
     duration: 90,
   },
   {
