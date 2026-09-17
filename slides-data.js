@@ -85,6 +85,22 @@ const SLIDES = [
   },
   {
     id: 6,
+    title: 'Het proces in één plaatje',
+    align: 'center',
+    bullets: [],
+    timeline: [
+      { label: 'Scaffold project', icon: 'wrench', tools: 'Node.js, npm, Git' },
+      { label: 'npm install', icon: 'inbox', tools: 'Node.js, npm' },
+      { label: 'VS Code + Claude Code', icon: 'folder', tools: 'VS Code, Claude Code CLI + extensie' },
+      { label: 'Specs & planning', icon: 'steps', tools: 'Superpowers-skill' },
+      { label: 'Code genereren', icon: 'bolt', tools: 'Claude Code extensie, pw-skills' },
+      { label: 'Testen in Studio Pro', icon: 'checkpoint', tools: 'Mendix Studio Pro' },
+    ],
+    notes: `- **Roadmap-slide:** Dit is het overzicht van fase 1 t/m 4 in één plaatje — de rest van de ochtend lopen we deze stappen één voor één in detail door.`,
+    duration: 90,
+  },
+  {
+    id: 7,
     title: 'Fase 1: Scaffolding',
     icon: 'wrench',
     align: 'left',
@@ -117,7 +133,7 @@ node -v
     duration: 900,
   },
   {
-    id: 7,
+    id: 8,
     title: 'Fase 1: Scaffolding — skills klaarzetten',
     icon: 'checklist',
     align: 'left',
@@ -130,7 +146,7 @@ node -v
     duration: 300,
   },
   {
-    id: 8,
+    id: 9,
     title: 'Widget-opbouw (1/5): volledig overzicht',
     icon: 'layers',
     align: 'left',
@@ -140,7 +156,7 @@ node -v
     duration: 60,
   },
   {
-    id: 9,
+    id: 10,
     title: 'Widget-opbouw (2/5): properties',
     icon: 'layers',
     align: 'left',
@@ -150,7 +166,7 @@ node -v
     duration: 60,
   },
   {
-    id: 10,
+    id: 11,
     title: 'Widget-opbouw (3/5): component tree',
     icon: 'layers',
     align: 'left',
@@ -160,7 +176,7 @@ node -v
     duration: 60,
   },
   {
-    id: 11,
+    id: 12,
     title: 'Widget-opbouw (4/5): skeleton',
     icon: 'layers',
     align: 'left',
@@ -170,7 +186,7 @@ node -v
     duration: 60,
   },
   {
-    id: 12,
+    id: 13,
     title: 'Widget-opbouw (5/5): overige bestanden',
     icon: 'layers',
     align: 'left',
@@ -180,7 +196,7 @@ node -v
     duration: 60,
   },
   {
-    id: 13,
+    id: 14,
     title: 'Even rondkijken: waar leeft de code?',
     icon: 'folder',
     align: 'left',
@@ -195,7 +211,7 @@ node -v
     duration: 180,
   },
   {
-    id: 14,
+    id: 15,
     title: 'Projectmechanica naast de widget-code',
     icon: 'layers',
     align: 'left',
@@ -211,7 +227,7 @@ node -v
     duration: 180,
   },
   {
-    id: 15,
+    id: 16,
     title: 'Bonus: wat zit er nog meer in de widget-XML?',
     icon: 'spark',
     align: 'left',
@@ -225,7 +241,7 @@ node -v
     duration: 150,
   },
   {
-    id: 16,
+    id: 17,
     title: 'Fase 2: Exploring',
     icon: 'question',
     align: 'left',
@@ -239,7 +255,7 @@ node -v
     duration: 240,
   },
   {
-    id: 17,
+    id: 18,
     title: 'Fase 3: Plannen',
     icon: 'steps',
     align: 'left',
@@ -252,7 +268,7 @@ node -v
     duration: 180,
   },
   {
-    id: 18,
+    id: 19,
     title: 'Fase 4: Coderen — wat AI doet',
     icon: 'bolt',
     align: 'left',
@@ -266,7 +282,7 @@ node -v
     duration: 240,
   },
   {
-    id: 19,
+    id: 20,
     title: 'Fase 4: Coderen — wat jij doet',
     icon: 'checkpoint',
     align: 'left',
@@ -280,7 +296,7 @@ node -v
     duration: 240,
   },
   {
-    id: 20,
+    id: 21,
     title: 'De bouw- en testcyclus',
     icon: 'repeat',
     align: 'left',
@@ -296,7 +312,7 @@ node -v
     duration: 180,
   },
   {
-    id: 21,
+    id: 22,
     title: 'Fase 5: Releasen',
     icon: 'output',
     align: 'left',
@@ -311,7 +327,7 @@ node -v
     duration: 180,
   },
   {
-    id: 22,
+    id: 23,
     title: 'Jouw rol als regisseur',
     align: 'center',
     bullets: [
@@ -323,7 +339,7 @@ node -v
     duration: 120,
   },
   {
-    id: 23,
+    id: 24,
     title: 'Praktische afspraken voor vandaag',
     icon: 'clock',
     align: 'left',
@@ -338,7 +354,7 @@ node -v
     duration: 90,
   },
   {
-    id: 24,
+    id: 25,
     title: 'Start',
     icon: 'flag',
     align: 'left',
@@ -351,7 +367,7 @@ node -v
     duration: 60,
   },
   {
-    id: 25,
+    id: 26,
     title: 'Go Make It!',
     align: 'center',
     bullets: [],

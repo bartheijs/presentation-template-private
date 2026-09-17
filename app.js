@@ -239,13 +239,17 @@ function buildSlideContentHTML(slide) {
     ? slide.timeline.filter((step) => step && typeof step.label === 'string')
     : [];
   const timelineBlock = timelineSteps.length
-    ? `<ol class="slide-timeline${timelineSteps.length > 6 ? ' slide-timeline--dense' : ''}" style="--timeline-count: ${timelineSteps.length}" aria-label="Dagprogramma">${timelineSteps.map((step, index) => `
+    ? `<ol class="slide-timeline${timelineSteps.length > 6 ? ' slide-timeline--dense' : ''}" style="--timeline-count: ${timelineSteps.length}" aria-label="${escapeHtml(slide.title || 'Tijdlijn')}">${timelineSteps.map((step, index) => `
         <li class="slide-timeline-step${step.kind === 'break' ? ' slide-timeline-step--break' : ''}${step.kind === 'end' ? ' slide-timeline-step--end' : ''}">
           <span class="slide-timeline-time">${escapeHtml(step.time || String(index + 1).padStart(2, '0'))}</span>
           <span class="slide-timeline-marker">
             <svg class="icon"><use href="#icon-${escapeHtml(step.icon || 'spark')}"></use></svg>
           </span>
-          <span class="slide-timeline-label">${escapeHtml(step.label)}</span>
+          <span class="slide-timeline-label">${escapeHtml(step.label)}</span>${
+            typeof step.tools === 'string' && step.tools
+              ? `<span class="slide-timeline-tools">${escapeHtml(step.tools)}</span>`
+              : ''
+          }
         </li>`).join('')}
       </ol>`
     : '';
