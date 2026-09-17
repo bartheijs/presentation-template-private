@@ -178,26 +178,15 @@ test.describe('theme system', () => {
     await expect(page.locator('#brand-chrome')).toBeVisible();
   });
 
-  test('CONFIG.brand strings populate the chrome, blank by default', async ({ page }) => {
+  test('the Conclusion theme brand chrome renders its logo and bottombar images', async ({ page }) => {
+    // Superseded 'CONFIG.brand strings populate the chrome' — index.html's
+    // brand-chrome now bakes the wordmark/tagline into two static images
+    // (see the comment above #brand-chrome in index.html) rather than
+    // reading CONFIG.brand into text elements, so there's nothing left for
+    // CONFIG.brand itself to drive; this checks the images it does render.
     await gotoPresentation(page);
-    // Forced explicitly rather than assumed from this deck's own config.js —
-    // those strings are content, not an engine default, and are free to
-    // already be filled in here.
-    await page.evaluate(() => {
-      CONFIG.brand.businessUnit = '';
-      CONFIG.brand.tagline = '';
-      applyConfigStrings();
-    });
-    await expect(page.locator('#brand-chrome-business-unit')).toBeEmpty();
-    await expect(page.locator('#brand-chrome-tagline')).toBeEmpty();
-
-    await page.evaluate(() => {
-      CONFIG.brand.businessUnit = 'Low Code Company';
-      CONFIG.brand.tagline = 'Business done differently';
-      applyConfigStrings();
-    });
-    await expect(page.locator('#brand-chrome-business-unit')).toHaveText('Low Code Company');
-    await expect(page.locator('#brand-chrome-tagline')).toHaveText('Business done differently');
+    await expect(page.locator('.brand-chrome-logo')).toHaveAttribute('src', /logo\.png$/);
+    await expect(page.locator('.brand-chrome-bottombar')).toHaveAttribute('src', /bottombar\.png$/);
   });
 
   test('Presenter View resolves the same computed colors as the main window', async ({ page }) => {

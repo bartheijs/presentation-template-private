@@ -115,7 +115,7 @@ test('manual finish via the toolbar button shows the finish overlay', async ({ p
   });
 });
 
-test('pressing Next on the last slide is a plain no-op, not a finish-overlay trigger', async ({ page }) => {
+test('pressing Next on the last slide opens the finish overlay, same as the toolbar button', async ({ page }) => {
   await gotoPresentation(page);
   const lastIndex = await page.evaluate(() => SLIDES.length - 1);
   await page.evaluate((index) => {
@@ -125,12 +125,21 @@ test('pressing Next on the last slide is a plain no-op, not a finish-overlay tri
 
   await page.evaluate(() => goNext());
 
-  await expect(page.locator('#finish-overlay')).toBeHidden();
+  await expect(page.locator('#finish-overlay')).toBeVisible();
   expect(await page.evaluate(() => ({ confettiActive, confettiPersistent }))).toEqual({
-    confettiActive: false,
-    confettiPersistent: false,
+    confettiActive: true,
+    confettiPersistent: true,
   });
+  // goNext() deliberately leaves state.currentIndex on the last slide rather
+  // than advancing past it — the finish overlay sits on top without being a
+  // real extra slide (see goTo()'s bounds guard and goPrev()'s special-case
+  // in app.js).
   expect(await page.evaluate(() => state.currentIndex)).toBe(lastIndex);
+
+  // A second Next while the overlay is already open must not relaunch
+  // confetti or otherwise double-trigger the celebration.
+  await page.evaluate(() => goNext());
+  expect(await page.evaluate(() => document.querySelectorAll('#finish-overlay').length)).toBe(1);
 });
 
 test('manual finish after a warning is not stopped by the old temporary timer', async ({ page }) => {

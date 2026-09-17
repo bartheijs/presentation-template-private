@@ -141,8 +141,12 @@ test.describe('8/12 column width', () => {
 test.describe('bullet subtext', () => {
   test('plain string bullets render without a subtext element', async ({ page }) => {
     await gotoPresentation(page);
+    // Replaces slide 4 wholesale (layout included) rather than only patching
+    // its `bullets` — this deck's own slide 4 may use any layout (e.g. a
+    // deck-specific 'timeline'/'disco' extension that ignores `bullets`
+    // entirely), so this stays a pure engine test independent of content.
     await page.evaluate(() => {
-      SLIDES[4].bullets = ['Plain bullet, **bold** and `code`'];
+      SLIDES[4] = { id: 'test-4', layout: 'bullets', title: 'Test', bullets: ['Plain bullet, **bold** and `code`'] };
       state.currentIndex = 4;
       renderSlide();
     });
@@ -155,9 +159,12 @@ test.describe('bullet subtext', () => {
   test('{ text, subtext } bullets render a smaller, muted line with markdown', async ({ page }) => {
     await gotoPresentation(page);
     await page.evaluate(() => {
-      SLIDES[4].bullets = [
-        { text: 'Main **bold** text', subtext: 'Muted `code` subtext' },
-      ];
+      SLIDES[4] = {
+        id: 'test-4',
+        layout: 'bullets',
+        title: 'Test',
+        bullets: [{ text: 'Main **bold** text', subtext: 'Muted `code` subtext' }],
+      };
       state.currentIndex = 4;
       renderSlide();
     });
@@ -186,7 +193,12 @@ test.describe('malformed bullet entries', () => {
     page.on('pageerror', (err) => errors.push(err.message));
 
     await page.evaluate(() => {
-      SLIDES[4].bullets = [null, undefined, { subtext: 'orphan subtext, no text' }, 'A real bullet'];
+      SLIDES[4] = {
+        id: 'test-4',
+        layout: 'bullets',
+        title: 'Test',
+        bullets: [null, undefined, { subtext: 'orphan subtext, no text' }, 'A real bullet'],
+      };
       state.currentIndex = 4;
       renderSlide();
     });
@@ -201,10 +213,12 @@ test.describe('malformed bullet entries', () => {
 test.describe('template-reference layout', () => {
   test('a template-reference slide renders compact with the inline reference block', async ({ page }) => {
     await gotoPresentation(page);
-    // Looked up by layout rather than a fixed index — this deck's content
-    // is edited often and slide positions shift.
+    // Injects a synthetic slide with the layout under test rather than
+    // looking one up in this deck's own content — a real deck is free to
+    // use (or drop) any given layout, so this stays a pure engine test.
     await page.evaluate(() => {
-      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'template-reference');
+      SLIDES[4] = { id: 'test-4', layout: 'template-reference', title: 'Test', bullets: [] };
+      state.currentIndex = 4;
       renderSlide();
     });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--compact/);
@@ -217,7 +231,14 @@ test.describe('new layout renderers', () => {
   test('list-image renders bullets beside an image', async ({ page }) => {
     await gotoPresentation(page);
     await page.evaluate(() => {
-      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'list-image');
+      SLIDES[4] = {
+        id: 'test-4',
+        layout: 'list-image',
+        title: 'Test',
+        bullets: ['One'],
+        image: { src: 'assets/demo-photo.svg', alt: 'Test' },
+      };
+      state.currentIndex = 4;
       renderSlide();
     });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-list-image/);
@@ -228,7 +249,8 @@ test.describe('new layout renderers', () => {
   test('quote renders the quote box, with attribution when set', async ({ page }) => {
     await gotoPresentation(page);
     await page.evaluate(() => {
-      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'quote');
+      SLIDES[4] = { id: 'test-4', layout: 'quote', title: 'Test', bullets: [], quote: 'A test quote', attribution: 'Tester' };
+      state.currentIndex = 4;
       renderSlide();
     });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-quote/);
@@ -239,7 +261,14 @@ test.describe('new layout renderers', () => {
   test('image-only renders the heading and a dominant image, no bullets', async ({ page }) => {
     await gotoPresentation(page);
     await page.evaluate(() => {
-      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'image-only');
+      SLIDES[4] = {
+        id: 'test-4',
+        layout: 'image-only',
+        title: 'Test',
+        bullets: [],
+        image: { src: 'assets/demo-photo.svg', alt: 'Test' },
+      };
+      state.currentIndex = 4;
       renderSlide();
     });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-image-only/);
@@ -252,7 +281,7 @@ test.describe('new layout renderers', () => {
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
     await page.evaluate(() => {
-      SLIDES[4].layout = 'nonexistent-layout';
+      SLIDES[4] = { id: 'test-4', layout: 'nonexistent-layout', title: 'Test', bullets: ['A real bullet'] };
       state.currentIndex = 4;
       renderSlide();
     });
