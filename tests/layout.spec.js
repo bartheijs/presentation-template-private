@@ -276,6 +276,34 @@ test.describe('new layout renderers', () => {
     await expect(page.locator('.slide-inner--image-only .slide-bullets')).toHaveCount(0);
   });
 
+  test('hideTitle preserves the heading accessibly and gives an image-only slide more image space', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      SLIDES[4] = {
+        id: 'test-4',
+        layout: 'image-only',
+        title: 'Still available to navigation',
+        bullets: [],
+        image: { src: 'assets/demo-photo.svg', alt: 'Test' },
+      };
+      state.currentIndex = 4;
+      renderSlide();
+    });
+
+    const image = page.locator('.slide-inner--image-only .slide-image');
+    await expect(image).toBeVisible();
+    const regularHeight = (await image.boundingBox()).height;
+
+    await page.evaluate(() => {
+      SLIDES[4].hideTitle = true;
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--title-hidden/);
+    await expect(page.locator('.slide-title-visually-hidden')).toHaveText('Still available to navigation');
+    const expandedHeight = (await image.boundingBox()).height;
+    expect(expandedHeight).toBeGreaterThan(regularHeight);
+  });
+
   test('an unknown layout value falls back to bullets instead of crashing', async ({ page }) => {
     await gotoPresentation(page);
     const errors = [];

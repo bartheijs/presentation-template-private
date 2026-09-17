@@ -496,6 +496,24 @@ button {
   padding-bottom: 0.5rem;
 }
 
+/* `hideTitle` preserves the title for the TOC and assistive technology, but
+   gives image-led slides the vertical space normally occupied by the visible
+   heading. */
+.slide-title-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.slide-content--title-hidden {
+  padding-top: 2.5rem;
+}
+
 /* Optional per-slide `background: { src, alt }` (see renderSlide() in
    app.js, which sets --slide-bg-image and this class together). The dark
    gradient is baked in rather than left to the author because every layout
@@ -787,6 +805,18 @@ button {
   height: min(52vh, 32rem);
   width: auto;
   max-width: 100%;
+}
+.slide-content--title-hidden .slide-inner--image-only,
+.slide-content--title-hidden .slide-image-stack--solo {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.slide-content--title-hidden .slide-image-stack--solo {
+  justify-content: center;
+}
+.slide-content--title-hidden .slide-image-stack--solo .slide-image {
+  height: min(72vh, 40rem);
+  max-height: 100%;
 }
 
 /* ---------- Icon-grid layout (specimen slide, see `items` in README) ---------- */
@@ -1428,6 +1458,7 @@ button {
   .slide-quote-box { padding: 1.5rem 1.75rem; }
   .slide-quote-image-stack .slide-image { height: 6.5rem; width: 6.5rem; }
   .slide-image-stack--solo .slide-image { height: 40vh; }
+  .slide-content--title-hidden .slide-image-stack--solo .slide-image { height: 60vh; }
   .slide-timeline {
     grid-template-columns: 1fr;
     gap: 0.7rem;

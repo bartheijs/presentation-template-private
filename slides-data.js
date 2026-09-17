@@ -30,6 +30,8 @@
  *   'quote' and 'image-only'
  * - quote / attribution: used by the 'quote' layout
  * - align: 'center' or 'left' (overrides CONFIG.layout.align)
+ * - hideTitle: keeps the title available to navigation and assistive
+ *   technology, but hides it visually so image-only content can use the space
  * - disco: enables/disables the flashy transition for this slide
  * - discoMode: 'auto' or 'pause'
  * - discoTitleLines: per-slide transition copy (also used by layout: 'disco')
@@ -194,6 +196,7 @@ node -v
     id: 9,
     layout: 'image-only',
     title: 'Widget-opbouw (1/5): volledig overzicht',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -205,6 +208,7 @@ node -v
     id: 10,
     layout: 'image-only',
     title: 'Widget-opbouw (2/5): properties',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -216,6 +220,7 @@ node -v
     id: 11,
     layout: 'image-only',
     title: 'Widget-opbouw (3/5): component tree',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -227,6 +232,7 @@ node -v
     id: 12,
     layout: 'image-only',
     title: 'Widget-opbouw (4/5): skeleton',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],
@@ -238,6 +244,7 @@ node -v
     id: 13,
     layout: 'image-only',
     title: 'Widget-opbouw (5/5): overige bestanden',
+    hideTitle: true,
     icon: 'layers',
     align: 'left',
     bullets: [],

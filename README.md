@@ -138,6 +138,10 @@ Ondersteunde optionele velden:
 - `quote` en `attribution` — gebruikt door de `'quote'`-layout.
 - `items: [{ icon, label }]` — gebruikt door de `'icon-grid'`-layout.
 - `align: 'center' | 'left'` — override van `CONFIG.layout.align`.
+- `hideTitle: true` — verbergt de titel alleen visueel, zodat bijvoorbeeld
+  een `'image-only'`-slide meer ruimte voor de afbeelding krijgt; de titel
+  blijft beschikbaar in de inhoudsopgave, Presenter View en voor
+  hulptechnologie.
 - `disco: true | false` — flashy transition per slide aan of uit.
 - `discoMode: 'auto' | 'pause'` — automatisch afspelen of bij vooruit
   navigeren halverwege bevriezen tot een tweede navigatieactie. Teruggaan

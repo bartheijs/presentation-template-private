@@ -212,6 +212,12 @@ function renderBulletItem(b) {
 // logic left for a new layout to accidentally trip over.
 
 function buildHeadingBlock(slide, { isTitleSlide = false } = {}) {
+  // A visually hidden title still gives the rendered slide its heading and
+  // remains available in the TOC/Presenter View, while image-led slides can
+  // use the full card for their image.
+  if (slide.hideTitle) {
+    return `<h1 class="slide-title-visually-hidden">${escapeHtml(slide.title || '')}</h1>`;
+  }
   // `icon` is optional — a title slide can omit it to show just the
   // heading text, with no icon glyph taking up space next to it.
   const iconBlock = slide.icon
@@ -466,6 +472,7 @@ function renderSlide() {
     'slide-content' +
     ` slide-content--layout-${layout}` +
     (layout === 'template-reference' ? ' slide-content--compact' : '') +
+    (slide.hideTitle ? ' slide-content--title-hidden' : '') +
     (align === 'left' ? ' slide-content--align-left' : '') +
     (hasBackground ? ' slide-content--has-bg' : '');
   // Set unconditionally (not just when present) so a slide without a
