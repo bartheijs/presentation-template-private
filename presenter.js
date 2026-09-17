@@ -5,14 +5,15 @@
 
 const PRESENTER_I18N = {
   nl: {
-    presenterMode: 'Presentatieweergave', localTime: 'Lokale tijd', connected: 'Verbonden',
+    presenterMode: 'Presentatieweergave', connected: 'Verbonden',
     disconnected: 'Niet verbonden',
     connectionHint: 'Open deze pagina via de Presentatieweergave (de Presenter View-knop of Shift+P), niet rechtstreeks.',
-    slidePreviews: 'Slidevoorbeelden', nowVisible: 'Nu zichtbaar', currentSlide: 'Huidige slide',
-    currentPreviewTitle: 'Voorbeeld van de huidige slide', upNext: 'Hierna', nextSlide: 'Volgende slide',
-    nextPreviewTitle: 'Voorbeeld van de volgende slide', prepareOtherSlide: 'Andere slide klaarzetten?',
-    restore: 'Herstel', skipOneSlide: 'Sla één slide over', onlyForYou: 'Alleen voor jou',
-    speakerNotes: 'Sprekersnotities', timerLabel: 'Resterende tijd', start: 'Start', pause: 'Pauze', reset: 'Reset',
+    slidePreviews: 'Slidevoorbeelden',
+    currentPreviewTitle: 'Voorbeeld van de huidige slide',
+    nextPreviewTitle: 'Voorbeeld van de volgende slide',
+    skipOneSlide: 'Sla over', skipOneSlideHint: 'Eerst klikken om te activeren, dan nogmaals om één slide over te slaan',
+    speakerNotes: 'Sprekersnotities', timerLabel: 'Resterende tijd', currentTime: 'Huidige tijd',
+    start: 'Start', pause: 'Pauze', reset: 'Reset',
     display: 'Weergave',
     displayOptions: 'Weergaveopties', leftSidebar: 'Linker zijbalk', rightSidebar: 'Rechter zijbalk',
     pauseScreen: 'Pauzescherm', contextOverlay: 'Context-overlay', presentationControls: 'Presentatiebediening',
@@ -22,14 +23,15 @@ const PRESENTER_I18N = {
     on: 'Aan', off: 'Uit', discoStillLabel: 'Dit ziet je publiek nu — een still, niet live',
   },
   en: {
-    presenterMode: 'Presenter mode', localTime: 'Local time', connected: 'Connected',
+    presenterMode: 'Presenter mode', connected: 'Connected',
     disconnected: 'Not connected',
     connectionHint: 'Open this page from Presentation View (the Presenter View button or Shift+P), not directly.',
-    slidePreviews: 'Slide previews', nowVisible: 'Now showing', currentSlide: 'Current slide',
-    currentPreviewTitle: 'Preview of the current slide', upNext: 'Up next', nextSlide: 'Next slide',
-    nextPreviewTitle: 'Preview of the next slide', prepareOtherSlide: 'Prepare a different slide?',
-    restore: 'Restore', skipOneSlide: 'Skip one slide', onlyForYou: 'Only for you',
-    speakerNotes: 'Speaker notes', timerLabel: 'Time remaining', start: 'Start', pause: 'Pause', reset: 'Reset',
+    slidePreviews: 'Slide previews',
+    currentPreviewTitle: 'Preview of the current slide',
+    nextPreviewTitle: 'Preview of the next slide',
+    skipOneSlide: 'Skip', skipOneSlideHint: 'Click once to arm, click again to skip one slide',
+    speakerNotes: 'Speaker notes', timerLabel: 'Time remaining', currentTime: 'Current time',
+    start: 'Start', pause: 'Pause', reset: 'Reset',
     display: 'Display',
     displayOptions: 'Display options', leftSidebar: 'Left sidebar', rightSidebar: 'Right sidebar',
     pauseScreen: 'Pause screen', contextOverlay: 'Context overlay', presentationControls: 'Presentation controls',
@@ -132,6 +134,7 @@ let latestState = null;
 const presenterMainEl = document.getElementById('presenter-main');
 const currentPreviewEl = document.getElementById('current-preview');
 const nextPreviewEl = document.getElementById('next-preview');
+const skipBtn = document.getElementById('btn-presenter-skip');
 
 // Keep the embedded presentation at its native 1280 x 800 canvas and scale
 // that canvas to the responsive viewport around it. A transform on the
@@ -187,10 +190,9 @@ function currentFlags() {
 // The next-preview iframe shows a slide the audience hasn't actually
 // reached yet, so it never shows an overlay that's only meaningful "on
 // screen right now" — the design doc's §7 wording only promises an exact
-// mirror for the current-preview iframe; the next-preview "wordt naar
-// pendingNextSlide gestuurd" (just navigated there). Aside visibility is
-// persistent presenter chrome rather than something tied to this instant,
-// so that part still mirrors real state.
+// mirror for the current-preview iframe. Aside visibility is persistent
+// presenter chrome rather than something tied to this instant, so that
+// part still mirrors real state.
 function nextPreviewFlags() {
   return Object.assign(currentFlags(), {
     contextOverlayVisible: false,
@@ -214,7 +216,7 @@ function resyncPreviewOnLoad(iframeEl, getSlideIndex, getFlags) {
   });
 }
 resyncPreviewOnLoad(currentPreviewEl, () => latestState.currentSlide, currentFlags);
-resyncPreviewOnLoad(nextPreviewEl, () => pendingNextSlide, nextPreviewFlags);
+resyncPreviewOnLoad(nextPreviewEl, pendingNextIndex, nextPreviewFlags);
 
 function sendCommand(command, extra) {
   const target = refreshPresentationRef();
@@ -226,8 +228,20 @@ function sendCommand(command, extra) {
   target.postMessage(Object.assign({ type: 'command', command }, extra), '*');
 }
 
-let pendingNextSlide = 1; // 0-based index; defaults to currentSlide + 1
+// Set right before a skip-jump (see btn-presenter-skip below) so one
+// following Vorige click can undo it by returning to this index instead of
+// just stepping back one slide from the post-skip position. Cleared on the
+// next ordinary Volgende click — the undo window is exactly one click.
 let lastJumpOriginIndex = null;
+
+// While the skip button is armed (see btn-presenter-skip below), the
+// next-preview card should show what a confirmed skip would actually land
+// on (currentSlide + 2), not the ordinary next slide — so the presenter can
+// see the target before committing to it with the second click.
+function pendingNextIndex() {
+  const step = skipBtn.classList.contains('is-armed') ? 2 : 1;
+  return Math.min(latestState.currentSlide + step, latestState.totalSlides - 1);
+}
 
 function renderToggleState(buttonId, statusSelector, active) {
   const button = document.getElementById(buttonId);
@@ -256,16 +270,6 @@ function renderDiscoStill(lines) {
 
 function renderState(newState) {
   latestState = newState;
-  // pendingNextSlide only ever diverges from currentSlide + 1 locally, via
-  // the Sla over/Herstel buttons — neither of which triggers renderState().
-  // So any real navigation arriving here (this call firing at all) means
-  // whatever was staged has just been consumed or is now stale, and must
-  // resync unconditionally. Resetting only when pendingNextSlide had fallen
-  // behind (<= newState.currentSlide) missed the reverse case: going back
-  // leaves it 2 slides ahead of the new position instead of 1, and the next
-  // Volgende click then misreads that gap as a deliberate skip-jump and
-  // jumps an extra slide instead of just advancing one.
-  pendingNextSlide = newState.currentSlide + 1;
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
   document.querySelector('[data-total-slides]').textContent = String(newState.totalSlides);
@@ -274,10 +278,9 @@ function renderState(newState) {
   renderToggleState('btn-toggle-pause-overlay', '[data-pause-overlay]', newState.pauseOverlayVisible);
   renderToggleState('btn-toggle-context-overlay', '[data-context-overlay]', newState.contextOverlayVisible);
   renderDiscoStill(newState.discoTitleLines);
-  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());
-  syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
+  syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
 
   document.getElementById('presenter-notes').textContent = SLIDES[newState.currentSlide].notes || '';
 }
@@ -451,37 +454,51 @@ window.addEventListener('message', (e) => {
   renderState(e.data);
 });
 
-document.getElementById('btn-presenter-skip').addEventListener('click', () => {
-  pendingNextSlide += 1;
-  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
-  if (!latestState) return;
-  syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
-});
+// Arm-then-confirm: this jumps straight over a slide with no undo-by-typo
+// safety net, so a single ordinary click must not fire it. The button
+// starts looking like plain text; a first click only turns it into a real
+// button (.is-armed, styled like Volgende so it reads as a genuine action)
+// without navigating, and a second click (while armed) performs the skip.
+// Arming auto-expires so it can't stay live and get triggered by an
+// unrelated later click.
+let skipArmTimer = null;
 
-document.getElementById('btn-presenter-herstel').addEventListener('click', () => {
+function disarmSkip() {
+  skipBtn.classList.remove('is-armed');
+  clearTimeout(skipArmTimer);
+  skipArmTimer = null;
+  if (latestState) syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
+}
+
+skipBtn.addEventListener('click', () => {
   if (!latestState) return;
-  pendingNextSlide = latestState.currentSlide + 1;
-  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextSlide + 1);
-  syncPreview(nextPreviewEl, pendingNextSlide, nextPreviewFlags());
+  if (!skipBtn.classList.contains('is-armed')) {
+    skipBtn.classList.add('is-armed');
+    // Show the actual skip target in the next-preview card now, before
+    // it's committed, so the presenter can see what they're about to jump
+    // to (see pendingNextIndex()).
+    syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
+    skipArmTimer = setTimeout(disarmSkip, 4000);
+    return;
+  }
+  const target = pendingNextIndex();
+  disarmSkip();
+  lastJumpOriginIndex = latestState.currentSlide;
+  sendCommand('GO_TO_SLIDE', { slide: target });
 });
 
 document.getElementById('btn-presenter-next').addEventListener('click', () => {
   if (!latestState) return;
-  const isSkipJump = pendingNextSlide !== latestState.currentSlide + 1;
-  lastJumpOriginIndex = isSkipJump ? latestState.currentSlide : null;
-  if (isSkipJump) {
-    // Skip-jumps must land directly on pendingNextSlide with no intermediate
-    // slides shown, so keep using GO_TO_SLIDE.
-    sendCommand('GO_TO_SLIDE', { slide: pendingNextSlide });
-  } else {
-    // Ordinary one-step advance: use NEXT_SLIDE so the real goNext() plays
-    // the normal transition/disco effect and can reach the finish overlay
-    // on the last slide, exactly like the physical Next button.
-    sendCommand('NEXT_SLIDE');
-  }
+  disarmSkip(); // an armed-but-uncommitted skip no longer applies once you navigate some other way
+  lastJumpOriginIndex = null;
+  // Use NEXT_SLIDE (not GO_TO_SLIDE) so the real goNext() plays the normal
+  // transition/disco effect and can reach the finish overlay on the last
+  // slide, exactly like the physical Next button.
+  sendCommand('NEXT_SLIDE');
 });
 
 document.getElementById('btn-presenter-prev').addEventListener('click', () => {
+  disarmSkip();
   if (lastJumpOriginIndex !== null) {
     sendCommand('GO_TO_SLIDE', { slide: lastJumpOriginIndex });
     lastJumpOriginIndex = null;

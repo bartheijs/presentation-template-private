@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { gotoPresentation } = require('./helpers');
+const { gotoPresentation, openPresenterView } = require('./helpers');
 
 // Covers: config.js-driven strings/toggles applied at startup by
 // applyConfigStrings() in app.js, and the templateOverlay.enabled toggle.
@@ -121,5 +121,89 @@ test.describe('config-driven UI strings', () => {
       discoRevealDelayMs: expect.any(Number),
       discoHideLeadMs: expect.any(Number),
     });
+  });
+});
+
+// Covers: CONFIG.theme -> the <html data-theme> attribute set by the inline
+// script in <head> (before styles.css/themes/conclusion/theme.css load, so
+// there's no flash of the wrong theme), the [data-theme="conclusion"] CSS
+// override winning over both the default :root block and the
+// prefers-color-scheme: dark block, the brand-chrome visibility/strings, and
+// Presenter View inheriting the same computed colors.
+test.describe('theme system', () => {
+  test('data-theme on <html> matches this deck\'s CONFIG.theme at load', async ({ page }) => {
+    await gotoPresentation(page);
+    const theme = await page.evaluate(() => CONFIG.theme);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+  });
+
+  test('data-theme="conclusion" overrides --bg/--accent regardless of OS color scheme', async ({ page }) => {
+    await gotoPresentation(page);
+    // Forced explicitly rather than assumed from this deck's own config.js —
+    // that value is content, not an engine default, and is free to already
+    // be 'conclusion' here.
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'default'));
+    const defaultBg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'conclusion'));
+    const conclusion = await page.evaluate(() => ({
+      bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
+      accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim(),
+    }));
+
+    expect(conclusion.bg).not.toBe(defaultBg);
+    expect(conclusion.bg.toLowerCase()).toBe('#000000');
+    expect(conclusion.accent.toLowerCase()).toBe('#1369af');
+  });
+
+  test('conclusion theme wins over prefers-color-scheme: dark', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await gotoPresentation(page);
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'conclusion'));
+    const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+    expect(bg.toLowerCase()).toBe('#000000');
+  });
+
+  test('brand chrome is hidden by default and shown under the conclusion theme', async ({ page }) => {
+    await gotoPresentation(page);
+    // Forced explicitly — see the note in the previous test.
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'default'));
+    await expect(page.locator('#brand-chrome')).toBeHidden();
+
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'conclusion'));
+    await expect(page.locator('#brand-chrome')).toBeVisible();
+  });
+
+  test('CONFIG.brand strings populate the chrome, blank by default', async ({ page }) => {
+    await gotoPresentation(page);
+    // Forced explicitly rather than assumed from this deck's own config.js —
+    // those strings are content, not an engine default, and are free to
+    // already be filled in here.
+    await page.evaluate(() => {
+      CONFIG.brand.businessUnit = '';
+      CONFIG.brand.tagline = '';
+      applyConfigStrings();
+    });
+    await expect(page.locator('#brand-chrome-business-unit')).toBeEmpty();
+    await expect(page.locator('#brand-chrome-tagline')).toBeEmpty();
+
+    await page.evaluate(() => {
+      CONFIG.brand.businessUnit = 'Low Code Company';
+      CONFIG.brand.tagline = 'Business done differently';
+      applyConfigStrings();
+    });
+    await expect(page.locator('#brand-chrome-business-unit')).toHaveText('Low Code Company');
+    await expect(page.locator('#brand-chrome-tagline')).toHaveText('Business done differently');
+  });
+
+  test('Presenter View resolves the same computed colors as the main window', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'conclusion'));
+    const popup = await openPresenterView(page);
+    await popup.evaluate(() => document.documentElement.setAttribute('data-theme', 'conclusion'));
+
+    const mainBg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+    const presenterBg = await popup.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+    expect(presenterBg).toBe(mainBg);
   });
 });

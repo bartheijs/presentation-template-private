@@ -4,7 +4,7 @@ const { gotoPresentation } = require('./helpers');
 // Covers: CONFIG.layout.align / per-slide align override, the 8/12-column
 // .slide-inner wrapper staying centered regardless of alignment mode, the
 // 900px responsive breakpoint, bullet subtext rendering, and the
-// isTemplateAnchor compact slides.
+// 'template-reference' layout's compact slides.
 
 test.describe('content alignment', () => {
   test('demo slides never combine an icon with a centered title', async ({ page }) => {
@@ -198,16 +198,65 @@ test.describe('malformed bullet entries', () => {
   });
 });
 
-test.describe('isTemplateAnchor slides', () => {
-  test('an isTemplateAnchor slide renders compact with the inline reference block', async ({ page }) => {
+test.describe('template-reference layout', () => {
+  test('a template-reference slide renders compact with the inline reference block', async ({ page }) => {
     await gotoPresentation(page);
-    // Looked up by the isTemplateAnchor flag rather than a fixed index —
-    // this deck's content is edited often and slide positions shift.
+    // Looked up by layout rather than a fixed index — this deck's content
+    // is edited often and slide positions shift.
     await page.evaluate(() => {
-      state.currentIndex = SLIDES.findIndex((s) => s.isTemplateAnchor);
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'template-reference');
       renderSlide();
     });
     await expect(page.locator('#slide-content')).toHaveClass(/slide-content--compact/);
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-template-reference/);
     await expect(page.locator('.slide-template-code')).toBeVisible();
+  });
+});
+
+test.describe('new layout renderers', () => {
+  test('list-image renders bullets beside an image', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'list-image');
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-list-image/);
+    await expect(page.locator('.slide-row-with-image')).toBeVisible();
+    await expect(page.locator('.slide-image-stack .slide-image')).toBeVisible();
+  });
+
+  test('quote renders the quote box, with attribution when set', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'quote');
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-quote/);
+    await expect(page.locator('.slide-quote-box')).toBeVisible();
+    await expect(page.locator('.slide-quote-text')).not.toBeEmpty();
+  });
+
+  test('image-only renders the heading and a dominant image, no bullets', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      state.currentIndex = SLIDES.findIndex((s) => s.layout === 'image-only');
+      renderSlide();
+    });
+    await expect(page.locator('#slide-content')).toHaveClass(/slide-content--layout-image-only/);
+    await expect(page.locator('.slide-inner--image-only .slide-image')).toBeVisible();
+    await expect(page.locator('.slide-inner--image-only .slide-bullets')).toHaveCount(0);
+  });
+
+  test('an unknown layout value falls back to bullets instead of crashing', async ({ page }) => {
+    await gotoPresentation(page);
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    await page.evaluate(() => {
+      SLIDES[4].layout = 'nonexistent-layout';
+      state.currentIndex = 4;
+      renderSlide();
+    });
+    expect(errors).toEqual([]);
+    await expect(page.locator('.slide-bullets')).toBeVisible();
   });
 });

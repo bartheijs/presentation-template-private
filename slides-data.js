@@ -5,10 +5,25 @@
  * index.html, app.js and styles.css generic so engine improvements can move
  * from develop to main without bringing topic-specific content with them.
  *
- * Each slide requires { id, title, bullets, notes }. Optional fields:
+ * Each slide requires { id, title, bullets, notes, layout }. `layout` is one
+ * of:
+ * - 'title': centered heading + subtitle, no bullets (the deck's opening
+ *   slide style)
+ * - 'bullets': heading + bullet list — the default, general-purpose layout
+ * - 'list-image': bullets in one column, `image` stacked beside them
+ * - 'quote': a colored quote box (`quote` + optional `attribution`),
+ *   optionally with `image` alongside it
+ * - 'image-only': heading + one dominant image, no bullets
+ * - 'template-reference': shows the Presentatiebrief content inline on the
+ *   slide itself (legacy internal use)
+ *
+ * Other optional fields:
  * - icon: name from the SVG sprite in index.html. Use icons only on
  *   left-aligned slides; centered headings deliberately have no icon.
  * - subtitle / meta: title-slide supporting copy
+ * - image: { src, alt } (or an array of those) — used by 'list-image',
+ *   'quote' and 'image-only'
+ * - quote / attribution: used by the 'quote' layout
  * - align: 'center' or 'left' (overrides CONFIG.layout.align)
  * - disco: enables/disables the flashy transition for this slide
  * - discoMode: 'auto' or 'pause'
@@ -17,8 +32,8 @@
  * - duration: presenter-only planned time for this slide, in seconds (used
  *   for the Presenter View's schedule-adherence indicator; falls back to an
  *   even split of CONFIG.timer.defaultMinutes when omitted)
- * - isTemplateAnchor / templateSection: show or highlight the reference
- *   overlay. These legacy internal names implement the generic overlay.
+ * - templateSection: highlights one Presentatiebrief section when the
+ *   overlay is opened from this slide (independent of `layout`)
  * - bullets may be strings or { text, subtext } objects
  */
 
@@ -80,15 +95,18 @@ const SKILL_TEMPLATE_SECTIONS = [
 const SLIDES = [
   {
     id: 1,
+    layout: 'title',
     title: 'Van tekst naar presentatie',
     subtitle: 'Lever je verhaal aan als tekst. AI doet de rest.',
     bullets: [],
     meta: ['Van ruwe inhoud', 'naar een werkende presentatie'],
+    background: { src: 'themes/conclusion/assets/conclusion-tower.jpg', alt: 'Het kantoorgebouw van Conclusion' },
     notes: `Deze demo laat zien wat het template kan. Voor een nieuwe presentatie hoeft de gebruiker alleen de inhoud en context aan te leveren.`,
     duration: 60,
   },
   {
     id: 2,
+    layout: 'bullets',
     title: 'Begin met drie dingen',
     icon: 'target',
     align: 'left',
@@ -97,11 +115,22 @@ const SLIDES = [
       'Voor wie is hij bedoeld?',
       'Wat moet het publiek na afloop begrijpen, voelen of doen?',
     ],
-    notes: `Meer hoeft niet om te beginnen. Als duur, taal of toon belangrijk zijn, kunnen die er gewoon in normale taal bij.`,
+    notes: `Meer hoeft niet om te beginnen. Als duur, taal of toon belangrijk zijn, kunnen die er gewoon in normale taal bij.
+
+Dit is een langere testnotitie om te controleren of het notities-paneel in Presenter View netjes scrollt zodra de tekst niet meer past. Herhaal dit een paar keer met wat extra tekst erbij.
+
+Ten eerste: leg uit waarom deze drie vragen de kern vormen van elke goede briefing. Zonder onderwerp, doelgroep en gewenste uitkomst gaat AI onnodig veel aannames doen, en die aannames zijn zelden precies wat de presentator bedoelde.
+
+Ten tweede: benadruk dat dit geen strak format is. Een presentator die alleen een onderwerp aanlevert, krijgt gewoon een eerste opzet — de andere twee vragen mogen ontbreken en worden dan impliciet ingevuld op basis van de aangeleverde tekst.
+
+Ten derde: geef een concreet voorbeeld uit een eerdere sessie, bijvoorbeeld een workshop-uitnodiging die in twee alinea's tekst is aangeleverd en in enkele minuten is omgezet naar een volledige sldedeck met sprekersnotities en een passende structuur.
+
+Tot slot: sluit af met de brug naar de volgende slide — vanaf hier bouwt de presentatie logisch verder op deze drie antwoorden, dus herhaal ze kort voordat je doorklikt.`,
     duration: 90,
   },
   {
     id: 3,
+    layout: 'bullets',
     title: 'Ruwe informatie bevat vaak meerdere verhalen',
     icon: 'inbox',
     align: 'left',
@@ -124,6 +153,7 @@ const SLIDES = [
   },
   {
     id: 4,
+    layout: 'bullets',
     title: 'Een heldere lijn maakt de kern zichtbaar',
     icon: 'spark',
     align: 'left',
@@ -138,6 +168,7 @@ const SLIDES = [
   },
   {
     id: 5,
+    layout: 'bullets',
     title: 'Center is geschikt voor één kernboodschap',
     align: 'center',
     bullets: [
@@ -148,6 +179,7 @@ const SLIDES = [
   },
   {
     id: 6,
+    layout: 'bullets',
     title: 'Goede uitleg blijft makkelijk te volgen',
     icon: 'book',
     align: 'left',
@@ -160,6 +192,7 @@ const SLIDES = [
   },
   {
     id: 7,
+    layout: 'bullets',
     title: 'Subtekst voegt nuance toe zonder extra bullets',
     icon: 'ruler',
     align: 'left',
@@ -177,6 +210,7 @@ const SLIDES = [
   },
   {
     id: 8,
+    layout: 'bullets',
     title: 'Sommige overgangen mogen rustig blijven',
     disco: false,
     bullets: [
@@ -187,11 +221,13 @@ const SLIDES = [
   },
   {
     id: 9,
+    layout: 'bullets',
     title: 'Een automatische overgang geeft kort extra energie',
     disco: true,
     discoMode: 'auto',
     discoHoldMs: 1600,
     discoTitleLines: ['KORTE', 'ENERGIE'],
+    background: { src: 'themes/conclusion/assets/conclusion-blender.jpg', alt: 'Een blender met spattende, kleurrijke verf' },
     bullets: [
       'Eén klik is genoeg',
       'De overgang speelt af en de volgende slide verschijnt vanzelf',
@@ -200,6 +236,7 @@ const SLIDES = [
   },
   {
     id: 10,
+    layout: 'bullets',
     title: 'Een pauze-overgang maakt ruimte voor een live moment',
     disco: true,
     discoMode: 'pause',
@@ -212,8 +249,8 @@ const SLIDES = [
   },
   {
     id: 11,
+    layout: 'template-reference',
     title: 'Achtergrondinformatie blijft binnen bereik',
-    isTemplateAnchor: true,
     bullets: [
       'Open de presentatiebrief wanneer je extra context nodig hebt',
       'De slide blijft zichtbaar terwijl je de briefing raadpleegt',
@@ -223,6 +260,7 @@ const SLIDES = [
   },
   {
     id: 12,
+    layout: 'bullets',
     title: 'De juiste achtergrond verschijnt op het juiste moment',
     icon: 'target',
     templateSection: 'takeaway',
@@ -236,6 +274,7 @@ const SLIDES = [
   },
   {
     id: 13,
+    layout: 'bullets',
     title: 'Notities zijn voor de presentator, niet voor het publiek',
     icon: 'book',
     align: 'left',
@@ -248,6 +287,7 @@ const SLIDES = [
   },
   {
     id: 14,
+    layout: 'bullets',
     title: 'De bediening ondersteunt het live tempo',
     icon: 'clock',
     align: 'left',
@@ -261,6 +301,7 @@ const SLIDES = [
   },
   {
     id: 15,
+    layout: 'bullets',
     title: 'Je hoeft geen technisch format te leren',
     icon: 'spark',
     align: 'left',
@@ -273,7 +314,57 @@ const SLIDES = [
     notes: `content-template.md is beschikbaar als eenvoudig startpunt, maar is nooit verplicht.`,
   },
   {
+    id: 17,
+    layout: 'list-image',
+    title: 'Beeld ondersteunt de boodschap',
+    icon: 'layers',
+    align: 'left',
+    image: { src: 'assets/demo-photo.svg', alt: 'Placeholder afbeelding' },
+    bullets: [
+      'Een afbeelding staat naast de bulletlijst, niet erboven',
+      'Handig voor een schermafbeelding, diagram of foto die de tekst toelicht',
+      'Vervang assets/demo-photo.svg door een eigen afbeelding',
+    ],
+    notes: `Dit is de 'list-image'-layout: bullets in één kolom, de afbeelding ernaast.`,
+  },
+  {
+    id: 18,
+    layout: 'quote',
+    title: 'Quote',
+    quote: 'Een presentatie is geslaagd zodra het publiek de kernboodschap kan navertellen.',
+    attribution: 'Voorbeeldcitaat',
+    background: { src: 'themes/conclusion/assets/conclusion-clouds-color.jpg', alt: 'Kleurrijke rookwolken in de huisstijlkleuren' },
+    notes: `Dit is de 'quote'-layout: een uitgelichte quote in een kleurvlak. Zet er optioneel een 'image' bij voor de foto-variant.`,
+  },
+  {
+    id: 20,
+    layout: 'icon-grid',
+    title: 'Iconenset',
+    items: [
+      { icon: 'target', label: 'Doel' },
+      { icon: 'chat', label: 'Gesprek' },
+      { icon: 'flag', label: 'Resultaat' },
+      { icon: 'steps', label: 'Stappen' },
+      { icon: 'clock', label: 'Tijd' },
+      { icon: 'spark', label: 'Hoogtepunt' },
+      { icon: 'book', label: 'Naslag' },
+      { icon: 'ruler', label: 'Meetbaar' },
+      { icon: 'layers', label: 'Structuur' },
+      { icon: 'inbox', label: 'Levering' },
+    ],
+    notes: `Dit is de 'icon-grid'-layout: een specimen-slide die de volledige iconenset toont (zie index.html voor de sprite). Handig als stijlreferentie, niet bedoeld om in de echte presentatie te laten staan.`,
+  },
+  {
+    id: 19,
+    layout: 'image-only',
+    title: 'Eén beeld, weinig tekst',
+    image: { src: 'assets/demo-photo.svg', alt: 'Placeholder afbeelding' },
+    bullets: [],
+    notes: `Dit is de 'image-only'-layout: de titel blijft zichtbaar, maar de afbeelding krijgt de meeste ruimte.`,
+  },
+  {
     id: 16,
+    layout: 'bullets',
     title: 'Begin gewoon met je verhaal',
     bullets: [
       '`Maak een presentatie over [onderwerp] voor [publiek]`',

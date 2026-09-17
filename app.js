@@ -15,6 +15,8 @@
 const CONFIG_DEFAULTS = {
   lang: 'nl',
   title: 'Presentatie',
+  theme: 'default',
+  brand: { businessUnit: '', tagline: '' },
   toc: { heading: 'Inhoud' },
   layout: { align: 'center' },
   disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
@@ -204,80 +206,182 @@ function renderBulletItem(b) {
   return `<li><svg class="icon icon--fill"><use href="#icon-spark"></use></svg>${body}</li>`;
 }
 
-function buildSlideContentHTML(slide) {
-  // A malformed slide (e.g. a generation slip missing `bullets`/`title`)
-  // degrades to blank-ish here instead of throwing — since renderTocOnce()
-  // renders every slide's title in one pass at startup, one bad slide
-  // anywhere in the deck would otherwise crash the entire presentation
-  // before it ever shows anything.
-  const bullets = slide.bullets || [];
-  const bulletsBlock = bullets.length
-    ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
-    : '';
-  const templateBlock = slide.isTemplateAnchor
-    ? `<pre class="slide-template-code"><code>${buildTemplateSectionsHtml(null)}</code></pre>`
-    : '';
+// Shared sub-pieces reused by more than one layout renderer below. Each
+// stays a plain function of `slide` (never `layout`) so a renderer only
+// pulls in the pieces it actually needs — there's no shared conditional
+// logic left for a new layout to accidentally trip over.
+
+function buildHeadingBlock(slide, { isTitleSlide = false } = {}) {
   // `icon` is optional — a title slide can omit it to show just the
-  // heading text, with no icon glyph taking up space next to it. A slide
-  // with no icon and a subtitle reads as the deck's title slide, so it
-  // gets the gradient-accent treatment on its own instead of a separate
-  // opt-in flag.
-  const isTitleSlide = !slide.icon && Boolean(slide.subtitle);
+  // heading text, with no icon glyph taking up space next to it.
   const iconBlock = slide.icon
     ? `<svg class="icon"><use href="#icon-${slide.icon}"></use></svg>`
+    : '';
+  // Optional `eyebrow` renders a short italic kicker line above the title,
+  // on any layout — independent of `subtitle` below, which is a longer
+  // tagline reserved for the title slide.
+  const eyebrowBlock = slide.eyebrow
+    ? `<p class="slide-eyebrow">${inlineMarkdown(slide.eyebrow)}</p>`
     : '';
   // Optional `subtitle` renders a tagline under the title — for a title
   // slide's tagline, not a general-purpose per-slide field.
   const subtitleBlock = slide.subtitle
     ? `<p class="slide-subtitle${isTitleSlide ? ' slide-subtitle--accent' : ''}">${inlineMarkdown(slide.subtitle)}</p>`
     : '';
-  const headingBlock = `
+  return `
+      ${eyebrowBlock}
       <div class="slide-heading${slide.subtitle ? ' slide-heading--with-subtitle' : ''}">
         ${iconBlock}
         <h1${isTitleSlide ? ' class="slide-title-accent"' : ''}>${escapeHtml(slide.title || '')}</h1>
       </div>
       ${subtitleBlock}`;
+}
 
-  // Optional `meta: [line, ...]` — a small byline (speaker / event / date)
-  // pinned to the bottom-left corner of the slide card, independent of the
-  // centered heading/bullets column above it.
-  const metaBlock = Array.isArray(slide.meta) && slide.meta.length
+// Optional `meta: [line, ...]` — a small byline (speaker / event / date)
+// pinned to the bottom-left corner of the slide card, independent of the
+// centered heading/bullets column above it. A sibling of `.slide-inner`,
+// not nested inside it, in every layout that uses it.
+function buildMetaBlock(slide) {
+  return Array.isArray(slide.meta) && slide.meta.length
     ? `<div class="slide-meta">${slide.meta.map((line) => `<span>${escapeHtml(line)}</span>`).join('')}</div>`
     : '';
+}
 
-  // Optional slide-level `image: { src, alt }` (or an array of those) — the
-  // full bullet list sits in one column, the image(s) stacked in a second
-  // column beside it, so the bullets keep their normal uniform gap instead
-  // of a lead bullet being pushed into its own row sized by the (taller)
-  // image.
+function buildBulletsBlock(slide) {
+  // A malformed slide (e.g. a generation slip missing `bullets`/`title`)
+  // degrades to blank-ish here instead of throwing — since renderTocOnce()
+  // renders every slide's title in one pass at startup, one bad slide
+  // anywhere in the deck would otherwise crash the entire presentation
+  // before it ever shows anything.
+  const bullets = slide.bullets || [];
+  return bullets.length
+    ? `<ul class="slide-bullets">${bullets.map(renderBulletItem).join('')}</ul>`
+    : '';
+}
+
+// Optional slide-level `image: { src, alt }` (or an array of those).
+function buildImagesBlock(slide) {
   const images = Array.isArray(slide.image)
     ? slide.image.filter((img) => img && img.src)
     : (slide.image && slide.image.src ? [slide.image] : []);
-  if (images.length) {
-    const imagesEl = images
-      .map((img) => `<img class="slide-image" src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || '')}">`)
-      .join('');
-    return `
-    <div class="slide-inner">
-      ${headingBlock}
-      <div class="slide-row-with-image">
-        ${bulletsBlock}
-        <div class="slide-image-stack">${imagesEl}</div>
-      </div>
-      ${templateBlock}
-    </div>
-    ${metaBlock}`;
-  }
+  return images
+    .map((img) => `<img class="slide-image" src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || '')}">`)
+    .join('');
+}
 
-  const innerClass = slide.isTemplateAnchor ? ' slide-inner--fill' : '';
-
+function renderTitleLayout(slide) {
   return `
-    <div class="slide-inner${innerClass}">
-      ${headingBlock}
-      ${bulletsBlock}
-      ${templateBlock}
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide, { isTitleSlide: true })}
+      ${buildBulletsBlock(slide)}
     </div>
-    ${metaBlock}`;
+    ${buildMetaBlock(slide)}`;
+}
+
+function renderBulletsLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      ${buildBulletsBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// The full bullet list sits in one column, the image(s) stacked in a
+// second column beside it, so the bullets keep their normal uniform gap
+// instead of a lead bullet being pushed into its own row sized by the
+// (taller) image.
+function renderListImageLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      <div class="slide-row-with-image">
+        ${buildBulletsBlock(slide)}
+        <div class="slide-image-stack">${buildImagesBlock(slide)}</div>
+      </div>
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Requires `quote` (string); `attribution` (string) and `image` are both
+// optional — setting `image` reproduces the deck's "quote + photo" variant,
+// otherwise the quote box sits alone on the theme's background.
+function renderQuoteLayout(slide) {
+  const imageBlock = slide.image
+    ? `<div class="slide-quote-image-stack">${buildImagesBlock(slide)}</div>`
+    : '';
+  return `
+    <div class="slide-inner slide-inner--quote">
+      <div class="slide-quote-box">
+        <blockquote class="slide-quote-text">${inlineMarkdown(slide.quote || '')}</blockquote>
+        ${slide.attribution ? `<p class="slide-quote-attribution">${escapeHtml(slide.attribution)}</p>` : ''}
+      </div>
+      ${imageBlock}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Deliberately keeps the heading (unlike a true full-bleed variant) so this
+// stays visually consistent with the other layouts and can reuse
+// buildHeadingBlock as-is; the image still gets the dominant remaining space.
+function renderImageOnlyLayout(slide) {
+  return `
+    <div class="slide-inner slide-inner--image-only">
+      ${buildHeadingBlock(slide)}
+      <div class="slide-image-stack slide-image-stack--solo">${buildImagesBlock(slide)}</div>
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Requires `items: [{ icon, label }]` — a labeled grid of sprite icons
+// (see index.html), for a specimen/overview slide rather than any one
+// piece of content. Reuses buildHeadingBlock so it gets the same
+// title/eyebrow treatment as every other layout.
+function buildIconGridBlock(slide) {
+  const items = Array.isArray(slide.items) ? slide.items : [];
+  return `<div class="slide-icon-grid">${items.map((item) => `
+      <div class="slide-icon-grid-item">
+        <svg class="icon slide-icon-grid-icon"><use href="#icon-${item.icon}"></use></svg>
+        <span class="slide-icon-grid-label">${escapeHtml(item.label || '')}</span>
+      </div>`).join('')}</div>`;
+}
+
+function renderIconGridLayout(slide) {
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      ${buildIconGridBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+function renderTemplateReferenceLayout(slide) {
+  return `
+    <div class="slide-inner slide-inner--fill">
+      ${buildHeadingBlock(slide)}
+      <pre class="slide-template-code"><code>${buildTemplateSectionsHtml(null)}</code></pre>
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+const LAYOUT_RENDERERS = {
+  title: renderTitleLayout,
+  bullets: renderBulletsLayout,
+  'list-image': renderListImageLayout,
+  quote: renderQuoteLayout,
+  'image-only': renderImageOnlyLayout,
+  'icon-grid': renderIconGridLayout,
+  'template-reference': renderTemplateReferenceLayout,
+};
+
+function buildSlideContentHTML(slide) {
+  const layout = slide.layout || 'bullets';
+  const renderer = LAYOUT_RENDERERS[layout];
+  if (!renderer) {
+    console.warn(`Unknown slide layout "${layout}" on slide "${slide.title || slide.id}" — falling back to "bullets".`);
+    return renderBulletsLayout(slide);
+  }
+  return renderer(slide);
 }
 
 // A slide's own `align` overrides CONFIG.layout.align. Unlike
@@ -302,10 +406,22 @@ function shouldShowNotes(slide) {
 function renderSlide() {
   const slide = SLIDES[state.currentIndex];
   const align = resolveAlignFor(slide);
+  const layout = slide.layout || 'bullets';
+  const hasBackground = Boolean(slide.background && slide.background.src);
   slideContentEl.className =
     'slide-content' +
-    (slide.isTemplateAnchor ? ' slide-content--compact' : '') +
-    (align === 'left' ? ' slide-content--align-left' : '');
+    ` slide-content--layout-${layout}` +
+    (layout === 'template-reference' ? ' slide-content--compact' : '') +
+    (align === 'left' ? ' slide-content--align-left' : '') +
+    (hasBackground ? ' slide-content--has-bg' : '');
+  // Set unconditionally (not just when present) so a slide without a
+  // `background` never inherits the previous slide's image via this custom
+  // property — only the .slide-content--has-bg class above gates whether it
+  // actually renders.
+  slideContentEl.style.setProperty(
+    '--slide-bg-image',
+    hasBackground ? `url("${slide.background.src}")` : 'none'
+  );
   slideContentEl.innerHTML = buildSlideContentHTML(slide);
   const hasNotesText = Boolean(slide.notes && slide.notes.trim());
   const showNotes = shouldShowNotes(slide);
@@ -845,6 +961,17 @@ if (!isEmbedPreview) {
     if (!item) return;
     goTo(Number(item.dataset.index), { animate: false });
   });
+
+  // Scrollbar stays hidden until the list is actually being scrolled (see
+  // .toc-list.is-scrolling in themes/conclusion/theme.css), then fades out
+  // again shortly after scrolling stops — rather than sitting permanently
+  // visible next to the slide numbers.
+  let tocScrollHideTimer = null;
+  tocListEl.addEventListener('scroll', () => {
+    tocListEl.classList.add('is-scrolling');
+    clearTimeout(tocScrollHideTimer);
+    tocScrollHideTimer = setTimeout(() => tocListEl.classList.remove('is-scrolling'), 900);
+  });
 }
 
 /* ---------- Timer ---------- */
@@ -1128,10 +1255,10 @@ function stopConfetti() {
 
 /* ---------- Skill template overlay ---------- */
 
-// Shared by the overlay and the isTemplateAnchor slide (buildSlideContentHTML)
-// so both render SKILL_TEMPLATE_SECTIONS with the same per-section heading
-// colors (.tpl-block--<id> .tpl-heading in styles.css) instead of one of them
-// drifting into a flat, uncolored copy.
+// Shared by the overlay and the 'template-reference' layout renderer
+// (renderTemplateReferenceLayout) so both render SKILL_TEMPLATE_SECTIONS with
+// the same per-section heading colors (.tpl-block--<id> .tpl-heading in
+// styles.css) instead of one of them drifting into a flat, uncolored copy.
 function buildTemplateSectionsHtml(highlightId) {
   const blocks = SKILL_TEMPLATE_SECTIONS.map((s) => {
     const [headingLine, ...rest] = s.body.split('\n');
@@ -1345,10 +1472,16 @@ window.addEventListener('message', (e) => {
       if (!overlayEl.hidden !== e.data.contextOverlayVisible) {
         e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
       }
-      if (tocCollapsed !== !e.data.leftAsideVisible) toggleTocCollapse();
-      // Presenter previews should mirror the audience screen exactly. While
-      // Presenter View is connected, a hidden right aside disappears there
-      // completely; it is not the ordinary collapsed icon rail.
+      // Deliberately NOT mirroring leftAsideVisible here (unlike the right
+      // aside below) — the TOC's slide titles are unreadable at preview
+      // thumbnail scale anyway, and collapsing it always gives the actual
+      // slide more of the small preview box regardless of the real
+      // screen's own TOC state.
+      if (!tocCollapsed) toggleTocCollapse();
+      // Presenter previews should otherwise mirror the audience screen
+      // exactly. While Presenter View is connected, a hidden right aside
+      // disappears there completely; it is not the ordinary collapsed icon
+      // rail.
       nextCollapsed = false;
       presenterHidesControls = !e.data.rightAsideVisible;
       renderNextPaneState();

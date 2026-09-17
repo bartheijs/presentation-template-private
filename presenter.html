@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presenter View</title>
+<script src="config.js"></script>
+<script>document.documentElement.setAttribute('data-theme', (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default');</script>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="themes/conclusion/theme.css">
 <link rel="stylesheet" href="presenter.css">
 </head>
 <body>
@@ -12,25 +15,6 @@
 <header class="presenter-header">
   <div class="presenter-heading">
     <span class="presenter-kicker" data-i18n="presenterMode">Presentatieweergave</span>
-    <h1>Presenter View</h1>
-  </div>
-
-  <div class="header-timer" aria-label="Presentatietijd" data-i18n-aria-label="presentationTiming">
-    <div class="elapsed-block">
-      <span class="meta-label" data-i18n="timerLabel">Resterende tijd</span>
-      <input type="text" class="elapsed" data-elapsed inputmode="numeric" autocomplete="off"
-        aria-label="Tijdsduur instellen (MM:SS of minuten), alleen als de timer niet loopt"
-        data-i18n-aria-label="setTimerDuration">
-    </div>
-    <div class="timer-controls" aria-label="Timerbediening" data-i18n-aria-label="timerControls">
-      <button id="btn-presenter-timer-toggle" class="btn btn--primary" type="button" data-i18n="start">Start</button>
-      <button id="btn-presenter-timer-reset" class="btn btn--quiet" type="button" data-i18n="reset">Reset</button>
-    </div>
-  </div>
-
-  <div class="clock-block presenter-clock">
-    <span class="meta-label" data-i18n="localTime">Lokale tijd</span>
-    <time class="clock" data-clock></time>
   </div>
 </header>
 
@@ -45,13 +29,6 @@
 <main id="presenter-main" class="presenter-main" hidden>
   <section class="preview-grid" aria-label="Slidevoorbeelden" data-i18n-aria-label="slidePreviews">
     <article class="panel preview-card preview-card--current">
-      <header class="panel-header">
-        <div>
-          <span class="panel-kicker" data-i18n="nowVisible">Nu zichtbaar</span>
-          <h2 data-i18n="currentSlide">Huidige slide</h2>
-        </div>
-        <span class="slide-chip">Slide <strong data-current-slide></strong> / <span data-total-slides></span></span>
-      </header>
       <div class="preview-viewport">
         <iframe id="current-preview" src="index.html?embed=preview" class="preview-frame" title="Voorbeeld van de huidige slide" data-i18n-title="currentPreviewTitle"></iframe>
         <div class="disco-still" data-disco-still hidden>
@@ -62,29 +39,17 @@
     </article>
 
     <nav class="preview-nav" aria-label="Presentatiebediening" data-i18n-aria-label="presentationControls">
+      <span class="slide-chip">Slide <strong data-current-slide></strong> / <span data-total-slides></span></span>
       <div class="nav-controls">
         <button id="btn-presenter-prev" class="btn btn--nav" type="button"><span aria-hidden="true">&#8592;</span> <span data-i18n="previous">Vorige</span></button>
         <button id="btn-presenter-next" class="btn btn--primary btn--nav" type="button"><span data-i18n="next">Volgende</span> <span aria-hidden="true">&#8594;</span></button>
+        <button id="btn-presenter-skip" class="btn btn--quiet btn--nav" type="button" data-i18n="skipOneSlide" data-i18n-title="skipOneSlideHint" title="Eerst klikken om te activeren, dan nogmaals om één slide over te slaan">Sla over</button>
       </div>
     </nav>
 
     <article class="panel preview-card preview-card--next">
-      <header class="panel-header">
-        <div>
-          <span class="panel-kicker" data-i18n="upNext">Hierna</span>
-          <h2 data-i18n="nextSlide">Volgende slide</h2>
-        </div>
-        <span class="slide-chip slide-chip--next">Slide <strong data-pending-next-slide></strong></span>
-      </header>
       <div class="preview-viewport">
         <iframe id="next-preview" src="index.html?embed=preview" class="preview-frame" title="Voorbeeld van de volgende slide" data-i18n-title="nextPreviewTitle"></iframe>
-      </div>
-      <div class="skip-controls">
-        <span data-i18n="prepareOtherSlide">Andere slide klaarzetten?</span>
-        <div>
-          <button id="btn-presenter-herstel" class="btn btn--quiet" type="button" data-i18n="restore">Herstel</button>
-          <button id="btn-presenter-skip" class="btn" type="button" data-i18n="skipOneSlide">Sla één slide over</button>
-        </div>
       </div>
     </article>
   </section>
@@ -92,10 +57,7 @@
   <section class="detail-grid">
     <article class="panel notes-panel">
       <header class="panel-header panel-header--compact">
-        <div>
-          <span class="panel-kicker" data-i18n="onlyForYou">Alleen voor jou</span>
-          <h2 data-i18n="speakerNotes">Sprekersnotities</h2>
-        </div>
+        <span class="panel-kicker" data-i18n="speakerNotes">Sprekersnotities</span>
       </header>
       <div id="presenter-notes" class="presenter-notes"></div>
     </article>
@@ -126,11 +88,27 @@
           </button>
         </div>
       </section>
+
+      <div class="header-timer" aria-label="Presentatietijd" data-i18n-aria-label="presentationTiming">
+        <div class="elapsed-block">
+          <span class="meta-label" data-i18n="timerLabel">Resterende tijd</span>
+          <input type="text" class="elapsed" data-elapsed inputmode="numeric" autocomplete="off"
+            aria-label="Tijdsduur instellen (MM:SS of minuten), alleen als de timer niet loopt"
+            data-i18n-aria-label="setTimerDuration">
+        </div>
+        <div class="timer-controls" aria-label="Timerbediening" data-i18n-aria-label="timerControls">
+          <button id="btn-presenter-timer-toggle" class="btn btn--primary" type="button" data-i18n="start">Start</button>
+          <button id="btn-presenter-timer-reset" class="btn btn--quiet" type="button" data-i18n="reset">Reset</button>
+        </div>
+        <div class="clock-block">
+          <span class="meta-label" data-i18n="currentTime">Huidige tijd</span>
+          <time class="clock clock--compact" data-clock></time>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 
-<script src="config.js"></script>
 <script src="slides-data.js"></script>
 <script src="presenter.js"></script>
 </body>

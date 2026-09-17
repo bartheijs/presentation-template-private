@@ -269,7 +269,7 @@ test.describe('interrupted transitions (resetAnimationState)', () => {
     // slides around.
     const targetIndex = await page.evaluate(() => {
       for (let i = 0; i < SLIDES.length - 1; i++) {
-        const plain = (s) => !isDiscoEnabledFor(s) && !s.isTemplateAnchor;
+        const plain = (s) => !isDiscoEnabledFor(s) && s.layout !== 'template-reference';
         if (plain(SLIDES[i]) && plain(SLIDES[i + 1])) return i;
       }
       return -1;
