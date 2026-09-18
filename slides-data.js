@@ -207,7 +207,7 @@ node -v
     align: 'left',
     bullets: [
       '`src/<WidgetName>.xml` — configuratie die Studio Pro leest',
-      '`src/<WidgetName>.tsx` — de widget-code zelf',
+      '`src/<WidgetName>.tsx` — widget root component',
       '`src/ui/<WidgetName>.css` — de widget css styling',
       '`src/componenten/..` — de ui componenten (widgets) van de widget',
       '`typings/` — automatisch gegenereerd uit de XML; nooit aanpassen',
@@ -221,10 +221,10 @@ node -v
     icon: 'layers',
     align: 'left',
     bullets: [
-      '`editorConfig.ts` — Structure mode + zichtbaarheid van properties',
+      '`editorConfig.ts` — Zichtbaarheid van properties in widget-configuratie & custom error messages',
       '`editorPreview.tsx` — Design mode-preview, alleen voor web-widgets',
       '`package.json` — naam, versie, afhankelijkheden en build-instellingen',
-      'Widget-icoon: PNG’s in de projectroot volgens naamconventie',
+      '`Widget-icoon`: PNG’s in de projectroot volgens naamconventie',
       '`npm start` / `npm run build` / `npm run release`',
       '`dist/` — hier landt het uiteindelijke `.mpk`-bestand (auto update in widget map)',
     ],
@@ -381,7 +381,7 @@ node -v
     // stays visible for as long as the slide is shown, arriving and leaving
     // via the ordinary slide transition like any other slide.
     discoSlide: true,
-    discoTitleLines: ['GO', 'MAKE', 'IT!'],
+    discoTitleLines: ['GO', 'mAIke', 'IT!'],
     notes: ``,
     duration: 20,
   },
