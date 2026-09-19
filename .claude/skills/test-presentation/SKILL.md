@@ -69,6 +69,15 @@ Bash (om `npm`/`npx playwright` te draaien). Geen MCP of sub-agents nodig.
      `renderTemplateReferenceLayout`) in `app.js`, of `.slide-inner`/
      `.slide-content--align-left`/`.slide-bullet-*`/`.slide-quote-*`/
      `.slide-image-stack--solo`/de 900px-breakpoint in `styles.css`.
+   - `tests/quiz.spec.js` faalt → `renderQuizLayout`/`getQuizState`/
+     `quizItemsFor`/`getQuizBroadcastPayload`/de `QUIZ_*`-commands in
+     `COMMAND_HANDLERS`/`openQuizExplanation`/`closeQuizExplanation` in
+     `app.js`; voor de cockpit specifiek → `renderQuizCockpit`/
+     `buildQuizCockpitRow` (let op: Uitleg is een `aria-pressed`-toggle,
+     geen aparte terug-knop) in `presenter.js`, of `.quiz-roster*`/
+     `.overlay-panel--wide` in `styles.css`/`.quiz-cockpit*` in
+     `presenter.css`. Zie
+     `docs/superpowers/specs/2026-09-18-quiz-slide-design.md`.
    - `tests/notes-resize.spec.js` faalt → de `flex-grow`-transitie op
      `.slide-content` en de `stage-no-notes`-regel in `styles.css`.
    - `tests/notes-toggle.spec.js` faalt → `toggleNotesVisibility`/

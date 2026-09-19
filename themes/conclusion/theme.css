@@ -117,7 +117,16 @@
  * needed (see .slide-content's own explicit `color: var(--text)` in
  * styles.css, required for this to reach descendants that don't set their
  * own color). */
-:root[data-theme="conclusion"] .slide-content {
+/* .overlay-panel--wide (the quiz explanation overlay, see index.html/
+ * app.js openQuizExplanation()) reuses this same buildSlideContentHTML()
+ * output outside .slide-content itself, so it needs the identical
+ * white-surface rescoping to read correctly — scoped on the *panel*
+ * (not just its #quiz-explanation-body content) so the panel's own
+ * background picks up the white --surface too, not just its descendants'
+ * text/border colors. Without this it would render colors tuned for a
+ * white background (e.g. the blue heading) on the dark tool-UI panel. */
+:root[data-theme="conclusion"] .slide-content,
+:root[data-theme="conclusion"] .overlay-panel--wide {
   --bg: #FFFFFF;
   --surface: #FFFFFF;
   --surface-alt: #F2F2F2;

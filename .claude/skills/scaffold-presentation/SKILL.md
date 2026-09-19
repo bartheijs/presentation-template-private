@@ -59,10 +59,12 @@ slidevolgorde of technische presentatie-instellingen zijn niet vereist.
 6. Schrijf de presentatie naar `config.js` en `slides-data.js`, als classic
    scripts zonder `import`/`export`. Laat `app.js` en `styles.css` intact voor
    gewone inhoudswijzigingen. Geef elke slide een expliciete `layout`
-   (`'title'`, `'bullets'`, `'list-image'`, `'quote'`, `'image-only'` of
-   `'template-reference'` — zie de README's "Slidegegevens" en
+   (`'title'`, `'bullets'`, `'list-image'`, `'quote'`, `'image-only'`,
+   `'quiz'` of `'template-reference'` — zie de README's "Slidegegevens" en
    `slides-data.js`'s koptekst) in plaats van dit impliciet uit andere velden
-   af te leiden.
+   af te leiden. Gebruik `'quiz'` alleen wanneer de gebruiker expliciet een
+   quiz-, "Slimste Mens"- of pubquiz-achtige onderbreking vraagt — het is
+   geen algemene lijst-layout.
 7. Gebruik alleen iconen die als `<symbol id="icon-...">` in `index.html`
    bestaan. Ontbreekt een inhoudelijk noodzakelijk icoon, voeg dan één nieuw
    symbol aan die sprite toe en meld dit. Gebruik altijd één van deze
@@ -84,14 +86,23 @@ heeft minimaal:
 ```
 
 `layout` is verplicht en is één van `'title'`, `'bullets'`, `'list-image'`,
-`'quote'`, `'image-only'` of `'template-reference'` — kies de layout die bij
-de inhoud van die slide past, niet standaard overal `'bullets'`. Ondersteunde
-opties zijn onder meer `icon`, `subtitle`, `meta`, `image`, `quote`,
-`attribution`, `align`, `disco`, `discoMode`, `discoHoldMs`,
-`discoTitleLines`, `templateSection` en `duration`. Bullets mogen strings
-zijn of `{ text, subtext }`-objecten. Voeg alleen opties toe die het
-verhaal of de presentatie daadwerkelijk helpen; stel de technische keuzes
-niet als vragen aan de gebruiker wanneer een verstandige default volstaat.
+`'quote'`, `'image-only'`, `'quiz'` of `'template-reference'` — kies de
+layout die bij de inhoud van die slide past, niet standaard overal
+`'bullets'`. Ondersteunde opties zijn onder meer `icon`, `subtitle`, `meta`,
+`image`, `quote`, `attribution`, `align`, `disco`, `discoMode`,
+`discoHoldMs`, `discoTitleLines`, `templateSection` en `duration`. Bullets
+mogen strings zijn of `{ text, subtext }`-objecten. Voeg alleen opties toe
+die het verhaal of de presentatie daadwerkelijk helpen; stel de technische
+keuzes niet als vragen aan de gebruiker wanneer een verstandige default
+volstaat.
+
+`'quiz'` heeft in plaats van `bullets` een `items`-array (1-10 entries,
+zie README/`slides-data.js`): `{ id, label, answer, explanation }` per
+item, waarbij `explanation` weer een genest content-object is
+(`layout`/`title`/`bullets`/`image`/`align`, dezelfde velden als een
+gewone slide-body). Onthulling en uitleg lopen volledig via Presenter
+View's cockpit, niet via Volgende/Vorige — zie
+`docs/superpowers/specs/2026-09-18-quiz-slide-design.md`.
 
 Schat voor iedere slide ook een `duration` (seconden, presenter-only) in —
 gebaseerd op het aantal woorden in bullets plus notes en een spreektempo

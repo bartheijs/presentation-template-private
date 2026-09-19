@@ -46,9 +46,10 @@ van inhoud kan leiden.
    en meld dit. Combineer een icoon alleen met volledig links uitgelijnde
    inhoud; een gecentreerde titel heeft geen icoon.
 8. Controleer iedere toegevoegde of gewijzigde slide op een geldige `id` en
-   `layout` (`'title'`, `'bullets'`, `'list-image'`, `'quote'`, `'image-only'`
-   of `'template-reference'`), niet-lege `title`, `bullets`-array en
-   `notes`-string. Test de presentatie
+   `layout` (`'title'`, `'bullets'`, `'list-image'`, `'quote'`, `'image-only'`,
+   `'quiz'` of `'template-reference'`), niet-lege `title`, `bullets`-array
+   (bij `'quiz'`: een `items`-array in plaats van `bullets`, zie
+   README/`slides-data.js`) en `notes`-string. Test de presentatie
    daarna volgens `.claude/skills/test-presentation/SKILL.md` en bekijk de
    gewijzigde slides visueel.
 

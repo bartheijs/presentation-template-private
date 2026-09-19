@@ -21,6 +21,7 @@ const PRESENTER_I18N = {
     setTimerDuration: 'Tijdsduur instellen (MM:SS of minuten), alleen als de timer niet loopt',
     previous: 'Vorige', next: 'Volgende', noNotes: 'Geen notities voor deze slide.',
     on: 'Aan', off: 'Uit', discoStillLabel: 'Dit ziet je publiek nu — een still, niet live',
+    quizShow: 'Toon', quizHide: 'Verberg', quizExplain: 'Uitleg', quizCloseExplain: 'Sluit uitleg',
   },
   en: {
     presenterMode: 'Presenter mode', connected: 'Connected',
@@ -39,6 +40,7 @@ const PRESENTER_I18N = {
     setTimerDuration: 'Set the duration (MM:SS or minutes) — only while the timer is not running',
     previous: 'Previous', next: 'Next', noNotes: 'No notes for this slide.',
     on: 'On', off: 'Off', discoStillLabel: 'This is what your audience sees now — a still, not live',
+    quizShow: 'Show', quizHide: 'Hide', quizExplain: 'Explain', quizCloseExplain: 'Close explanation',
   },
 };
 
@@ -184,6 +186,10 @@ function currentFlags() {
     leftAsideVisible: latestState.leftAsideVisible,
     rightAsideVisible: latestState.rightAsideVisible,
     pauseOverlayVisible: latestState.pauseOverlayVisible,
+    // The current-preview iframe is a separate app.js instance with its own
+    // independent quiz reveal state — mirrored here so it's an exact replica
+    // of what the audience sees, same rationale as the other flags above.
+    quiz: latestState.quiz,
   };
 }
 
@@ -197,6 +203,10 @@ function nextPreviewFlags() {
   return Object.assign(currentFlags(), {
     contextOverlayVisible: false,
     pauseOverlayVisible: false,
+    // latestState.quiz belongs to the CURRENT slide, not whatever this
+    // iframe is showing as "next" — never mirror it here, only onto
+    // current-preview via currentFlags() above.
+    quiz: null,
   });
 }
 
@@ -268,6 +278,87 @@ function renderDiscoStill(lines) {
   );
 }
 
+// Quiz cockpit — replaces the next-slide preview panel while the CURRENT
+// slide is a quiz slide (there's nothing meaningful to preview as "next"
+// mid-quiz; see docs/superpowers/specs/2026-09-18-quiz-slide-design.md).
+// Item content (label/answer) is read locally from SLIDES, the same way
+// the notes panel already reads slide.notes locally — only ids/status
+// travel over postMessage.
+const nextPreviewViewportEl = document.getElementById('next-preview-viewport');
+const quizCockpitEl = document.getElementById('quiz-cockpit');
+const quizCockpitListEl = document.getElementById('quiz-cockpit-list');
+
+// The item list always stays visible, including while an explanation is
+// open — Uitleg is a per-item toggle (aria-pressed), not a separate
+// "back to list" step, so there's always exactly one obvious way back:
+// click the same button again.
+function buildQuizCockpitRow(item, status, isExplaining) {
+  const li = document.createElement('li');
+  li.className = 'quiz-cockpit-item';
+  li.dataset.status = status;
+
+  const dot = document.createElement('span');
+  dot.className = 'quiz-cockpit-dot';
+  dot.setAttribute('aria-hidden', 'true');
+  li.appendChild(dot);
+
+  const label = document.createElement('span');
+  label.className = 'quiz-cockpit-label';
+  label.textContent = `${item.label} — ${item.answer}`;
+  li.appendChild(label);
+
+  const actions = document.createElement('div');
+  actions.className = 'quiz-cockpit-actions';
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'btn btn--quiet btn--small';
+  toggleBtn.dataset.quizAction = status === 'shown' ? 'hide' : 'reveal';
+  toggleBtn.dataset.quizItem = item.id;
+  toggleBtn.textContent = status === 'shown' ? presenterText.quizHide : presenterText.quizShow;
+  actions.appendChild(toggleBtn);
+
+  const explainBtn = document.createElement('button');
+  explainBtn.type = 'button';
+  explainBtn.className = 'btn btn--quiet btn--small';
+  explainBtn.setAttribute('aria-pressed', String(isExplaining));
+  explainBtn.dataset.quizAction = isExplaining ? 'close-explain' : 'explain';
+  explainBtn.dataset.quizItem = item.id;
+  explainBtn.textContent = isExplaining ? presenterText.quizCloseExplain : presenterText.quizExplain;
+  actions.appendChild(explainBtn);
+
+  li.appendChild(actions);
+  return li;
+}
+
+function renderQuizCockpit(quiz) {
+  const active = Boolean(quiz);
+  nextPreviewViewportEl.hidden = active;
+  quizCockpitEl.hidden = !active;
+  if (!active) return;
+
+  const slide = SLIDES.find((s) => s.id === quiz.slideId);
+  const items = slide && Array.isArray(slide.items) ? slide.items : [];
+  const statusById = new Map(quiz.items.map((entry) => [entry.id, entry.status]));
+
+  quizCockpitListEl.replaceChildren(
+    ...items.map((item) => buildQuizCockpitRow(item, statusById.get(item.id) || 'hidden', item.id === quiz.explanationItemId))
+  );
+}
+
+// Delegated (one listener for the whole dynamically-rebuilt list) rather
+// than per-row, since renderQuizCockpit() replaces every row on each state
+// broadcast — matches app.js's own TOC click-delegation pattern.
+quizCockpitListEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-quiz-action]');
+  if (!btn) return;
+  const itemId = btn.dataset.quizItem;
+  if (btn.dataset.quizAction === 'reveal') sendCommand('QUIZ_REVEAL', { itemId });
+  else if (btn.dataset.quizAction === 'hide') sendCommand('QUIZ_HIDE', { itemId });
+  else if (btn.dataset.quizAction === 'explain') sendCommand('QUIZ_SHOW_EXPLANATION', { itemId });
+  else if (btn.dataset.quizAction === 'close-explain') sendCommand('QUIZ_BACK_TO_LIST');
+});
+
 function renderState(newState) {
   latestState = newState;
   presenterMainEl.hidden = false;
@@ -281,6 +372,7 @@ function renderState(newState) {
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());
   syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
+  renderQuizCockpit(newState.quiz);
 
   document.getElementById('presenter-notes').textContent = SLIDES[newState.currentSlide].notes || '';
 }

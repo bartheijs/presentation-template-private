@@ -306,6 +306,83 @@ input:focus-visible {
   pointer-events: none;
 }
 
+/* Quiz cockpit — replaces the next-slide iframe preview in
+   .preview-card--next while the current slide is a quiz slide (see
+   docs/superpowers/specs/2026-09-18-quiz-slide-design.md). Sized like
+   .preview-viewport's box so the panel doesn't jump in height when the two
+   swap via presenter.js's renderQuizCockpit(). */
+.quiz-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.quiz-cockpit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow: auto;
+}
+
+.quiz-cockpit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.quiz-cockpit-dot {
+  flex: 0 0 auto;
+  width: 0.62rem;
+  height: 0.62rem;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  background: transparent;
+}
+.quiz-cockpit-item[data-status="shown"] .quiz-cockpit-dot {
+  border-color: var(--accent-3);
+  background: var(--accent-3);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-3) 16%, transparent);
+}
+
+.quiz-cockpit-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.quiz-cockpit-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.btn--small {
+  min-height: 1.9rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.72rem;
+}
+
+/* Uitleg is a per-item toggle (aria-pressed), not a separate back step —
+   this highlights whichever item's explanation is currently open. */
+.quiz-cockpit-actions button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent-4) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent-4) 16%, var(--surface));
+  color: var(--text);
+}
+
 .notes-panel {
   display: flex;
   flex-direction: column;

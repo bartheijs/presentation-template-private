@@ -165,6 +165,19 @@
   </div>
 </div>
 
+<!-- Quiz item explanation (layout: 'quiz') — an overlay over the roster,
+     same pattern as #template-overlay above, so the roster underneath is
+     never rebuilt/replaced while it's open (see openQuizExplanation() /
+     docs/superpowers/specs/2026-09-18-quiz-slide-design.md). -->
+<div class="overlay-backdrop" id="quiz-explanation-overlay" hidden>
+  <div class="overlay-panel overlay-panel--wide" role="dialog" aria-modal="true">
+    <button class="overlay-close" id="btn-quiz-explanation-close" type="button">
+      <svg class="icon"><use href="#icon-close"></use></svg>
+    </button>
+    <div class="overlay-body" id="quiz-explanation-body"></div>
+  </div>
+</div>
+
 <div class="finish-overlay" id="finish-overlay" hidden>
   <button class="overlay-close" id="btn-finish-close" type="button">
     <svg class="icon"><use href="#icon-close"></use></svg>
