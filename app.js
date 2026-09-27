@@ -176,7 +176,10 @@ function renderNotesHTML(notesText) {
 
 /* ---------- State ---------- */
 
-const state = { currentIndex: 0 };
+// state.quiz is keyed by slide id (not index — a quiz slide's id is stable
+// even if slides are reordered) and lazily populated by getQuizState() the
+// first time each quiz slide is reached; see renderQuizLayout() below.
+const state = { currentIndex: 0, quiz: {} };
 
 const slideStageEl = document.getElementById('slide-stage');
 const slideContentEl = document.getElementById('slide-content');
@@ -187,6 +190,8 @@ const overlayEl = document.getElementById('template-overlay');
 const overlayBodyEl = document.getElementById('overlay-body');
 const finishOverlayEl = document.getElementById('finish-overlay');
 const pauseOverlayEl = document.getElementById('pause-overlay');
+const quizExplanationOverlayEl = document.getElementById('quiz-explanation-overlay');
+const quizExplanationBodyEl = document.getElementById('quiz-explanation-body');
 
 /* ---------- Rendering ---------- */
 
@@ -364,6 +369,55 @@ function renderTemplateReferenceLayout(slide) {
     ${buildMetaBlock(slide)}`;
 }
 
+// Requires `items: [{ id, label, answer, explanation }]`, 1..MAX_QUIZ_ITEMS
+// entries at fixed positions (no reshuffling as items get revealed). See
+// docs/superpowers/specs/2026-09-18-quiz-slide-design.md. Reveal/explanation
+// state lives in state.quiz (keyed by slide.id), driven exclusively by
+// Presenter View's cockpit over the existing postMessage command channel —
+// this renderer only ever reads it, never mutates it.
+const MAX_QUIZ_ITEMS = 10;
+
+function getQuizState(slide) {
+  const key = String(slide.id);
+  if (!state.quiz[key]) state.quiz[key] = { revealed: {}, explanationItemId: null };
+  return state.quiz[key];
+}
+
+function quizItemsFor(slide) {
+  const items = Array.isArray(slide.items) ? slide.items : [];
+  if (items.length > MAX_QUIZ_ITEMS) {
+    console.warn(`Quiz slide "${slide.title || slide.id}" has ${items.length} items — only the first ${MAX_QUIZ_ITEMS} are shown.`);
+  }
+  return items.slice(0, MAX_QUIZ_ITEMS);
+}
+
+// grid-auto-flow: column (styles.css) fills the first column top-to-bottom
+// before spilling into a second one, so ≤5 items sit in one column and
+// 6-10 split 5-left/5-right without this renderer doing the split itself.
+function renderQuizRosterBlock(slide, quizState) {
+  const items = quizItemsFor(slide);
+  return `<ol class="quiz-roster">${items.map((item) => {
+    const isRevealed = Boolean(quizState.revealed[item.id]);
+    const text = isRevealed ? (item.answer || '') : (item.label || '');
+    return `<li class="quiz-roster-item${isRevealed ? ' is-revealed' : ''}">${escapeHtml(text)}</li>`;
+  }).join('')}</ol>`;
+}
+
+// The roster is always the slide's own content — an open explanation is a
+// separate overlay (#quiz-explanation-overlay, see openQuizExplanation()
+// below), never a replacement of this HTML. That way the roster/reveal
+// state is never rebuilt while an explanation is open, so it can't
+// possibly appear reset when the explanation closes again.
+function renderQuizLayout(slide) {
+  const quizState = getQuizState(slide);
+  return `
+    <div class="slide-inner">
+      ${buildHeadingBlock(slide)}
+      ${renderQuizRosterBlock(slide, quizState)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
 const LAYOUT_RENDERERS = {
   title: renderTitleLayout,
   bullets: renderBulletsLayout,
@@ -372,6 +426,7 @@ const LAYOUT_RENDERERS = {
   'image-only': renderImageOnlyLayout,
   'icon-grid': renderIconGridLayout,
   'template-reference': renderTemplateReferenceLayout,
+  quiz: renderQuizLayout,
 };
 
 function buildSlideContentHTML(slide) {
@@ -591,6 +646,11 @@ function goTo(index, { animate = false, direction = null } = {}) {
   // button to close the overlay, unlike the local keyboard handler's own
   // guard) should still close the celebration on its way there.
   if (!finishOverlayEl.hidden) closeFinishOverlay();
+  // The quiz explanation overlay (see openQuizExplanation()) is a fixed,
+  // slide-independent element — without this it would keep floating on
+  // top of whatever slide comes next instead of closing with the quiz
+  // slide it belongs to.
+  if (!quizExplanationOverlayEl.hidden) closeQuizExplanation();
 
   const dir = direction || (index > state.currentIndex ? 'next' : 'prev');
 
@@ -1286,6 +1346,27 @@ function closeTemplateOverlay() {
   sendStateToPresenter();
 }
 
+// Only ever opened/closed from Presenter View's cockpit (QUIZ_SHOW_EXPLANATION/
+// QUIZ_BACK_TO_LIST below) — the close button/backdrop click here exist for
+// visual consistency with the other overlays, not as a normal audience path.
+function openQuizExplanation(itemId) {
+  const slide = SLIDES[state.currentIndex];
+  if (slide.layout !== 'quiz') return;
+  const item = quizItemsFor(slide).find((i) => i.id === itemId);
+  if (!item) return;
+  getQuizState(slide).explanationItemId = itemId;
+  quizExplanationBodyEl.innerHTML = buildSlideContentHTML(item.explanation || {});
+  quizExplanationOverlayEl.hidden = false;
+  sendStateToPresenter();
+}
+
+function closeQuizExplanation() {
+  const quizState = currentQuizState();
+  if (quizState) quizState.explanationItemId = null;
+  quizExplanationOverlayEl.hidden = true;
+  sendStateToPresenter();
+}
+
 document.getElementById('btn-template').addEventListener('click', openTemplateOverlay);
 document.getElementById('btn-toggle-notes').addEventListener('click', toggleNotesVisibility);
 document.getElementById('btn-toc-collapse').addEventListener('click', toggleTocCollapse);
@@ -1293,6 +1374,10 @@ document.getElementById('btn-next-collapse').addEventListener('click', toggleNex
 document.getElementById('btn-overlay-close').addEventListener('click', closeTemplateOverlay);
 overlayEl.addEventListener('click', (e) => {
   if (e.target === overlayEl) closeTemplateOverlay();
+});
+document.getElementById('btn-quiz-explanation-close').addEventListener('click', closeQuizExplanation);
+quizExplanationOverlayEl.addEventListener('click', (e) => {
+  if (e.target === quizExplanationOverlayEl) closeQuizExplanation();
 });
 
 /* ---------- Finish celebration overlay ---------- */
@@ -1340,6 +1425,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!finishOverlayEl.hidden) closeFinishOverlay();
   else if (!overlayEl.hidden) closeTemplateOverlay();
+  else if (!quizExplanationOverlayEl.hidden) closeQuizExplanation();
   else if (isPauseOverlayVisible()) hidePauseOverlay();
 });
 
@@ -1432,6 +1518,14 @@ if (!isEmbedPreview) {
 // with an inherited Object.prototype member (e.g. "toString") looks up to
 // undefined instead of resolving to a truthy inherited function, so the
 // `if (!handler) return;` check below correctly rejects it.
+// Quiz commands never carry a slideId — a cockpit only ever controls
+// whichever slide is currently on screen, mirroring how GO_TO_SLIDE etc.
+// already operate on state.currentIndex rather than an explicit target.
+function currentQuizState() {
+  const slide = SLIDES[state.currentIndex];
+  return slide.layout === 'quiz' ? getQuizState(slide) : null;
+}
+
 const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   NEXT_SLIDE: () => goNext(),
   PREVIOUS_SLIDE: () => goPrev(),
@@ -1439,6 +1533,20 @@ const COMMAND_HANDLERS = Object.assign(Object.create(null), {
     const slide = Number(data.slide);
     if (Number.isInteger(slide)) goTo(slide, { animate: false });
   },
+  QUIZ_REVEAL: (data) => {
+    const quizState = currentQuizState();
+    if (!quizState) return;
+    quizState.revealed[data.itemId] = true;
+    renderSlide();
+  },
+  QUIZ_HIDE: (data) => {
+    const quizState = currentQuizState();
+    if (!quizState) return;
+    quizState.revealed[data.itemId] = false;
+    renderSlide();
+  },
+  QUIZ_SHOW_EXPLANATION: (data) => openQuizExplanation(data.itemId),
+  QUIZ_BACK_TO_LIST: () => closeQuizExplanation(),
   TOGGLE_CONTEXT_OVERLAY: () => (overlayEl.hidden ? openTemplateOverlay() : closeTemplateOverlay()),
   SHOW_CONTEXT_OVERLAY: () => openTemplateOverlay(),
   HIDE_CONTEXT_OVERLAY: () => closeTemplateOverlay(),
@@ -1488,6 +1596,25 @@ window.addEventListener('message', (e) => {
       if (isPauseOverlayVisible() !== e.data.pauseOverlayVisible) {
         e.data.pauseOverlayVisible ? showPauseOverlay() : hidePauseOverlay();
       }
+      // This iframe is a separate app.js instance with its own independent
+      // state.quiz — GO_TO_SLIDE alone can't carry reveal/explanation state,
+      // so it's mirrored here exactly like the boolean flags above, then
+      // re-rendered so it actually reflects what the audience screen shows.
+      // The explanation overlay is a separate DOM element from the roster
+      // (see openQuizExplanation()), so it's mirrored explicitly too, not
+      // just picked up by renderSlide().
+      if (e.data.quiz) {
+        const revealed = {};
+        e.data.quiz.items.forEach((item) => { revealed[item.id] = item.status === 'shown'; });
+        const slide = SLIDES[state.currentIndex];
+        state.quiz[String(e.data.quiz.slideId)] = { revealed, explanationItemId: e.data.quiz.explanationItemId };
+        renderSlide();
+        const explanationItem = e.data.quiz.explanationItemId
+          ? quizItemsFor(slide).find((item) => item.id === e.data.quiz.explanationItemId)
+          : null;
+        quizExplanationOverlayEl.hidden = !explanationItem;
+        quizExplanationBodyEl.innerHTML = explanationItem ? buildSlideContentHTML(explanationItem.explanation || {}) : '';
+      }
       return;
     }
     if (e.data.type === 'command' && e.data.command === 'GO_TO_SLIDE') {
@@ -1511,6 +1638,23 @@ window.addEventListener('message', (e) => {
   sendStateToPresenter();
 });
 
+// null when the current slide isn't a quiz; otherwise only ids/status
+// travel over postMessage — Presenter View already has item labels/answers
+// locally from its own SLIDES (same pattern as speaker notes today).
+function getQuizBroadcastPayload() {
+  const slide = SLIDES[state.currentIndex];
+  if (slide.layout !== 'quiz') return null;
+  const quizState = getQuizState(slide);
+  return {
+    slideId: slide.id,
+    items: quizItemsFor(slide).map((item) => ({
+      id: item.id,
+      status: quizState.revealed[item.id] ? 'shown' : 'hidden',
+    })),
+    explanationItemId: quizState.explanationItemId,
+  };
+}
+
 function sendStateToPresenter() {
   if (!presenterRef || presenterRef.closed) return;
   // targetOrigin '*' is deliberate: file:// pages have opaque origins, so
@@ -1530,6 +1674,7 @@ function sendStateToPresenter() {
       // ordinary non-disco transition. Presenter View shows this as a still
       // (the title text on a disco-colored card), not a live mirror.
       discoTitleLines: activeDiscoTitleLines,
+      quiz: getQuizBroadcastPayload(),
     },
     '*'
   );

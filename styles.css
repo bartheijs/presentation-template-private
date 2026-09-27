@@ -814,6 +814,39 @@ button {
   color: var(--text-muted);
 }
 
+/* Quiz roster (layout: 'quiz', see app.js renderQuizLayout) — fixed
+   positions, no reshuffling as items get revealed. grid-auto-flow: column
+   with 5 rows fills the left column top-to-bottom first, so ≤5 items sit
+   in one column and 6-10 split 5-left/5-right without any JS involved. */
+.quiz-roster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-rows: repeat(5, auto);
+  grid-auto-flow: column;
+  column-gap: 3rem;
+  row-gap: 0.9rem;
+  width: 100%;
+}
+.quiz-roster-item {
+  padding: 0.75rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: var(--font-bullet);
+  font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+  font-weight: 700;
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.quiz-roster-item.is-revealed {
+  border-color: color-mix(in srgb, var(--accent-3) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent-3) 12%, var(--surface));
+  color: var(--text);
+}
+
 .slide-template-code {
   margin: 0.5rem 0 0;
   width: 100%;
@@ -1071,6 +1104,18 @@ button {
   color: var(--text);
 }
 .overlay-close:hover { background: var(--accent); color: #fff; }
+
+/* Quiz explanation overlay reuses slide-content classes (.slide-heading,
+   .slide-bullets, ...) sized for the full slide stage — a wider panel than
+   the default 720px keeps that text from looking cramped in a modal. */
+.overlay-panel--wide { max-width: 900px; }
+.overlay-panel--wide .slide-inner { width: 100%; text-align: left; align-items: flex-start; }
+.overlay-panel--wide .slide-heading { justify-content: flex-start; margin-bottom: 1.5rem; padding-bottom: 0; }
+/* Explicit rather than left to inherit from body — same reasoning as
+   .slide-content's own `color: var(--text)` above: a theme that rescopes
+   --text locally here (see themes/conclusion/theme.css's .overlay-panel--wide
+   rule) needs this so descendant bullets/headings actually pick it up. */
+.overlay-panel--wide { color: var(--text); }
 
 .template-code {
   margin: 0;

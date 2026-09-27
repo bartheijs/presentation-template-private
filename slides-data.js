@@ -16,6 +16,10 @@
  * - 'image-only': heading + one dominant image, no bullets
  * - 'template-reference': shows the Presentatiebrief content inline on the
  *   slide itself (legacy internal use)
+ * - 'quiz': a "Slimste Mens"-style roster of up to 10 items (see
+ *   `items` below), revealed one by one from Presenter View's cockpit —
+ *   never via Volgende/Vorige. See
+ *   docs/superpowers/specs/2026-09-18-quiz-slide-design.md.
  *
  * Other optional fields:
  * - icon: name from the SVG sprite in index.html. Use icons only on
@@ -35,6 +39,12 @@
  * - templateSection: highlights one Presentatiebrief section when the
  *   overlay is opened from this slide (independent of `layout`)
  * - bullets may be strings or { text, subtext } objects
+ * - items: [{ id, label, answer, explanation }] — 'quiz' layout only, 1-10
+ *   entries at fixed positions (no reshuffling as they're revealed).
+ *   `explanation` is a nested slide-content object (same fields as a
+ *   regular slide's body: layout/title/bullets/image/align), shown via the
+ *   quizmaster's per-item "Uitleg" button without ever becoming its own
+ *   addressable slide.
  */
 
 // Generic reference content shown by the "Presentatiebrief" overlay.
@@ -373,5 +383,63 @@ Tot slot: sluit af met de brug naar de volgende slide — vanaf hier bouwt de pr
       'AI regelt structuur, vormgeving en techniek',
     ],
     notes: `Dit is voldoende om te starten. Extra wensen kunnen vooraf of als feedback op het eerste resultaat worden toegevoegd.`,
+  },
+  {
+    id: 21,
+    layout: 'quiz',
+    title: 'Noem 5 huisdieren',
+    items: [
+      {
+        id: 'p1',
+        label: '1',
+        answer: 'Hond',
+        explanation: {
+          layout: 'bullets',
+          title: 'Hond',
+          bullets: ['Meest gehouden huisdier van Nederland', 'Gemiddeld zo’n 1,5 miljoen honden per huishouden-telling'],
+        },
+      },
+      {
+        id: 'p2',
+        label: '2',
+        answer: 'Kat',
+        explanation: {
+          layout: 'bullets',
+          title: 'Kat',
+          bullets: ['Nederland telt meer katten dan honden', 'Katten slapen gemiddeld 12 tot 16 uur per dag'],
+        },
+      },
+      {
+        id: 'p3',
+        label: '3',
+        answer: 'Vis',
+        explanation: {
+          layout: 'bullets',
+          title: 'Vis',
+          bullets: ['Een aquarium telt als huisdier, ongeacht het aantal vissen erin', 'Goudvissen kunnen tientallen jaren oud worden'],
+        },
+      },
+      {
+        id: 'p4',
+        label: '4',
+        answer: 'Konijn',
+        explanation: {
+          layout: 'bullets',
+          title: 'Konijn',
+          bullets: ['Konijnentanden blijven levenslang doorgroeien', 'Van oorsprong een prooidier — vandaar het schrikachtige gedrag'],
+        },
+      },
+      {
+        id: 'p5',
+        label: '5',
+        answer: 'Hamster',
+        explanation: {
+          layout: 'bullets',
+          title: 'Hamster',
+          bullets: ['Vult zijn wangzakken tot wel een derde van zijn lichaamsgewicht', 'Is van nature een nachtdier'],
+        },
+      },
+    ],
+    notes: `Dit is de 'quiz'-layout: vraag het publiek hardop "Noem 5 huisdieren" en onthul elk juist antwoord vanuit Presenter View's cockpit (rechterpaneel). Klik "Uitleg" voor een leuk weetje per dier — nogmaals klikken sluit het weer. Volgende/Vorige slaat deze onthullingen en uitleg volledig over.`,
   },
 ];

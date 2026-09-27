@@ -119,6 +119,10 @@ Elk object in `SLIDES` heeft minimaal:
   vooral bedoeld als specimen-/stijlslide.
 - `'template-reference'` — toont de Presentatiebrief-inhoud inline op de
   slide zelf (interne legacy-functie, was voorheen `isTemplateAnchor: true`).
+- `'quiz'` — een "Slimste Mens"-achtig rooster van 1 tot 10 items (`items`,
+  zie hieronder) dat de quizmaster één voor één onthult vanuit Presenter
+  View's cockpit, nooit via Volgende/Vorige. Zie
+  `docs/superpowers/specs/2026-09-18-quiz-slide-design.md`.
 
 Beide thema's (`default` en `conclusion`) gebruiken dezelfde layouts —
 alleen de kleuren verschillen per thema.
@@ -137,6 +141,14 @@ Ondersteunde optionele velden:
   donkere overlay overheen zodat titel/bullets leesbaar blijven.
 - `quote` en `attribution` — gebruikt door de `'quote'`-layout.
 - `items: [{ icon, label }]` — gebruikt door de `'icon-grid'`-layout.
+- `items: [{ id, label, answer, explanation }]` — gebruikt door de
+  `'quiz'`-layout, 1 tot 10 items op vaste posities (geen opschuiven van
+  lege plekken). `label` is de plaatshouder vóór onthulling (meestal het
+  volgnummer), `answer` verschijnt zodra de quizmaster het item toont.
+  `explanation` is een genest content-object met dezelfde velden als een
+  gewone slide-body (`layout`/`title`/`bullets`/`image`/`align`), getoond
+  via de "Uitleg"-knop in de cockpit zonder ooit een eigen navigeerbare
+  slide te worden.
 - `align: 'center' | 'left'` — override van `CONFIG.layout.align`.
 - `disco: true | false` — flashy transition per slide aan of uit.
 - `discoMode: 'auto' | 'pause'` — automatisch afspelen of bij vooruit
@@ -193,6 +205,10 @@ Combineer nooit een icoon met een gecentreerde titel.
   `'en'`).
 - Is Presenter View niet beschikbaar (bijv. het venster is gesloten), dan
   sluit `Esc` de pauze-overlay nog steeds vanuit de Presentatieweergave zelf.
+- Staat de huidige slide op `layout: 'quiz'`, dan vervangt een cockpit
+  (Toon/Verberg/Uitleg per item — Uitleg is zelf een toggle) de
+  volgende-slide-voorvertoning rechts — er valt toch niets zinvols te
+  previewen als "volgende slide" tijdens een quiz.
 
 ## Configuratie
 
