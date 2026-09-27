@@ -128,7 +128,7 @@ test.describe('config-driven UI strings', () => {
 // script in <head> (before styles.css/themes/conclusion/theme.css load, so
 // there's no flash of the wrong theme), the [data-theme="conclusion"] CSS
 // override winning over both the default :root block and the
-// prefers-color-scheme: dark block, the brand-chrome visibility/strings, and
+// prefers-color-scheme: dark block, the brand-chrome visibility, and
 // Presenter View inheriting the same computed colors.
 test.describe('theme system', () => {
   test('data-theme on <html> matches this deck\'s CONFIG.theme at load', async ({ page }) => {
@@ -172,28 +172,6 @@ test.describe('theme system', () => {
 
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'conclusion'));
     await expect(page.locator('#brand-chrome')).toBeVisible();
-  });
-
-  test('CONFIG.brand strings populate the chrome, blank by default', async ({ page }) => {
-    await gotoPresentation(page);
-    // Forced explicitly rather than assumed from this deck's own config.js —
-    // those strings are content, not an engine default, and are free to
-    // already be filled in here.
-    await page.evaluate(() => {
-      CONFIG.brand.businessUnit = '';
-      CONFIG.brand.tagline = '';
-      applyConfigStrings();
-    });
-    await expect(page.locator('#brand-chrome-business-unit')).toBeEmpty();
-    await expect(page.locator('#brand-chrome-tagline')).toBeEmpty();
-
-    await page.evaluate(() => {
-      CONFIG.brand.businessUnit = 'Low Code Company';
-      CONFIG.brand.tagline = 'Business done differently';
-      applyConfigStrings();
-    });
-    await expect(page.locator('#brand-chrome-business-unit')).toHaveText('Low Code Company');
-    await expect(page.locator('#brand-chrome-tagline')).toHaveText('Business done differently');
   });
 
   test('Presenter View resolves the same computed colors as the main window', async ({ page }) => {

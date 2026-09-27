@@ -149,6 +149,55 @@ testsuite bewust wat minder dekking heeft — precies zoals nu al voor
 
 ---
 
+## Skip-ahead in Presenter View: spec/tests beschrijven een feature die niet (meer) bestaat
+
+**Status:** gevonden tijdens het bouwen van de `HBO-Q&A`-presentatie
+(2026-09-27), nog niet opgelost. Gebruiker vermoedt dat dit eerder bewust is
+teruggedraaid.
+
+### Context
+
+`docs/superpowers/specs/2026-08-22-presenter-view-design.md` §8
+("Skip-ahead (`pendingNextSlide`)") beschrijft een presenter-only teller die
+oploopt bij elke klik op "Sla over", een aparte "Herstel"-knop die 'm
+terugzet, en "Volgende" die bevestigt met `GO_TO_SLIDE(pendingNextSlide)`.
+`tests/presenter-view.spec.js` (describe "skip-ahead and presenter-local
+back-to-jump-origin", regel 253 en 278) test precies dit gedrag, inclusief
+een `[data-pending-next-slide]`-element en een `#btn-presenter-herstel`-knop.
+
+Geen van beide bestaat in `presenter.js`/`presenter.html`. De huidige
+implementatie is een ouder, eenvoudiger patroon: "Sla over" eerst klikken om
+te "arm"-en (toont 4 seconden het +2-doel in de next-preview), een tweede
+klik binnen die tijd springt direct 2 slides vooruit. Geen teller, geen
+Herstel-knop. `lastJumpOriginIndex`/de Vorige-terugsprong-logica uit §5 van
+de spec bestaat wél al in `presenter.js`.
+
+Dit zorgt voor 2 falende tests op elke branch (`presenter-view.spec.js:253`
+en `:278`), ook op `main`/`develop` — bevestigd door de suite tegen de
+ongewijzigde main-content te draaien vóór de `HBO-Q&A`-content-wijzigingen.
+
+### Op te lossen (bij uitvoering te beslissen)
+
+Eerst uitzoeken wát er is gebeurd, dan pas bouwen/opruimen:
+- Is de `pendingNextSlide`/Herstel-feature ooit gebouwd en later bewust
+  vervangen door het simpelere arm-en-spring-2-patroon (gebruiker vermoedt
+  van wel)? Zo ja: de spec-sectie 8 en de twee tests zijn stale en horen
+  bijgewerkt/verwijderd te worden naar het huidige gedrag, niet andersom.
+- Of was dit een gepland maar nooit afgemaakt stuk werk? Zo ja: alsnog
+  bouwen volgens de spec (nieuwe `#btn-presenter-herstel`-knop in
+  `presenter.html`, `pendingNextSlide`-state en herziene Skip/Vorige-
+  afhandeling in `presenter.js`).
+
+### Kritieke bestanden (bij uitvoering)
+
+- `docs/superpowers/specs/2026-08-22-presenter-view-design.md` (§5 en §8).
+- `presenter.js`/`presenter.html` — skip-knop, eventuele Herstel-knop,
+  `lastJumpOriginIndex`/`pendingNextIndex()`.
+- `tests/presenter-view.spec.js` (describe "skip-ahead and presenter-local
+  back-to-jump-origin").
+
+---
+
 ## Generieke naamgeving: disco → flashyTransition, Skill Template → Reference overlay, timer-duidelijkheid
 
 **Status:** gepland, nog niet uitgevoerd. Uit te voeren ná de live-presentatie

@@ -47,399 +47,464 @@
  *   addressable slide.
  */
 
-// Generic reference content shown by the "Presentatiebrief" overlay.
-// The variable names are retained for backwards compatibility with app.js.
+// Reference content shown by the "Presentatiebrief" overlay for this
+// specific presentation (HvA gastles, ICT Deeltijd — BI-semester).
 const SKILL_TEMPLATE_MD = `PRESENTATIEBRIEF
 
 DOEL
-Wat moet deze presentatie bereiken?
+Tweedejaars studenten laten zien dat een IT-carrière niet lineair hoeft te
+verlopen, en hen aanmoedigen zelf stappen te zetten — mits in een veilige
+omgeving.
 
 PUBLIEK
-Wie zit er in de zaal en wat weten zij al?
+Tweedejaars studenten ICT Deeltijd (Business Intelligence-semester),
+kijkend vanuit de rollen AI Engineer, Digital Business Engineer of
+Security Specialist.
 
 KERNBOODSCHAP
-Wat moet het publiek vooral onthouden of doen?
+Je moet het zelf doen — maar dat kan alleen in een veilige omgeving.
 
 OPBOUW
-1. Opening: waarom dit belangrijk is
-2. Kernargument of leeropbouw
-3. Bewijs, voorbeeld of demonstratie
-4. Afsluiting: besluit, actie of toepassing
+1. Opener: polshoogte nemen bij de zaal
+2. Vast programma (~5 min): carrièrepad, Mendix/Low Code, AI in het werk
+3. Vraaggedeelte: het grootste deel van de tijd, "vraag mij alles"
+4. Afsluiting: kernboodschap, bemoediging, contact (LinkedIn)
 
 UITVOERING
-Duur, taal, toon en aanwijzingen voor de presentator.`;
+Duur 40-45 min, Nederlandstalig, persoonlijke/informele toon. Geen
+pep-talk-toon bij de kernboodschap. Ravijn-quote alleen als decoratief
+sfeerelement tijdens het vraaggedeelte, niet hardop voorlezen.`;
 
 const SKILL_TEMPLATE_SECTIONS = [
   {
     id: 'purpose',
     label: 'Doel',
     icon: 'target',
-    body: `## Doel\n[Wat moet deze presentatie bereiken?]`,
+    body: `## Doel\nTweedejaars studenten laten zien dat een IT-carrière niet lineair hoeft te verlopen, en hen aanmoedigen zelf stappen te zetten — mits in een veilige omgeving.`,
   },
   {
     id: 'audience',
     label: 'Publiek',
     icon: 'chat',
-    body: `## Publiek\n[Wie zit er in de zaal en wat weten zij al?]`,
+    body: `## Publiek\nTweedejaars studenten ICT Deeltijd (Business Intelligence-semester), kijkend vanuit de rollen AI Engineer, Digital Business Engineer of Security Specialist.`,
   },
   {
     id: 'takeaway',
     label: 'Kernboodschap',
     icon: 'flag',
-    body: `## Kernboodschap\n[Wat moet het publiek vooral onthouden of doen?]`,
+    body: `## Kernboodschap\nJe moet het zelf doen — maar dat kan alleen in een veilige omgeving.`,
   },
   {
     id: 'outline',
     label: 'Opbouw',
     icon: 'steps',
-    body: `## Opbouw\n1. [Opening: waarom dit belangrijk is]\n2. [Kernargument of leeropbouw]\n3. [Bewijs, voorbeeld of demonstratie]\n4. [Afsluiting: besluit, actie of toepassing]`,
+    body: `## Opbouw\n1. Opener: polshoogte nemen bij de zaal\n2. Vast programma (~5 min): carrièrepad, Mendix/Low Code, AI in het werk\n3. Vraaggedeelte: het grootste deel van de tijd, "vraag mij alles"\n4. Afsluiting: kernboodschap, bemoediging, contact (LinkedIn)`,
   },
   {
     id: 'delivery',
     label: 'Uitvoering',
     icon: 'clock',
-    body: `## Uitvoering\n[Duur, taal, toon en aanwijzingen voor de presentator.]`,
+    body: `## Uitvoering\nDuur 40-45 min, Nederlandstalig, persoonlijke/informele toon. Geen pep-talk-toon bij de kernboodschap. Ravijn-quote alleen als decoratief sfeerelement tijdens het vraaggedeelte, niet hardop voorlezen.`,
   },
 ];
 
 const SLIDES = [
   {
     id: 1,
-    layout: 'title',
-    title: 'Van tekst naar presentatie',
-    subtitle: 'Lever je verhaal aan als tekst. AI doet de rest.',
-    bullets: [],
-    meta: ['Van ruwe inhoud', 'naar een werkende presentatie'],
-    background: { src: 'themes/conclusion/assets/conclusion-tower.jpg', alt: 'Het kantoorgebouw van Conclusion' },
-    notes: `Deze demo laat zien wat het template kan. Voor een nieuwe presentatie hoeft de gebruiker alleen de inhoud en context aan te leveren.`,
+    layout: 'bullets',
+    title: 'Wie zijn jullie?',
+    icon: 'chat',
+    align: 'left',
+    bullets: [
+      'Wie werkt er naast de opleiding?',
+      'Wie werkt er al in IT naast de opleiding?',
+    ],
+    notes: `Handen laten zien, kort reageren op wat je ziet. Hiermee lees je de zaal zonder meteen druk te leggen op voorbereide vragen.
+
+Verhaal: afhankelijk van de reacties kun je later makkelijker voorbeelden kiezen — carrièreswitch, werkervaring, IT-praktijk of juist eerste kennismaking.`,
     duration: 60,
   },
   {
     id: 2,
-    layout: 'bullets',
-    title: 'Begin met drie dingen',
-    icon: 'target',
-    align: 'left',
-    bullets: [
-      'Waar gaat de presentatie over?',
-      'Voor wie is hij bedoeld?',
-      'Wat moet het publiek na afloop begrijpen, voelen of doen?',
-    ],
-    notes: `Meer hoeft niet om te beginnen. Als duur, taal of toon belangrijk zijn, kunnen die er gewoon in normale taal bij.
+    layout: 'title',
+    title: 'Bart Heijs',
+    subtitle: 'Senior Mendix Consultant',
+    bullets: [],
+    notes: `Kort, geen uitweiding — dit is de kapstok, niet het verhaal zelf.
 
-Dit is een langere testnotitie om te controleren of het notities-paneel in Presenter View netjes scrollt zodra de tekst niet meer past. Herhaal dit een paar keer met wat extra tekst erbij.
-
-Ten eerste: leg uit waarom deze drie vragen de kern vormen van elke goede briefing. Zonder onderwerp, doelgroep en gewenste uitkomst gaat AI onnodig veel aannames doen, en die aannames zijn zelden precies wat de presentator bedoelde.
-
-Ten tweede: benadruk dat dit geen strak format is. Een presentator die alleen een onderwerp aanlevert, krijgt gewoon een eerste opzet — de andere twee vragen mogen ontbreken en worden dan impliciet ingevuld op basis van de aangeleverde tekst.
-
-Ten derde: geef een concreet voorbeeld uit een eerdere sessie, bijvoorbeeld een workshop-uitnodiging die in twee alinea's tekst is aangeleverd en in enkele minuten is omgezet naar een volledige sldedeck met sprekersnotities en een passende structuur.
-
-Tot slot: sluit af met de brug naar de volgende slide — vanaf hier bouwt de presentatie logisch verder op deze drie antwoorden, dus herhaal ze kort voordat je doorklikt.`,
-    duration: 90,
+Verhaal: dit is puur even face tonen. Het echte verhaal komt in de volgende slide.`,
+    duration: 20,
   },
   {
     id: 3,
     layout: 'bullets',
-    title: 'Ruwe informatie bevat vaak meerdere verhalen',
-    icon: 'inbox',
+    title: 'Carrièrepad bij Conclusion',
+    icon: 'steps',
     align: 'left',
     bullets: [
-      {
-        text: 'Feiten leggen uit wat er speelt',
-        subtext: 'Ze geven het verhaal een betrouwbare basis.',
-      },
-      {
-        text: 'Voorbeelden maken de gevolgen herkenbaar',
-        subtext: 'Ze verbinden abstracte informatie aan de praktijk.',
-      },
-      {
-        text: 'Een kernboodschap bepaalt wat blijft hangen',
-        subtext: 'Niet alles hoeft op het scherm om overtuigend te zijn.',
-      },
+      'Eerst Facility Manager',
+      'Omscholing via Make IT Work',
+      'Naar Conclusion — keuze voor de combinatie low code én consultancy: sneller ontwikkelen, meer klantcontact',
+      'Frontend-voorkeur ontwikkeld',
+      'HR Coach geworden',
+      'Nu ook AI Champion',
+      'Volgende doel: Mendix MVP',
     ],
-    notes: `Ruwe input bestaat vaak uit feiten, voorbeelden en nuances. De kracht van een presentatie zit in de keuze welke lijn het publiek moet volgen.`,
+    notes: `Vertel het als één doorlopende lijn, niet als opsomming. Nadruk op: iedere stap kwam voort uit de vorige, niet gepland vooraf.
+
+Verhaal: dit is het hart van je persoonlijke verhaal. Je carrière is niet lineair gepland — het groeide organisch vanuit nieuwsgierigheid en waar je energie van kreeg. Bewaar het "hoe" (durven, coach, ravijn) voor het vraaggedeelte als iemand ernaar vraagt — hier vertel je alleen wát er gebeurde, niet de onderliggende twijfel of het keerpunt.`,
     duration: 120,
   },
   {
     id: 4,
     layout: 'bullets',
-    title: 'Een heldere lijn maakt de kern zichtbaar',
-    icon: 'spark',
+    title: 'Werken bij Conclusion',
+    icon: 'flag',
     align: 'left',
     bullets: [
-      'De opening maakt duidelijk waarom het onderwerp ertoe doet',
-      'Elke volgende stap bouwt voort op de vorige',
-      'Voorbeelden geven betekenis aan de hoofdgedachte',
-      'De afsluiting vertaalt inzicht naar een concrete uitkomst',
+      'Veel ruimte voor studie',
+      'Ambitie: de beste Mendix-partner willen zijn',
+      'Veel kennisdeling',
+      'Oog voor personeel',
     ],
-    notes: `Een goede volgorde helpt het publiek verbanden te leggen. Zo voelt de presentatie als één verhaal in plaats van een verzameling losse slides.`,
-    duration: 90,
+    notes: `Niet als reclame brengen, maar als verklaring waarom je carrière kón groeien.
+
+Verhaal: mijn carrière was niet vooraf uitgestippeld. Ik kreeg kansen, maar moest zelf stappen zetten. Dat lukt makkelijker in een omgeving waar je mag leren, proberen, vragen stellen en fouten maken.`,
+    duration: 45,
   },
   {
     id: 5,
     layout: 'bullets',
-    title: 'Center is geschikt voor één kernboodschap',
-    align: 'center',
+    title: 'Wat is Low Code?',
+    icon: 'spark',
+    align: 'left',
     bullets: [
-      'Rustige compositie',
-      'Korte, krachtige copy',
+      'Applicaties bouwen met visuele bouwstenen',
+      'Niet alles regel voor regel coderen',
+      'Maar wél echte bedrijfsapplicaties maken',
     ],
-    notes: `Een rustige, gecentreerde compositie helpt wanneer één boodschap alle aandacht verdient.`,
+    notes: `Low-code betekent niet "simpel speelgoed".
+
+Verhaal: je bouwt nog steeds echte software, maar veel onderdelen zijn visueel te modelleren.`,
+    duration: 30,
   },
   {
     id: 6,
     layout: 'bullets',
-    title: 'Goede uitleg blijft makkelijk te volgen',
-    icon: 'book',
+    title: 'Voorbeeld: incident afhandelen',
+    icon: 'inbox',
     align: 'left',
     bullets: [
-      'Elke slide heeft één duidelijke boodschap',
-      'De belangrijkste punten staan in een logische volgorde',
-      'Verdieping verhuist naar de sprekersnotities',
+      'Iemand meldt een incident via een formulier',
+      'Een collega krijgt een taak om actie te ondernemen',
+      'Het systeem combineert melding en afhandeling in een rapport',
+      'De melder ziet dat het is afgehandeld',
+      'Zo ontstaat gestructureerde data voor inzicht en verbetering',
     ],
-    notes: `AI verdeelt de aangeleverde tekst over begrijpelijke stappen en bewaart extra uitleg voor de presentator.`,
+    notes: `Gebruik dit als rode draad voor Page Builder, Workflow en Microflow. Eén simpel proces waarin mensen, systeemacties en data samenkomen.
+
+Verhaal: korte koppeling met Business Intelligence — als je informatie gestructureerd vastlegt, kun je later patronen herkennen en processen verbeteren.`,
+    duration: 60,
   },
   {
     id: 7,
-    layout: 'bullets',
-    title: 'Subtekst voegt nuance toe zonder extra bullets',
-    icon: 'ruler',
+    layout: 'list-image',
+    title: 'Page Builder: het formulier',
+    icon: 'layers',
     align: 'left',
+    image: { src: 'assets/mendix-page-builder.svg', alt: 'Screenshot van de Mendix page builder met het incident-formulier' },
     bullets: [
-      {
-        text: 'Houd de hoofdregel scanbaar',
-        subtext: 'Zet de nuance eronder in een rustiger formaat.',
-      },
-      {
-        text: 'Benadruk alleen wat echt belangrijk is',
-        subtext: 'Zo blijft de hoofdboodschap helder voor het publiek.',
-      },
+      'Hier bouw je de schermen',
+      'Bijvoorbeeld: incident melden',
+      'Velden, knoppen, validatie, layout',
     ],
-    notes: `AI kan toelichting visueel ondergeschikt maken, zodat de slide snel te begrijpen blijft.`,
+    notes: `Laat screenshot zien van de page builder.
+
+Verhaal: niet technisch uitleggen, vooral laten zien dat het visueel en herkenbaar is.`,
+    duration: 40,
   },
   {
     id: 8,
-    layout: 'bullets',
-    title: 'Sommige overgangen mogen rustig blijven',
-    disco: false,
+    layout: 'list-image',
+    title: 'Workflow: het proces',
+    icon: 'steps',
+    align: 'left',
+    image: { src: 'assets/mendix-workflow.svg', alt: 'Diagram van een workflow voor het incident-proces' },
     bullets: [
-      'Deze slide verschijnt zonder extra effect',
-      'AI stemt het tempo af op het moment in het verhaal',
+      'Wie moet iets doen?',
+      'Welke stap komt daarna?',
+      'Waar neemt het systeem het over?',
     ],
-    notes: `Niet iedere stap in een verhaal heeft nadruk nodig. Een rustige overgang helpt het publiek de inhoud te blijven volgen.`,
+    notes: `Laat de workflow zien als routekaart: melder → actiehouder → systeemactie → terugkoppeling.
+
+Verhaal: hier kun je letterlijk aanwijzen — hier doet een mens iets, hier doet het systeem iets.`,
+    duration: 40,
   },
   {
     id: 9,
-    layout: 'bullets',
-    title: 'Een automatische overgang geeft kort extra energie',
-    disco: true,
-    discoMode: 'auto',
-    discoHoldMs: 1600,
-    discoTitleLines: ['KORTE', 'ENERGIE'],
-    background: { src: 'themes/conclusion/assets/conclusion-blender.jpg', alt: 'Een blender met spattende, kleurrijke verf' },
+    layout: 'list-image',
+    title: 'Microflow: de logica achter een stap',
+    icon: 'target',
+    align: 'left',
+    image: { src: 'assets/mendix-microflow.svg', alt: 'Screenshot van een eenvoudige microflow' },
     bullets: [
-      'Eén klik is genoeg',
-      'De overgang speelt af en de volgende slide verschijnt vanzelf',
+      'Data ophalen',
+      'Beslissingen nemen',
+      'Acties uitvoeren',
     ],
-    notes: `Deze overgang blijft bewust iets langer zichtbaar dan de overgang ervoor. Dat maakt het verschil in tempo goed merkbaar.`,
+    notes: `Bijvoorbeeld: bij een taak de juiste melding, afhandeling en betrokken personen ophalen.
+
+Verhaal: dit is de logica achter de workflowstap — de motor die op de achtergrond draait.`,
+    duration: 40,
   },
   {
     id: 10,
     layout: 'bullets',
-    title: 'Een pauze-overgang maakt ruimte voor een live moment',
-    disco: true,
-    discoMode: 'pause',
-    discoTitleLines: ['PAUSE', 'EN', 'VERVOLG'],
+    title: 'Eén compleet platform',
+    icon: 'layers',
+    align: 'left',
     bullets: [
-      'De eerste klik bevriest de overgang halverwege',
-      'De tweede klik landt op deze slide',
+      'Formulieren en schermen',
+      'Workflows en microflows',
+      'PDF-generatie',
+      'Integraties met andere systemen',
+      'Native apps voor iOS en Android',
     ],
-    notes: `Gebruik dit bijvoorbeeld voor een reveal, publieksvraag of live demonstratie.`,
+    notes: `Dit is de samenvatting van het Mendix-blok.
+
+Verhaal: Mendix is niet alleen een formulierbouwer — het is een compleet platform om bedrijfsprocessen te bouwen, te automatiseren en te koppelen aan andere systemen.`,
+    duration: 35,
   },
   {
     id: 11,
-    layout: 'template-reference',
-    title: 'Achtergrondinformatie blijft binnen bereik',
+    layout: 'bullets',
+    title: 'De veranderende developer',
+    icon: 'spark',
+    align: 'left',
     bullets: [
-      'Open de presentatiebrief wanneer je extra context nodig hebt',
-      'De slide blijft zichtbaar terwijl je de briefing raadpleegt',
-      'Sluit het paneel en ga direct verder met presenteren',
+      'AI neemt het denken niet over',
+      'Je werk verschuift: meer sturen, beoordelen en keuzes maken',
+      'Ideeën sneller kunnen uitproberen',
+      'Meer ruimte voor ontwerp, creativiteit en probleembegrip',
+      'Technische kennis blijft nodig om kwaliteit te bewaken',
     ],
-    notes: `Open de knop “Presentatiebrief”. De briefing kan tijdens het presenteren naast de slides worden geraadpleegd.`,
+    notes: `AI betekent niet dat je minder hoeft na te denken — het verandert vooral waar je over nadenkt.
+
+Verhaal: je kunt sneller van idee naar eerste versie, maar je blijft verantwoordelijk voor wat je oplevert. Juist daarom worden goede vragen stellen, kritisch beoordelen, testen en begrijpen wat je bouwt steeds belangrijker.`,
+    duration: 60,
   },
   {
     id: 12,
     layout: 'bullets',
-    title: 'De juiste achtergrond verschijnt op het juiste moment',
-    icon: 'target',
-    templateSection: 'takeaway',
+    title: 'AI in het werk',
+    icon: 'book',
     align: 'left',
     bullets: [
-      'Open de Presentatiebrief',
-      'De relevante sectie “Kernboodschap” wordt automatisch gemarkeerd',
-      'AI koppelt ondersteunende context aan de juiste slide',
+      'Deze presentatie is gemaakt met een eigen AI-skill',
+      'Niet één losse prompt, maar een herbruikbare werkwijze',
+      'Meer uitleg alleen als jullie daar nieuwsgierig naar zijn',
     ],
-    notes: `De briefing is een voorbeeld van ondersteunende context. AI gebruikt dit alleen wanneer het iets toevoegt aan de presentatie.`,
+    notes: `Heel kort noemen, niet demonstreren tenzij er vragen over komen.
+
+De boodschap: AI zit niet alleen in code schrijven, maar ook in voorbereiden, structureren en verbeteren van werk. Verhaal: als studenten willen weten hoe dit werkt, kan dat in het vraaggedeelte.`,
+    duration: 40,
   },
   {
     id: 13,
     layout: 'bullets',
-    title: 'Notities zijn voor de presentator, niet voor het publiek',
-    icon: 'book',
+    title: 'AI door de hele lifecycle',
+    icon: 'steps',
     align: 'left',
     bullets: [
-      'De knop rechts toont of verbergt alle speaker notes',
-      'De keuze blijft actief tijdens het navigeren',
-      'Slides zonder notities gebruiken automatisch de extra ruimte',
+      'Niet alleen het coderen',
+      'Ook alles eromheen (requirements, testen, documentatie, etc.)',
     ],
-    notes: `Deze tekst is bewust zichtbaar als demonstratie. Verberg de notities voordat je alleen het presentatiescherm met het publiek deelt.`,
+    notes: `Kort, geen opsomming van alle fases — dat komt terug in de quiz.
+
+Verhaal: dit weerlegt het beeld dat AI = "code schrijven". Het is breder, en dat is precies waarom het relevant is voor alle drie de beroepsrollen die zij bestuderen.`,
+    duration: 35,
   },
   {
     id: 14,
     layout: 'bullets',
-    title: 'De bediening ondersteunt het live tempo',
-    icon: 'clock',
+    title: 'Niet alleen gebruiken, ook optimaliseren',
+    icon: 'ruler',
     align: 'left',
     bullets: [
-      'Timer met start, pauze en configureerbare extra minuten',
-      'Klaar-knop met confetti voor een bewuste afsluiting',
-      'Inhoudsopgave en bedieningspaneel kunnen worden ingeklapt',
-      'Pijltjestoetsen en een presentatieklikker navigeren door de slides',
+      'Agents, skills',
+      'Script vs. intelligence vs knowledge',
+      'Herbruikbaar, onderhoudbaar, testen, doorontwikkelen — net als software',
     ],
-    notes: `Test de timer en de Klaar-knop. Een gangbare presentatieklikker stuurt PageDown/PageUp of pijltjestoetsen; beide werken. De standaardduur en alle labels komen uit config.js.`,
+    notes: `Dit is een dieper punt — leg uit dat je soms een simpel scriptje nodig hebt, en soms echt AI-redenering.
+
+Verhaal: dit toont dat het werken met AI een vak op zich is — je zet niet zomaar AI ergens op los, je stuurt het bij en optimaliseert het net zoals je met code zou doen.`,
+    duration: 45,
   },
   {
     id: 15,
     layout: 'bullets',
-    title: 'Je hoeft geen technisch format te leren',
-    icon: 'spark',
-    align: 'left',
+    title: 'Vraag mij alles',
+    align: 'center',
     bullets: [
-      'Plak of voeg tekst toe in de vorm die je al hebt',
-      'AI vraagt alleen door als essentiële context echt ontbreekt',
-      'Bekijk het resultaat en geef feedback in gewone taal',
-      'AI verwerkt de feedback en controleert de presentatie opnieuw',
+      'Geen onderwerp is off-limits',
+      'Dit is jullie moment',
     ],
-    notes: `content-template.md is beschikbaar als eenvoudig startpunt, maar is nooit verplicht.`,
-  },
-  {
-    id: 17,
-    layout: 'list-image',
-    title: 'Beeld ondersteunt de boodschap',
-    icon: 'layers',
-    align: 'left',
-    image: { src: 'assets/demo-photo.svg', alt: 'Placeholder afbeelding' },
-    bullets: [
-      'Een afbeelding staat naast de bulletlijst, niet erboven',
-      'Handig voor een schermafbeelding, diagram of foto die de tekst toelicht',
-      'Vervang assets/demo-photo.svg door een eigen afbeelding',
-    ],
-    notes: `Dit is de 'list-image'-layout: bullets in één kolom, de afbeelding ernaast.`,
-  },
-  {
-    id: 18,
-    layout: 'quote',
-    title: 'Quote',
-    quote: 'Een presentatie is geslaagd zodra het publiek de kernboodschap kan navertellen.',
-    attribution: 'Voorbeeldcitaat',
-    background: { src: 'themes/conclusion/assets/conclusion-clouds-color.jpg', alt: 'Kleurrijke rookwolken in de huisstijlkleuren' },
-    notes: `Dit is de 'quote'-layout: een uitgelichte quote in een kleurvlak. Zet er optioneel een 'image' bij voor de foto-variant.`,
-  },
-  {
-    id: 20,
-    layout: 'icon-grid',
-    title: 'Iconenset',
-    items: [
-      { icon: 'target', label: 'Doel' },
-      { icon: 'chat', label: 'Gesprek' },
-      { icon: 'flag', label: 'Resultaat' },
-      { icon: 'steps', label: 'Stappen' },
-      { icon: 'clock', label: 'Tijd' },
-      { icon: 'spark', label: 'Hoogtepunt' },
-      { icon: 'book', label: 'Naslag' },
-      { icon: 'ruler', label: 'Meetbaar' },
-      { icon: 'layers', label: 'Structuur' },
-      { icon: 'inbox', label: 'Levering' },
-    ],
-    notes: `Dit is de 'icon-grid'-layout: een specimen-slide die de volledige iconenset toont (zie index.html voor de sprite). Handig als stijlreferentie, niet bedoeld om in de echte presentatie te laten staan.`,
-  },
-  {
-    id: 19,
-    layout: 'image-only',
-    title: 'Eén beeld, weinig tekst',
-    image: { src: 'assets/demo-photo.svg', alt: 'Placeholder afbeelding' },
-    bullets: [],
-    notes: `Dit is de 'image-only'-layout: de titel blijft zichtbaar, maar de afbeelding krijgt de meeste ruimte.`,
+    notes: `Open uitnodiging, ga zitten/leun naar voren, maak ruimte.
+
+Verhaal: dit is het scharnierpunt van de les — van zenden naar luisteren. Neem hier bewust een pauze.`,
+    duration: 5,
   },
   {
     id: 16,
-    layout: 'bullets',
-    title: 'Begin gewoon met je verhaal',
-    bullets: [
-      '`Maak een presentatie over [onderwerp] voor [publiek]`',
-      '`Na afloop moeten zij [gewenste uitkomst]`',
-      '`Gebruik onderstaande tekst als inhoud: …`',
-      'AI regelt structuur, vormgeving en techniek',
+    layout: 'title',
+    title: 'Vragen',
+    subtitle: '',
+    bullets: [],
+    notes: `Blijft in beeld terwijl de zaal vragen stelt, geen tekst om voor te lezen.
+
+Verhaal: dit is decor, geen inhoud — de aandacht moet naar de zaal, niet naar het scherm.`,
+    duration: 15,
+  },
+  {
+    id: 17,
+    layout: 'quote',
+    title: 'Durf je het te vragen?',
+    quote: 'De allermooiste bloemen groeien vlak langs het ravijn. Om die te kunnen plukken moet je durven bang te zijn.',
+    attribution: '',
+    notes: `Puur sfeer — niet voorlezen. Wat je wél hardop kunt zeggen, afhankelijk van het moment:
+
+1. Als aanmoediging tijdens het vraaggedeelte, bij twijfel of stilte: "Welke vraag ligt op het puntje van je tong, maar heb je niet gesteld omdat hij spannend voelt of misschien dom lijkt?"
+2. Om de laatste vraag af te dwingen: "laatste kans — wie durft?"
+3. Om te complimenteren op de vragen die al gesteld zijn: "mooi dat jullie dit al durfden te vragen"
+
+Verhaal: koppel dit aan de praktijk — deze vraag moet je straks ook durven stellen aan een klant. Durven vragen stopt niet bij de collegezaal.`,
+    duration: 30,
+  },
+  {
+    id: 18,
+    layout: 'quiz',
+    title: 'Waar gebruiken we AI in de SDLC?',
+    items: [
+      {
+        id: 'sdlc1',
+        label: '1',
+        answer: 'Requirements ophalen',
+        explanation: {
+          layout: 'bullets',
+          title: 'Requirements ophalen',
+          bullets: ['AI vat gesprekken en documenten samen tot user stories', 'Helpt vage wensen scherper te formuleren'],
+        },
+      },
+      {
+        id: 'sdlc2',
+        label: '2',
+        answer: 'Ontwerp',
+        explanation: {
+          layout: 'bullets',
+          title: 'Ontwerp',
+          bullets: ['AI stelt architectuur- of UI-opties voor', 'Versnelt het verkennen van meerdere richtingen'],
+        },
+      },
+      {
+        id: 'sdlc3',
+        label: '3',
+        answer: 'Bouwen',
+        explanation: {
+          layout: 'bullets',
+          title: 'Bouwen',
+          bullets: ['AI genereert of ondersteunt code, microflows en configuratie', 'De ontwikkelaar blijft sturen en reviewen'],
+        },
+      },
+      {
+        id: 'sdlc4',
+        label: '4',
+        answer: 'Testen',
+        explanation: {
+          layout: 'bullets',
+          title: 'Testen',
+          bullets: ['AI genereert testscenario’s en testdata', 'Helpt edge cases te vinden die je zelf mist'],
+        },
+      },
+      {
+        id: 'sdlc5',
+        label: '5',
+        answer: 'Opleveren',
+        explanation: {
+          layout: 'bullets',
+          title: 'Opleveren',
+          bullets: ['AI stelt release notes en documentatie op', 'Versnelt overdracht naar beheer of de klant'],
+        },
+      },
+      {
+        id: 'sdlc6',
+        label: '6',
+        answer: 'Onderhoud',
+        explanation: {
+          layout: 'bullets',
+          title: 'Onderhoud',
+          bullets: ['AI analyseert logs en signaleert afwijkingen', 'Helpt bij het lokaliseren van de oorzaak van een bug'],
+        },
+      },
     ],
-    notes: `Dit is voldoende om te starten. Extra wensen kunnen vooraf of als feedback op het eerste resultaat worden toegevoegd.`,
+    notes: `Alleen gebruiken bij tijd over/weinig vragen.
+
+Vorm: "slimste mens"-stijl, laat ze gokken/roepen per fase van de SDLC. Relativeren: ook wij zijn dit nog aan het uitvinden.
+
+Verhaal: dit voorkomt dat het overkomt als "wij weten het antwoord al" — het is een gezamenlijke zoektocht, niet een quiz met een goed antwoord dat jij al kent. Items hierboven zijn een eerste opzet — verder aan te scherpen.`,
+    duration: 90,
+  },
+  {
+    id: 19,
+    layout: 'bullets',
+    title: 'Kernboodschap',
+    align: 'center',
+    bullets: [
+      'Je moet het zelf doen',
+      '...maar dat lukt beter in een veilige omgeving',
+      'Zorg dat je die hebt, of ga ernaar op zoek',
+    ],
+    notes: `Rustig brengen, geen pep-talk. Mijn loopbaan was niet strak gepland. Ik kreeg kansen, maar moest ze zelf pakken.
+
+Verhaal: een veilige omgeving betekent ruimte om te leren, vragen te stellen, fouten te maken en nieuwe dingen te proberen. Dat geldt voor een carrièreswitch, voor leren programmeren en voor werken met AI.`,
+    duration: 45,
+  },
+  {
+    id: 20,
+    layout: 'bullets',
+    title: 'Jullie hebben de eerste stap al gezet',
+    align: 'center',
+    bullets: [
+      'Door voor deze opleiding te kiezen',
+    ],
+    notes: `Kort, rustig, als laatste zin voor de deur uit.
+
+Verhaal: dit weerlegt impliciet de aanname dat "zelf doen" alleen voor anderen is weggelegd — bevestig dat zij het al doen, nu al.`,
+    duration: 20,
   },
   {
     id: 21,
-    layout: 'quiz',
-    title: 'Noem 5 huisdieren',
-    items: [
-      {
-        id: 'p1',
-        label: '1',
-        answer: 'Hond',
-        explanation: {
-          layout: 'bullets',
-          title: 'Hond',
-          bullets: ['Meest gehouden huisdier van Nederland', 'Gemiddeld zo’n 1,5 miljoen honden per huishouden-telling'],
-        },
-      },
-      {
-        id: 'p2',
-        label: '2',
-        answer: 'Kat',
-        explanation: {
-          layout: 'bullets',
-          title: 'Kat',
-          bullets: ['Nederland telt meer katten dan honden', 'Katten slapen gemiddeld 12 tot 16 uur per dag'],
-        },
-      },
-      {
-        id: 'p3',
-        label: '3',
-        answer: 'Vis',
-        explanation: {
-          layout: 'bullets',
-          title: 'Vis',
-          bullets: ['Een aquarium telt als huisdier, ongeacht het aantal vissen erin', 'Goudvissen kunnen tientallen jaren oud worden'],
-        },
-      },
-      {
-        id: 'p4',
-        label: '4',
-        answer: 'Konijn',
-        explanation: {
-          layout: 'bullets',
-          title: 'Konijn',
-          bullets: ['Konijnentanden blijven levenslang doorgroeien', 'Van oorsprong een prooidier — vandaar het schrikachtige gedrag'],
-        },
-      },
-      {
-        id: 'p5',
-        label: '5',
-        answer: 'Hamster',
-        explanation: {
-          layout: 'bullets',
-          title: 'Hamster',
-          bullets: ['Vult zijn wangzakken tot wel een derde van zijn lichaamsgewicht', 'Is van nature een nachtdier'],
-        },
-      },
+    layout: 'list-image',
+    title: 'Blijf in contact',
+    icon: 'chat',
+    align: 'left',
+    image: { src: 'assets/linkedin-qr.svg', alt: 'QR-code naar LinkedIn-profiel' },
+    bullets: [
+      'Verbind met mij op LinkedIn',
     ],
-    notes: `Dit is de 'quiz'-layout: vraag het publiek hardop "Noem 5 huisdieren" en onthul elk juist antwoord vanuit Presenter View's cockpit (rechterpaneel). Klik "Uitleg" voor een leuk weetje per dier — nogmaals klikken sluit het weer. Volgende/Vorige slaat deze onthullingen en uitleg volledig over.`,
+    notes: `Korte, losse uitnodiging — geen druk, gewoon een open deur.
+
+Verhaal: dit is de praktische afsluiting na de kernboodschap — een laagdrempelige manier om het contact te laten doorlopen na de les, mocht er nog een vraag opkomen of iemand willen doorpraten.`,
+    duration: 20,
   },
 ];
+
+/*
+ * Reservemateriaal — geen slides, alleen gebruiken als antwoord op een vraag
+ * tijdens het vraaggedeelte. Niet in SLIDES opnemen.
+ *
+ * - Coach-moment / "durven komt vóór lukken": het volledige verhaal over de
+ *   coach die dit tegen je zei.
+ * - Ravijn-spreuk voluit: "De allermooiste bloemen groeien vlak langs het
+ *   ravijn. Om die te kunnen plukken moet je durven bang te zijn." —
+ *   inzetbaar als iemand doorvraagt op het coach-moment.
+ */

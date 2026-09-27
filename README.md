@@ -82,9 +82,10 @@ thema, met kleuren/fonts als CSS custom properties bovenaan `styles.css`) of
 `'conclusion'` (donker thema met Conclusion-huisstijlkleuren, zie
 `themes/conclusion/theme.css`). Net als `CONFIG.lang` wordt dit gekozen
 wanneer de presentatie wordt gemaakt, niet tijdens het presenteren.
-`CONFIG.brand.businessUnit`/`tagline` vullen de bijpassende chrome
-(hoeklogo/footer) van een thema dat dat gebruikt; leeg laten toont een
-generieke variant. Presenter View volgt automatisch hetzelfde thema.
+De bijpassende chrome (hoeklogo/footer) van een thema dat dat gebruikt komt
+uit vaste beeldassets (zie `themes/conclusion/assets/`); wissel die
+bestanden om te rebranden voor een andere business unit. Presenter View
+volgt automatisch hetzelfde thema.
 
 Een nieuw thema toevoegen: maak `themes/<naam>/theme.css` met daarin
 `:root[data-theme="<naam>"] { --bg: ...; --accent: ...; }` (zie
@@ -215,8 +216,6 @@ Combineer nooit een icoon met een gecentreerde titel.
 `CONFIG` is gegroepeerd per functie:
 
 - `theme` — `'default'` of `'conclusion'`, zie Technische referentie hierboven.
-- `brand` — `businessUnit`/`tagline`, alleen zichtbaar in thema's die er chrome
-  voor tonen (momenteel `conclusion`).
 - `toc` — titel van de inhoudsopgave.
 - `layout` — standaarduitlijning.
 - `disco` — transition aan/uit, tekst en modus. De technische naam bestaat

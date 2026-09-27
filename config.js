@@ -16,20 +16,12 @@
 
 const CONFIG = {
   lang: 'nl',
-  title: 'Presentation Template Demo',
+  title: 'HvA Gastles — IT-carrière & AI',
 
   // 'default' or 'conclusion' (see themes/conclusion/theme.css). Chosen once
   // when the presentation is set up and not meant to change at runtime — see
   // README.md for how to add a new theme.
   theme: 'conclusion',
-
-  // Only rendered when a theme's chrome uses it (currently just
-  // `conclusion`'s corner wordmark + footer tagline). Leave blank for a
-  // generic Conclusion look, or fill in for a specific business unit.
-  brand: {
-    businessUnit: 'Low Code Company',
-    tagline: 'Business done differently',
-  },
 
   layout: {
     align: 'center', // 'center' (default) | 'left' — global default for the
@@ -47,7 +39,7 @@ const CONFIG = {
   },
 
   timer: {
-    defaultMinutes: 20,
+    defaultMinutes: 45,
     addMinutes: 5,
     warningMinutes: 5,
     warningDurationMs: 5000,

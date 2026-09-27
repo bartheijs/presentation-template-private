@@ -16,7 +16,6 @@ const CONFIG_DEFAULTS = {
   lang: 'nl',
   title: 'Presentatie',
   theme: 'default',
-  brand: { businessUnit: '', tagline: '' },
   toc: { heading: 'Inhoud' },
   layout: { align: 'center' },
   disco: { enabled: true, titleLines: ['DISCO'], mode: 'auto' },
