@@ -1438,6 +1438,9 @@ function applyConfigStrings() {
   document.documentElement.style.setProperty('--transition-out-ms', `${ANIM_OUT_MS}ms`);
   document.documentElement.style.setProperty('--transition-in-ms', `${ANIM_IN_MS}ms`);
 
+  document.getElementById('brand-chrome-business-unit').textContent = CONFIG.brand.businessUnit;
+  document.getElementById('brand-chrome-tagline').textContent = CONFIG.brand.tagline;
+
   document.getElementById('toc-heading').textContent = CONFIG.toc.heading;
   renderDiscoTitle(CONFIG.disco.titleLines);
 

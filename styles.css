@@ -1291,6 +1291,18 @@ button {
   width: 100%;
   height: auto;
 }
+/* Holds CONFIG.brand.businessUnit/tagline (see applyConfigStrings() in
+   app.js) — visually hidden since the wordmark/tagline are already baked
+   into the logo/bottombar images above; kept in the DOM so a business unit
+   without custom assets can still set these two strings in config.js. */
+.brand-chrome-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
 
 /* ---------- Responsive fallback ---------- */
 @media (max-width: 900px) {
