@@ -11,8 +11,9 @@
  *   slide style)
  * - 'bullets': heading + bullet list — the default, general-purpose layout
  * - 'list-image': bullets in one column, `image` stacked beside them
- * - 'quote': a colored quote box (`quote` + optional `attribution`),
- *   optionally with `image` alongside it
+ * - 'quote': a colored quote box (`quote` + optional `attribution` +
+ *   optional `bullets` — with bullets, a heading + bullet list render above
+ *   the quote box, which then shrinks to a smaller illustrative footnote),
  * - 'image-only': heading + one dominant image, no bullets
  * - 'template-reference': shows the Presentatiebrief content inline on the
  *   slide itself (legacy internal use)
