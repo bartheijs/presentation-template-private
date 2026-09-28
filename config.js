@@ -18,8 +18,9 @@ const CONFIG = {
   lang: 'nl',
   title: 'Presentation Template Demo',
 
-  // 'default' or 'conclusion' (see themes/conclusion/theme.css). Chosen once
-  // when the presentation is set up and not meant to change at runtime — see
+  // 'default', 'conclusion' or 'bouwstenen' — see themes/<name>/theme.css.
+  // This is only the START theme: the presentator can always switch live
+  // during the presentation via the design button / Shift+T — see
   // README.md for how to add a new theme.
   theme: 'conclusion',
 

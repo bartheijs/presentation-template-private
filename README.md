@@ -77,21 +77,24 @@ presentatie wordt gemaakt.
 de overige CSS vormen de gedeelde engine en horen bij gewone
 inhoudswijzigingen intact te blijven.
 
-`CONFIG.theme` kiest de visuele stijl: `'default'` (het bestaande lichte
-thema, met kleuren/fonts als CSS custom properties bovenaan `styles.css`) of
-`'conclusion'` (donker thema met Conclusion-huisstijlkleuren, zie
-`themes/conclusion/theme.css`). Net als `CONFIG.lang` wordt dit gekozen
-wanneer de presentatie wordt gemaakt, niet tijdens het presenteren.
-`CONFIG.brand.businessUnit`/`tagline` vullen de bijpassende chrome
-(hoeklogo/footer) van een thema dat dat gebruikt; leeg laten toont een
-generieke variant. Presenter View volgt automatisch hetzelfde thema.
+`CONFIG.theme` kiest het **startdesign**: `'default'` (het bestaande lichte
+thema), `'conclusion'` (donker thema met Conclusion-huisstijlkleuren, zie
+`themes/conclusion/theme.css`) of `'bouwstenen'` (papieren fond met chunky
+kleurblokken, zie `themes/bouwstenen/theme.css`). Tijdens het presenteren kan
+de presentator altijd wisselen via de designknop naast de Presenter
+View-knop, of `Shift+T` — zie ook vanuit de Presenter View. De keuze
+overleeft een refresh binnen dezelfde sessie (`sessionStorage`); zonder
+opgeslagen waarde geldt weer `CONFIG.theme`. `CONFIG.brand.businessUnit`/
+`tagline` vullen de bijpassende chrome (hoeklogo/footer) van een thema dat
+dat gebruikt; leeg laten toont een generieke variant.
 
 Een nieuw thema toevoegen: maak `themes/<naam>/theme.css` met daarin
 `:root[data-theme="<naam>"] { --bg: ...; --accent: ...; }` (zie
-`themes/conclusion/theme.css` als voorbeeld), en voeg in zowel `index.html`
-als `presenter.html` één `<link rel="stylesheet" href="themes/<naam>/theme.css">`
-toe naast de bestaande thema-links. `styles.css` zelf hoeft niet te
-veranderen.
+`themes/conclusion/theme.css` als voorbeeld), voeg in zowel `index.html` als
+`presenter.html` één `<link rel="stylesheet" href="themes/<naam>/theme.css">`
+toe naast de bestaande thema-links, en voeg de naam toe aan de `THEMES`-lijst
+bovenaan `app.js` (en een weergavenaam in `APP_I18N.themeNames`). `styles.css`
+zelf hoeft niet te veranderen.
 
 ## Slidegegevens
 
