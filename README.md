@@ -82,7 +82,7 @@ thema), `'conclusion'` (donker thema met Conclusion-huisstijlkleuren, zie
 `themes/conclusion/theme.css`) of `'bouwstenen'` (papieren fond met chunky
 kleurblokken, zie `themes/bouwstenen/theme.css`). Tijdens het presenteren kan
 de presentator altijd wisselen via de designknop naast de Presenter
-View-knop, of `Shift+T` — zie ook vanuit de Presenter View. De keuze
+View-knop, met `Shift+T`, of via de Ontwerp-knop in de Presenter View. De keuze
 overleeft een refresh binnen dezelfde sessie (`sessionStorage`); zonder
 opgeslagen waarde geldt weer `CONFIG.theme`. `CONFIG.brand.businessUnit`/
 `tagline` vullen de bijpassende chrome (hoeklogo/footer) van een thema dat
@@ -94,7 +94,10 @@ Een nieuw thema toevoegen: maak `themes/<naam>/theme.css` met daarin
 `presenter.html` één `<link rel="stylesheet" href="themes/<naam>/theme.css">`
 toe naast de bestaande thema-links, en voeg de naam toe aan de `THEMES`-lijst
 bovenaan `app.js` (en een weergavenaam in `APP_I18N.themeNames`). `styles.css`
-zelf hoeft niet te veranderen.
+zelf hoeft niet te veranderen. Gebruikt het thema webfonts, zet dan de
+bijbehorende `<link>`-tag(s) ook in de `<head>` van beide HTML-bestanden,
+vóór de eigen theme-link — zie de Google Fonts-link van het
+`bouwstenen`-thema als voorbeeld.
 
 ## Slidegegevens
 
@@ -217,7 +220,8 @@ Combineer nooit een icoon met een gecentreerde titel.
 
 `CONFIG` is gegroepeerd per functie:
 
-- `theme` — `'default'` of `'conclusion'`, zie Technische referentie hierboven.
+- `theme` — `'default'`, `'conclusion'` of `'bouwstenen'` (het startdesign),
+  zie Technische referentie hierboven.
 - `brand` — `businessUnit`/`tagline`, alleen zichtbaar in thema's die er chrome
   voor tonen (momenteel `conclusion`).
 - `toc` — titel van de inhoudsopgave.

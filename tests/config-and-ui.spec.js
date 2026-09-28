@@ -238,6 +238,68 @@ test.describe('bouwstenen theme', () => {
     expect(bg).toBe('rgb(23, 26, 28)'); // --text / inkt
   });
 
+  test('a title slide with a background photo keeps a white subtitle', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'bouwstenen');
+      SLIDES[0] = { ...SLIDES[0], background: SLIDES[0].background || { src: 'themes/conclusion/assets/conclusion-tower.jpg', alt: '' } };
+      state.currentIndex = 0;
+      renderSlide();
+    });
+    await expect(page.locator('.slide-content')).toHaveClass(/slide-content--has-bg/);
+    const color = await page.locator('.slide-subtitle--accent').evaluate((el) => getComputedStyle(el).color);
+    expect(color).toBe('rgb(255, 255, 255)');
+  });
+
+  for (const width of [1280, 1920]) {
+    test(`plain quote text stays inside the dark strip between the wedges at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: Math.round(width * 9 / 16) });
+      await gotoPresentation(page);
+      await page.evaluate(() => {
+        document.documentElement.setAttribute('data-theme', 'bouwstenen');
+        const i = SLIDES.findIndex((s) => s.layout === 'quote');
+        SLIDES[i] = { ...SLIDES[i], background: undefined, bullets: undefined };
+        state.currentIndex = i;
+        renderSlide();
+      });
+      const { slide, text, leftWedge, rightWedge } = await page.evaluate(() => {
+        const content = document.querySelector('.slide-content');
+        return {
+          slide: content.getBoundingClientRect().toJSON(),
+          text: document.querySelector('.slide-quote-text').getBoundingClientRect().toJSON(),
+          leftWedge: parseFloat(getComputedStyle(content, '::before').width),
+          rightWedge: parseFloat(getComputedStyle(content, '::after').width),
+        };
+      });
+      // Compared against each wedge's full (top-edge) width, so the quote
+      // text can never overlap the paper-colored wedges at any height.
+      expect(text.left).toBeGreaterThan(slide.left + leftWedge);
+      expect(text.right).toBeLessThan(slide.right - rightWedge);
+    });
+  }
+
+  test('a plain quote slide with a background photo keeps the photo and a solid quote card', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'bouwstenen');
+      const i = SLIDES.findIndex((s) => s.layout === 'quote');
+      SLIDES[i] = { ...SLIDES[i], bullets: undefined, background: SLIDES[i].background || { src: 'themes/conclusion/assets/conclusion-clouds-color.jpg', alt: '' } };
+      state.currentIndex = i;
+      renderSlide();
+    });
+    const result = await page.evaluate(() => {
+      const content = document.querySelector('.slide-content');
+      return {
+        bgImage: getComputedStyle(content).backgroundImage,
+        wedge: getComputedStyle(content, '::before').content,
+        cardBg: getComputedStyle(document.querySelector('.slide-quote-box')).backgroundColor,
+      };
+    });
+    expect(result.bgImage).toContain('url(');
+    expect(result.wedge).toBe('none');
+    expect(result.cardBg).toBe('rgb(23, 26, 28)');
+  });
+
   test('bullets cycle through all 4 accent colors', async ({ page }) => {
     await gotoPresentation(page);
     const bulletsIndex = await page.evaluate(() => SLIDES.findIndex((s) => (s.bullets || []).length >= 4));
@@ -307,19 +369,87 @@ test.describe('theme toggle (Presentation View)', () => {
     expect(revealed).toBe(true);
   });
 
+  // Reads the demo deck's disco slides by their config rather than by a
+  // hardcoded index, so reordering slides-data.js doesn't silently turn
+  // these into plain (non-disco) transitions again.
   test('switching theme mid-disco-transition does not break the following transition', async ({ page }) => {
     await gotoPresentation(page);
+    const discoIndex = await page.evaluate(() =>
+      SLIDES.findIndex((s) => s.disco === true && (s.discoMode || CONFIG.disco.mode || 'auto') === 'auto')
+    );
+    expect(discoIndex).toBeGreaterThan(0); // fixture: an auto-mode disco slide with a slide before it
+    await page.evaluate((i) => goTo(i - 1), discoIndex);
+    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+
+    await page.evaluate((i) => goTo(i, { animate: true }), discoIndex);
     // eslint-disable-next-line no-undef
-    await page.evaluate(() => { goTo(1, { animate: true }); });
-    await page.click('#btn-theme-toggle'); // fired while isAnimatingSlide is (likely) still true
+    expect(await page.evaluate(() => isAnimatingSlide)).toBe(true);
+    await page.click('#btn-theme-toggle');
+    // Still mid-animation after the click, so the toggle really happened
+    // during the disco transition (the auto hold keeps it running >1s).
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => isAnimatingSlide)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).not.toBe(before);
+
     await waitIdle(page);
-    // A normal subsequent transition must still complete cleanly.
-    await page.evaluate(() => { goTo(2, { animate: true }); });
+    expect(await page.evaluate(() => state.currentIndex)).toBe(discoIndex);
+    await expect(page.locator('.slide-stage')).not.toHaveClass(/is-transitioning/);
+
+    // A normal subsequent (animated, non-disco) transition must still
+    // complete cleanly. Backward on purpose: going back never replays disco,
+    // and the slide after this one may itself be a pause-mode disco slide.
+    await page.evaluate((i) => goTo(i - 1, { animate: true }), discoIndex);
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => isAnimatingSlide)).toBe(true);
     await waitIdle(page);
-    expect(await page.evaluate(() => state.currentIndex)).toBe(2);
+    expect(await page.evaluate(() => state.currentIndex)).toBe(discoIndex - 1);
   });
 
-  test('switching theme while the pause overlay is frozen leaves it visible and unchanged', async ({ page }) => {
+  test('switching theme while a pause-mode disco transition is frozen keeps the hold, which then resumes normally', async ({ page }) => {
+    await gotoPresentation(page);
+    const pauseIndex = await page.evaluate(() =>
+      SLIDES.findIndex((s) => s.disco === true && (s.discoMode || CONFIG.disco.mode) === 'pause')
+    );
+    expect(pauseIndex).toBeGreaterThan(0); // fixture: a pause-mode disco slide with a slide before it
+    await page.evaluate((i) => goTo(i - 1), pauseIndex);
+
+    await page.evaluate((i) => goTo(i, { animate: true }), pauseIndex);
+    // eslint-disable-next-line no-undef
+    await page.waitForFunction(() => pendingPause !== null);
+    const frozen = () => page.evaluate(() => ({
+      // eslint-disable-next-line no-undef
+      pendingPause,
+      // eslint-disable-next-line no-undef
+      animating: isAnimatingSlide,
+      currentIndex: state.currentIndex,
+      transitioning: document.querySelector('.slide-stage').classList.contains('is-transitioning'),
+      contentOut: document.querySelector('.slide-content').classList.contains('content-anim-out'),
+    }));
+    const held = await frozen();
+    expect(held).toEqual({
+      pendingPause: { toIndex: pauseIndex, dir: 'next' },
+      animating: false,
+      currentIndex: pauseIndex - 1,
+      transitioning: true,
+      contentOut: true,
+    });
+
+    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    await page.click('#btn-theme-toggle'); // not covered by the frozen disco (probed: hit-testable)
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).not.toBe(before);
+    expect(await frozen()).toEqual(held); // hold completely unchanged by the toggle
+
+    // Second "next" resumes the frozen transition and lands on the slide.
+    await page.evaluate((i) => goTo(i, { animate: true }), pauseIndex);
+    await waitIdle(page);
+    expect(await page.evaluate(() => state.currentIndex)).toBe(pauseIndex);
+    // eslint-disable-next-line no-undef
+    expect(await page.evaluate(() => pendingPause)).toBeNull();
+    await expect(page.locator('.slide-stage')).not.toHaveClass(/is-transitioning/);
+    await expect(page.locator('.slide-content')).not.toHaveClass(/content-anim-out/);
+  });
+
+  test('switching theme while the pause screen is shown leaves it visible', async ({ page }) => {
     await gotoPresentation(page);
     await page.evaluate(() => showPauseOverlay());
     // The pause overlay is a deliberate full-viewport cutaway that visually covers
@@ -327,7 +457,64 @@ test.describe('theme toggle (Presentation View)', () => {
     // path here: a document-level keydown listener (app.js) that fires regardless
     // of what's covering the button, and the only way a presenter could actually
     // cycle the theme while the overlay is up.
+    const before = await page.evaluate(() => document.documentElement.dataset.theme);
     await page.keyboard.press('Shift+T');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).not.toBe(before);
     expect(await page.evaluate(() => isPauseOverlayVisible())).toBe(true);
+  });
+
+  test('a throwing sessionStorage still starts on CONFIG.theme and Shift+T still cycles', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'sessionStorage', {
+        configurable: true,
+        get() { throw new Error('blocked'); },
+      });
+    });
+    await gotoPresentation(page);
+    // Sanity: the init script actually took effect.
+    expect(await page.evaluate(() => { try { sessionStorage; return false; } catch { return true; } })).toBe(true);
+
+    const configured = await page.evaluate(() => CONFIG.theme);
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(configured);
+
+    const themes = await page.evaluate(() => THEMES);
+    await page.keyboard.press('Shift+T');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme))
+      .toBe(themes[(themes.indexOf(configured) + 1) % themes.length]);
+    expect(errors).toEqual([]);
+  });
+
+  test('an unknown stored theme name falls back to default instead of rendering unstyled', async ({ page }) => {
+    await page.addInitScript(() => { sessionStorage.setItem('presentation.theme', 'no-such-theme'); });
+    await gotoPresentation(page);
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('default');
+    const expectedLabel = await page.evaluate(() => `${CONFIG.ui.themeToggleLabelPrefix} ${CONFIG.ui.themeNames.default}`);
+    await expect(page.locator('#btn-theme-toggle-label')).toHaveText(expectedLabel);
+  });
+
+  test('every slide renders with no console errors under each theme after a live toggle', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
+    page.on('console', (msg) => { if (msg.type() === 'error') errors.push(`console: ${msg.text()}`); });
+
+    await gotoPresentation(page);
+    const themes = await page.evaluate(() => THEMES);
+    const total = await page.evaluate(() => SLIDES.length);
+    const visited = [];
+    for (let t = 0; t < themes.length; t++) {
+      await page.keyboard.press('Shift+T');
+      const theme = await page.evaluate(() => document.documentElement.dataset.theme);
+      visited.push(theme);
+      for (let i = 0; i < total; i++) {
+        // eslint-disable-next-line no-loop-func
+        await page.evaluate((index) => goTo(index), i);
+        expect(await page.evaluate(() => state.currentIndex)).toBe(i);
+      }
+      await page.evaluate(() => goTo(0)); // back to the start so Shift+T isn't eaten by a quiz/overlay slide
+    }
+    expect(new Set(visited)).toEqual(new Set(themes)); // every theme reached via the real toggle
+    expect(errors).toEqual([]);
   });
 });

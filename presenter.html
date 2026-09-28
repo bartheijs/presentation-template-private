@@ -5,7 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presenter View</title>
 <script src="config.js"></script>
-<script>document.documentElement.setAttribute('data-theme', (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default');</script>
+<script>
+(function () {
+  // Same as index.html's head script: a window.open() popup gets a copy of
+  // the opener's sessionStorage, so this avoids a flash of CONFIG.theme
+  // before the first state broadcast arrives (which then stays in charge).
+  var stored = null;
+  try { stored = sessionStorage.getItem('presentation.theme'); } catch (e) { /* private browsing / blocked storage */ }
+  var theme = stored || (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default';
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="themes/conclusion/theme.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;600&display=swap">

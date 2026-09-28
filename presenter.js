@@ -370,7 +370,7 @@ quizCockpitListEl.addEventListener('click', (e) => {
 
 function renderState(newState) {
   latestState = newState;
-  document.documentElement.dataset.theme = newState.theme;
+  if (newState.theme) document.documentElement.dataset.theme = newState.theme;
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
   document.querySelector('[data-total-slides]').textContent = String(newState.totalSlides);

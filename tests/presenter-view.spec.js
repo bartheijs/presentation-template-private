@@ -546,14 +546,18 @@ test.describe('theme sync (Presenter View)', () => {
     // which app.js already hides (display: none) the moment Presenter View
     // connects (presenterHidesControls -> .presenter-controls-hidden
     // .next-column), so it isn't clickable here — pre-existing behavior,
-    // unrelated to this task. Shift+T (Task 5) drives the same cycleTheme()
+    // unrelated to theme switching. Shift+T drives the same cycleTheme()
     // regardless of button visibility, so it exercises the same behavior.
     await page.keyboard.press('Shift+T');
     const chosen = await page.evaluate(() => document.documentElement.dataset.theme);
     await expect.poll(() => presenter.evaluate(() => document.documentElement.dataset.theme)).toBe(chosen);
     const currentPreviewFrame = presenter.frameLocator('#current-preview');
+    const nextPreviewFrame = presenter.frameLocator('#next-preview');
     await expect.poll(() =>
       currentPreviewFrame.locator('html').evaluate((el) => el.dataset.theme)
+    ).toBe(chosen);
+    await expect.poll(() =>
+      nextPreviewFrame.locator('html').evaluate((el) => el.dataset.theme)
     ).toBe(chosen);
   });
 });

@@ -9,8 +9,8 @@
  * regardless of source order or the viewer's OS preference — same pattern
  * as themes/conclusion/theme.css.
  *
- * Fonts loaded via Google Fonts <link> in index.html/presenter.html (see
- * Task 3) — requires internet once per session to fetch; the font-family
+ * Fonts loaded via a Google Fonts <link> in index.html/presenter.html's
+ * <head> — requires internet once per session to fetch; the font-family
  * fallback stacks below keep presenting usable offline (system-ui sans).
  */
 
@@ -129,6 +129,13 @@
   font-size: 26px;
   text-align: left;
 }
+/* The rule above's dark ink would beat styles.css's white
+   `.slide-content--has-bg .slide-subtitle` on specificity, leaving the
+   subtitle dark-on-photo — restore white when the title slide has a
+   background photo (one extra class, so this wins regardless of order). */
+:root[data-theme="bouwstenen"] .slide-content--has-bg.slide-content--layout-title .slide-subtitle--accent {
+  color: #fff;
+}
 :root[data-theme="bouwstenen"] .slide-content--layout-title .slide-subtitle--accent::before {
   content: '';
   flex: 0 0 auto;
@@ -160,31 +167,51 @@
 }
 
 /* ---------- Quote layout ---------- */
-/* Plain quote (no bullets, see Task 1's hasBullets): the whole slide goes
-   dark with a paper-colored trapezoid wedge on each side (mirrored), the
-   quote box loses its own background and sits centered over the dark
-   middle. Requires :has() (Chromium — this project's only tested/target
-   presenting browser) to tell the two cases apart from the container. */
-:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(:has(.slide-quote-box--footnote)) {
+/* Plain quote (no bullets, see renderQuoteLayout()'s hasBullets) on the
+   ordinary surface: the whole slide goes dark with a paper-colored
+   trapezoid wedge on each side (mirrored), the quote box loses its own
+   background and sits centered over the dark middle. Requires :has()
+   (Chromium — this project's only tested/target presenting browser) to
+   tell the plain and footnote cases apart from the container.
+
+   Sizing: both the wedges and the quote column are percentages of the
+   slide's own width, so the dark middle strip is always wider than the
+   quote column at every viewport. A wedge covers 16% of the slide at its
+   widest (the top edge; the bottom edge tapers to ~10%), and the quote
+   column is capped at 60% (centered, so 20%-80%) — leaving a >=4% dark
+   margin between the text and the nearest wedge edge. A fixed pixel wedge
+   width can't do this: the slide ranges from ~650px to ~1300px wide across
+   ordinary laptop/beamer viewports.
+
+   Background photo (.slide-content--has-bg): the photo is an explicit,
+   per-slide author choice, so this theme keeps it — no dark fill, no
+   wedges (every rule below is scoped :not(.slide-content--has-bg)). The
+   quote instead becomes a solid ink card in styles.css's left text column
+   over the photo, the same look this theme already gives the footnote
+   variant, so contrast never depends on the photo. */
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote)) {
   background: var(--text);
 }
-:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(:has(.slide-quote-box--footnote))::before,
-:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(:has(.slide-quote-box--footnote))::after {
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::before,
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 380px;
+  width: 16%;
   background: var(--bg);
   z-index: 0;
 }
-:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(:has(.slide-quote-box--footnote))::before {
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::before {
   left: 0;
   clip-path: polygon(0 0, 100% 0, 62% 100%, 0 100%);
 }
-:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(:has(.slide-quote-box--footnote))::after {
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::after {
   right: 0;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 38% 100%);
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote)) .slide-inner--quote {
+  width: min(60%, 72rem);
 }
 :root[data-theme="bouwstenen"] .slide-content--layout-quote .slide-quote-box:not(.slide-quote-box--footnote) {
   position: relative;
@@ -203,12 +230,23 @@
   border-radius: var(--radius-sm);
   background: var(--accent-3);
 }
+/* Plain quote over a background photo: solid ink card, left-aligned with
+   styles.css's has-bg text column (instead of centered text floating over
+   an arbitrary part of the photo). */
+:root[data-theme="bouwstenen"] .slide-content--has-bg.slide-content--layout-quote .slide-quote-box:not(.slide-quote-box--footnote) {
+  background: var(--text);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+:root[data-theme="bouwstenen"] .slide-content--has-bg.slide-content--layout-quote .slide-quote-box:not(.slide-quote-box--footnote)::before {
+  margin: 0 0 1.25rem;
+}
 :root[data-theme="bouwstenen"] .slide-quote-text {
   font-family: var(--font-italic);
   font-style: normal;
   font-weight: 500;
 }
-/* Footnote variant (has bullets, see Task 1): small dark card, not a
+/* Footnote variant (has bullets, see renderQuoteLayout()): small dark card, not a
    full-bleed trapezoid — the bullets above it must stay on the ordinary
    paper surface. */
 :root[data-theme="bouwstenen"] .slide-quote-box--footnote {

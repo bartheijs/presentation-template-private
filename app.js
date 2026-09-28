@@ -1448,22 +1448,17 @@ document.addEventListener('keydown', (e) => {
   else if (isPauseOverlayVisible()) hidePauseOverlay();
 });
 
+// index.html's and presenter.html's inline <head> theme scripts read this
+// same 'presentation.theme' literal (they run before app.js loads) — keep
+// all three in sync if it ever changes.
 const THEME_STORAGE_KEY = 'presentation.theme';
-
-function loadStoredTheme() {
-  try {
-    return sessionStorage.getItem(THEME_STORAGE_KEY);
-  } catch {
-    return null; // private browsing / blocked site data — fall back to CONFIG.theme
-  }
-}
 
 function storeTheme(theme) {
   try {
     sessionStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {
-    /* same as above — the theme still applies for this page load, it just
-       won't survive a reload */
+    /* private browsing / blocked site data — the theme still applies for
+       this page load, it just won't survive a reload */
   }
 }
 
@@ -1475,15 +1470,9 @@ function updateThemeToggleLabel() {
   document.getElementById('btn-theme-toggle').setAttribute('aria-label', label);
 }
 
-// `persist: false` is used by the preview-state handler (Task 6) and by
-// presenter.js's renderState() equivalent (Task 7), which both apply a
-// theme that was already decided (and already persisted, if applicable) by
-// the real Presentation View — persisting again there would be redundant,
-// not incorrect, but keeping it to one writer avoids two tabs racing each
-// other's sessionStorage writes for no benefit.
-function setTheme(theme, { persist = true } = {}) {
+function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  if (persist) storeTheme(theme);
+  storeTheme(theme);
   if (!isEmbedPreview) updateThemeToggleLabel();
 }
 
@@ -1507,6 +1496,11 @@ function applyConfigStrings() {
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
   document.getElementById('btn-presenter-view-label').textContent = CONFIG.ui.presenterViewButton;
   document.getElementById('btn-presenter-view').setAttribute('aria-label', CONFIG.ui.presenterViewButton);
+  // A CONFIG.theme or stored value that isn't in THEMES (e.g. a typo) would
+  // leave the deck unstyled while the label names a theme that isn't active.
+  if (!THEMES.includes(document.documentElement.dataset.theme)) {
+    document.documentElement.dataset.theme = 'default';
+  }
   updateThemeToggleLabel();
   updateNotesToggleLabel();
   document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
@@ -1581,7 +1575,7 @@ function cycleTheme() {
   const current = document.documentElement.dataset.theme;
   const next = THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
   setTheme(next);
-  sendStateToPresenter(); // no-op if no Presenter View is connected (Task 6 adds the `theme` field it sends)
+  sendStateToPresenter(); // no-op if no Presenter View is connected; the broadcast carries `theme`
 }
 
 // Whitelisted commands a connected Presenter View may send. Each handler
@@ -1639,8 +1633,8 @@ const COMMAND_HANDLERS = Object.assign(Object.create(null), {
 });
 
 // Message listener is registered unconditionally (not gated on
-// isEmbedPreview): a Task 6 preview iframe (isEmbedPreview === true) still
-// needs to receive and act on messages — it just never opens its own
+// isEmbedPreview): a Presenter View preview iframe (isEmbedPreview === true)
+// still needs to receive and act on messages — it just never opens its own
 // Presenter View or navigates on its own (that's what the guard above is
 // for).
 window.addEventListener('message', (e) => {
