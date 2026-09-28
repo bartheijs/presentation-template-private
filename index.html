@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presentation Template Demo</title>
 <script src="config.js"></script>
-<script>document.documentElement.setAttribute('data-theme', (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default');</script>
+<script>
+(function () {
+  var stored = null;
+  try { stored = sessionStorage.getItem('presentation.theme'); } catch (e) { /* private browsing / blocked storage */ }
+  var theme = stored || (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default';
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="themes/conclusion/theme.css">
 <!-- bouwstenen theme fonts — needs internet once per session; every
@@ -118,6 +125,11 @@
       <button id="btn-presenter-view" class="btn-floating btn-presenter-view btn-compact-collapsible" type="button">
         <svg class="icon"><use href="#icon-layers"></use></svg>
         <span id="btn-presenter-view-label" class="btn-label-text"></span>
+      </button>
+
+      <button id="btn-theme-toggle" class="btn-floating btn-theme-toggle btn-compact-collapsible" type="button">
+        <svg class="icon"><use href="#icon-swap"></use></svg>
+        <span id="btn-theme-toggle-label" class="btn-label-text"></span>
       </button>
 
       <div class="timer-widget" id="timer-widget">

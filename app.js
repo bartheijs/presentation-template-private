@@ -69,6 +69,8 @@ const APP_I18N = {
     overlayTitle: 'Presentatiebrief',
     backToDeckLabel: 'Terug naar de presentatie',
     presenterViewButton: 'Presenter View',
+    themeToggleLabelPrefix: 'Ontwerp:',
+    themeNames: { default: 'Standaard', conclusion: 'Conclusion', bouwstenen: 'Bouwstenen' },
     finishTitle: 'Klaar om te presenteren!',
     finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
     pauseOverlayText: '...',
@@ -91,6 +93,8 @@ const APP_I18N = {
     overlayTitle: 'Presentation brief',
     backToDeckLabel: 'Back to presentation',
     presenterViewButton: 'Presenter View',
+    themeToggleLabelPrefix: 'Design:',
+    themeNames: { default: 'Default', conclusion: 'Conclusion', bouwstenen: 'Bouwstenen' },
     finishTitle: 'Ready to present!',
     finishBodyHtml: 'Use this demo as the starting point for your own story.',
     pauseOverlayText: '...',
@@ -132,6 +136,12 @@ applyAppLanguage();
 // §7): it must not navigate/launch on its own, only render commands it
 // receives.
 const isEmbedPreview = new URLSearchParams(location.search).get('embed') === 'preview';
+
+// Fixed cycle order for the design-toggle button/Shift+T/CYCLE_THEME — see
+// README.md's "Een nieuw thema toevoegen" for what adding a 4th theme needs
+// (a themes/<name>/theme.css, two <link> tags, one entry here, one entry in
+// APP_I18N.themeNames below).
+const THEMES = ['default', 'conclusion', 'bouwstenen'];
 
 /* ---------- Small helpers ---------- */
 
@@ -1438,6 +1448,45 @@ document.addEventListener('keydown', (e) => {
   else if (isPauseOverlayVisible()) hidePauseOverlay();
 });
 
+const THEME_STORAGE_KEY = 'presentation.theme';
+
+function loadStoredTheme() {
+  try {
+    return sessionStorage.getItem(THEME_STORAGE_KEY);
+  } catch {
+    return null; // private browsing / blocked site data — fall back to CONFIG.theme
+  }
+}
+
+function storeTheme(theme) {
+  try {
+    sessionStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    /* same as above — the theme still applies for this page load, it just
+       won't survive a reload */
+  }
+}
+
+function updateThemeToggleLabel() {
+  const theme = document.documentElement.dataset.theme;
+  const name = CONFIG.ui.themeNames[theme] || theme;
+  const label = `${CONFIG.ui.themeToggleLabelPrefix} ${name}`;
+  document.getElementById('btn-theme-toggle-label').textContent = label;
+  document.getElementById('btn-theme-toggle').setAttribute('aria-label', label);
+}
+
+// `persist: false` is used by the preview-state handler (Task 6) and by
+// presenter.js's renderState() equivalent (Task 7), which both apply a
+// theme that was already decided (and already persisted, if applicable) by
+// the real Presentation View — persisting again there would be redundant,
+// not incorrect, but keeping it to one writer avoids two tabs racing each
+// other's sessionStorage writes for no benefit.
+function setTheme(theme, { persist = true } = {}) {
+  document.documentElement.dataset.theme = theme;
+  if (persist) storeTheme(theme);
+  if (!isEmbedPreview) updateThemeToggleLabel();
+}
+
 /* ---------- Apply config-driven strings/toggles ---------- */
 
 function applyConfigStrings() {
@@ -1458,6 +1507,7 @@ function applyConfigStrings() {
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
   document.getElementById('btn-presenter-view-label').textContent = CONFIG.ui.presenterViewButton;
   document.getElementById('btn-presenter-view').setAttribute('aria-label', CONFIG.ui.presenterViewButton);
+  updateThemeToggleLabel();
   updateNotesToggleLabel();
   document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
   document.getElementById('btn-next-collapse').setAttribute('aria-label', CONFIG.ui.controlsCollapseHide);
@@ -1519,6 +1569,19 @@ if (!isEmbedPreview) {
   document.addEventListener('keydown', (e) => {
     if (e.shiftKey && e.key === 'P') openPresenterView();
   });
+  document.getElementById('btn-theme-toggle').addEventListener('click', cycleTheme);
+  document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.key === 'T') cycleTheme();
+  });
+} else {
+  document.getElementById('btn-theme-toggle').hidden = true;
+}
+
+function cycleTheme() {
+  const current = document.documentElement.dataset.theme;
+  const next = THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
+  setTheme(next);
+  sendStateToPresenter(); // no-op if no Presenter View is connected (Task 6 adds the `theme` field it sends)
 }
 
 // Whitelisted commands a connected Presenter View may send. Each handler

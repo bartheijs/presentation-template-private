@@ -253,3 +253,57 @@ test.describe('bouwstenen theme', () => {
     expect(new Set(colors).size).toBe(4);
   });
 });
+
+test.describe('theme toggle (Presentation View)', () => {
+  test('the button is visible without extra configuration, and a click cycles default -> conclusion -> bouwstenen -> default', async ({ page }) => {
+    await gotoPresentation(page);
+    await expect(page.locator('#btn-theme-toggle')).toBeVisible();
+    const themes = await page.evaluate(() => THEMES);
+    const start = await page.evaluate(() => document.documentElement.dataset.theme);
+    let expected = themes[(themes.indexOf(start) + 1) % themes.length];
+    for (let i = 0; i < themes.length; i++) {
+      await page.click('#btn-theme-toggle');
+      await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(expected);
+      expected = themes[(themes.indexOf(expected) + 1) % themes.length];
+    }
+  });
+
+  test('Shift+T also cycles the theme', async ({ page }) => {
+    await gotoPresentation(page);
+    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    await page.keyboard.press('Shift+T');
+    const after = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(after).not.toBe(before);
+  });
+
+  test('the choice survives a reload within the session (sessionStorage)', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.click('#btn-theme-toggle');
+    const chosen = await page.evaluate(() => document.documentElement.dataset.theme);
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe(chosen);
+  });
+
+  test('you stay on the same slide, with quiz/overlay state intact, across a theme switch', async ({ page }) => {
+    await gotoPresentation(page);
+    const quizIndex = await page.evaluate(() => SLIDES.findIndex((s) => s.layout === 'quiz'));
+    await page.evaluate((index) => { state.currentIndex = index; renderSlide(); }, quizIndex);
+    await page.evaluate(() => {
+      const slide = SLIDES[state.currentIndex];
+      const itemId = slide.items[0].id;
+      const s = getQuizState(slide);
+      s.revealed[itemId] = true;
+      renderSlide();
+    });
+    let navigated = false;
+    page.on('framenavigated', () => { navigated = true; });
+    await page.click('#btn-theme-toggle');
+    expect(navigated).toBe(false); // sanity: no navigation happened, only the CSS attribute changed
+    expect(await page.evaluate(() => state.currentIndex)).toBe(quizIndex);
+    const revealed = await page.evaluate(() => {
+      const slide = SLIDES[state.currentIndex];
+      return getQuizState(slide).revealed[slide.items[0].id];
+    });
+    expect(revealed).toBe(true);
+  });
+});
