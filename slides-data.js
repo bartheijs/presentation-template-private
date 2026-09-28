@@ -356,32 +356,31 @@ Verhaal: dit is het scharnierpunt van de les — van zenden naar luisteren. Neem
   },
   {
     id: 16,
-    layout: 'title',
-    title: 'Vragen',
-    subtitle: '',
-    bullets: [],
-    notes: `Blijft in beeld terwijl de zaal vragen stelt, geen tekst om voor te lezen.
+    layout: 'quote',
+    title: 'Durf je het te vragen?',
+    bullets: [
+      'Welke vraag zit op het puntje van je tong, maar durfde je nog niet te stellen?',
+      'Laatste kans — wie durft?',
+      'Straks bij een klant moet je dat ook durven vragen',
+    ],
+    quote: 'De allermooiste bloemen groeien vlak langs het ravijn. Om die te kunnen plukken moet je durven bang te zijn.',
+    attribution: '',
+    disco: true,
+    discoMode: 'pause',
+    discoTitleLines: ['VRAGEN'],
+    notes: `Komt binnen via de disco-tussenstop: na "Vraag mij alles" bevriest het scherm op "VRAGEN" — decor, geen tekst om voor te lezen, puur een stil rustpunt terwijl de zaal vragen stelt. Nog een keer op Volgende/pijl-rechts laat deze slide landen: de drie bullets staan nu zelf in beeld als uitnodiging, de quote is illustratie/sfeer eronder — niet voorlezen.
 
-Verhaal: dit is decor, geen inhoud — de aandacht moet naar de zaal, niet naar het scherm.`,
-    duration: 15,
+Aanvullend, hardop, afhankelijk van het moment:
+
+1. Bij twijfel of stilte, als aanmoediging: "Welke vraag ligt op het puntje van je tong, maar heb je niet gesteld omdat hij spannend voelt of misschien dom lijkt?"
+2. Om de laatste vraag af te dwingen: "laatste kans — wie durft?"
+3. Om te complimenteren op de vragen die al gesteld zijn (niet op de slide, want terugkijkend): "mooi dat jullie dit al durfden te vragen"
+
+Verhaal: de derde bullet legt de brug naar de praktijk — durven vragen stopt niet bij de collegezaal, dat geldt straks net zo hard bij een klant.`,
+    duration: 45,
   },
   {
     id: 17,
-    layout: 'quote',
-    title: 'Durf je het te vragen?',
-    quote: 'De allermooiste bloemen groeien vlak langs het ravijn. Om die te kunnen plukken moet je durven bang te zijn.',
-    attribution: '',
-    notes: `Puur sfeer — niet voorlezen. Wat je wél hardop kunt zeggen, afhankelijk van het moment:
-
-1. Als aanmoediging tijdens het vraaggedeelte, bij twijfel of stilte: "Welke vraag ligt op het puntje van je tong, maar heb je niet gesteld omdat hij spannend voelt of misschien dom lijkt?"
-2. Om de laatste vraag af te dwingen: "laatste kans — wie durft?"
-3. Om te complimenteren op de vragen die al gesteld zijn: "mooi dat jullie dit al durfden te vragen"
-
-Verhaal: koppel dit aan de praktijk — deze vraag moet je straks ook durven stellen aan een klant. Durven vragen stopt niet bij de collegezaal.`,
-    duration: 30,
-  },
-  {
-    id: 18,
     layout: 'quiz',
     title: 'Waar gebruiken we AI in de SDLC?',
     items: [
@@ -454,7 +453,7 @@ Verhaal: dit voorkomt dat het overkomt als "wij weten het antwoord al" — het i
     duration: 90,
   },
   {
-    id: 19,
+    id: 18,
     layout: 'bullets',
     title: 'Kernboodschap',
     align: 'center',
@@ -469,7 +468,7 @@ Verhaal: een veilige omgeving betekent ruimte om te leren, vragen te stellen, fo
     duration: 45,
   },
   {
-    id: 20,
+    id: 19,
     layout: 'bullets',
     title: 'Jullie hebben de eerste stap al gezet',
     align: 'center',
@@ -482,7 +481,7 @@ Verhaal: dit weerlegt impliciet de aanname dat "zelf doen" alleen voor anderen i
     duration: 20,
   },
   {
-    id: 21,
+    id: 20,
     layout: 'list-image',
     title: 'Blijf in contact',
     icon: 'chat',

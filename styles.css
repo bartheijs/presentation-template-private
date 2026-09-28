@@ -765,6 +765,20 @@ button {
   font-weight: 600;
   opacity: 0.85;
 }
+/* Demoted variant: a quote slide's own `bullets` carry the message, so the
+   quote itself sits below them as a smaller, illustrative footnote instead
+   of the slide's main event — see renderQuoteLayout()'s `hasBullets`. */
+.slide-quote-box--footnote {
+  max-width: 42rem;
+  padding: 1.1rem 1.5rem;
+  box-shadow: none;
+}
+.slide-quote-box--footnote .slide-quote-text {
+  font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+}
+.slide-quote-box--footnote .slide-quote-attribution {
+  font-size: 0.8rem;
+}
 .slide-quote-image-stack {
   display: flex;
   justify-content: center;
@@ -1323,6 +1337,7 @@ button {
   .slide-row-with-image { flex-direction: column; align-items: center; }
   .slide-image { height: 6.5rem; width: 6.5rem; }
   .slide-quote-box { padding: 1.5rem 1.75rem; }
+  .slide-quote-box--footnote { padding: 1rem 1.25rem; }
   .slide-quote-image-stack .slide-image { height: 6.5rem; width: 6.5rem; }
   .slide-image-stack--solo .slide-image { height: 40vh; }
 }

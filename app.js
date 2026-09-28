@@ -307,19 +307,28 @@ function renderListImageLayout(slide) {
     ${buildMetaBlock(slide)}`;
 }
 
-// Requires `quote` (string); `attribution` (string) and `image` are both
-// optional — setting `image` reproduces the deck's "quote + photo" variant,
-// otherwise the quote box sits alone on the theme's background.
+// Requires `quote` (string); `attribution` (string), `image` and `bullets`
+// are all optional. `image` reproduces the deck's "quote + photo" variant.
+// `bullets` adds a heading + supporting bullet list, with the quote box then
+// demoted below them as a smaller illustrative footnote (`--footnote`
+// modifier) rather than the slide's main content — omitted, the quote box
+// sits alone at full size on the theme's background exactly as before (a
+// purely decorative "sfeer" slide, no heading rendered).
 function renderQuoteLayout(slide) {
   const imageBlock = slide.image
     ? `<div class="slide-quote-image-stack">${buildImagesBlock(slide)}</div>`
     : '';
+  const hasBullets = Array.isArray(slide.bullets) && slide.bullets.length > 0;
+  const quoteBlock = `
+    <div class="slide-quote-box${hasBullets ? ' slide-quote-box--footnote' : ''}">
+      <blockquote class="slide-quote-text">${inlineMarkdown(slide.quote || '')}</blockquote>
+      ${slide.attribution ? `<p class="slide-quote-attribution">${escapeHtml(slide.attribution)}</p>` : ''}
+    </div>`;
   return `
     <div class="slide-inner slide-inner--quote">
-      <div class="slide-quote-box">
-        <blockquote class="slide-quote-text">${inlineMarkdown(slide.quote || '')}</blockquote>
-        ${slide.attribution ? `<p class="slide-quote-attribution">${escapeHtml(slide.attribution)}</p>` : ''}
-      </div>
+      ${hasBullets ? buildHeadingBlock(slide) : ''}
+      ${hasBullets ? buildBulletsBlock(slide) : ''}
+      ${quoteBlock}
       ${imageBlock}
     </div>
     ${buildMetaBlock(slide)}`;
