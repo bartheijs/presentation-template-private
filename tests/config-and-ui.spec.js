@@ -207,3 +207,49 @@ test.describe('theme system', () => {
     expect(presenterBg).toBe(mainBg);
   });
 });
+
+test.describe('bouwstenen theme', () => {
+  test('every slide renders under bouwstenen with no console errors', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', (err) => errors.push(err));
+    page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
+
+    await gotoPresentation(page);
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'bouwstenen'));
+
+    const total = await page.evaluate(() => SLIDES.length);
+    for (let i = 0; i < total; i++) {
+      // eslint-disable-next-line no-loop-func
+      await page.evaluate((index) => { state.currentIndex = index; renderSlide(); }, i);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  test('the title slide gets the dark wordmark block, not the gradient-clip text', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'bouwstenen');
+      state.currentIndex = 0; // slide 0 is always the title slide, per README's authoring convention
+      renderSlide();
+    });
+    const bg = await page.locator('.slide-heading h1.slide-title-accent').evaluate(
+      (el) => getComputedStyle(el).backgroundColor
+    );
+    expect(bg).toBe('rgb(23, 26, 28)'); // --text / inkt
+  });
+
+  test('bullets cycle through all 4 accent colors', async ({ page }) => {
+    await gotoPresentation(page);
+    const bulletsIndex = await page.evaluate(() => SLIDES.findIndex((s) => (s.bullets || []).length >= 4));
+    expect(bulletsIndex).toBeGreaterThan(-1); // fixture assumption — see step 2 below if this fails
+    await page.evaluate((index) => {
+      document.documentElement.setAttribute('data-theme', 'bouwstenen');
+      state.currentIndex = index;
+      renderSlide();
+    }, bulletsIndex);
+    const colors = await page.locator('.slide-bullets li').evaluateAll(
+      (lis) => lis.slice(0, 4).map((li) => getComputedStyle(li, '::before').backgroundColor)
+    );
+    expect(new Set(colors).size).toBe(4);
+  });
+});
