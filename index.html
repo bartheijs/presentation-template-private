@@ -82,10 +82,14 @@
       <div class="brand-chrome" id="brand-chrome" aria-hidden="true">
         <!-- Real brand assets (see themes/conclusion/assets/) rather than a
              reconstructed text lockup — swap these two files to rebrand for
-             a different business unit; CONFIG.brand is no longer read here
-             since the wordmark/tagline are baked into the images. -->
+             a different business unit. CONFIG.brand.businessUnit/tagline are
+             still applied below, visually hidden (the parent is already
+             aria-hidden) — they exist so a branch without custom assets can
+             still declare its business unit/tagline in config.js alone. -->
         <img class="brand-chrome-logo" src="themes/conclusion/assets/logo.png" alt="Conclusion Low Code Company">
         <img class="brand-chrome-bottombar" src="themes/conclusion/assets/bottombar.png" alt="Business done differently">
+        <span class="brand-chrome-text" id="brand-chrome-business-unit"></span>
+        <span class="brand-chrome-text" id="brand-chrome-tagline"></span>
       </div>
     </div>
   </main>

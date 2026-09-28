@@ -40,10 +40,12 @@
 
     <nav class="preview-nav" aria-label="Presentatiebediening" data-i18n-aria-label="presentationControls">
       <span class="slide-chip">Slide <strong data-current-slide></strong> / <span data-total-slides></span></span>
+      <span class="slide-chip"><span data-i18n="pendingNextSlideLabel">Volgende:</span> <strong data-pending-next-slide></strong></span>
       <div class="nav-controls">
         <button id="btn-presenter-prev" class="btn btn--nav" type="button"><span aria-hidden="true">&#8592;</span> <span data-i18n="previous">Vorige</span></button>
         <button id="btn-presenter-next" class="btn btn--primary btn--nav" type="button"><span data-i18n="next">Volgende</span> <span aria-hidden="true">&#8594;</span></button>
-        <button id="btn-presenter-skip" class="btn btn--quiet btn--nav" type="button" data-i18n="skipOneSlide" data-i18n-title="skipOneSlideHint" title="Eerst klikken om te activeren, dan nogmaals om één slide over te slaan">Sla over</button>
+        <button id="btn-presenter-skip" class="btn btn--quiet btn--nav" type="button" data-i18n="skipOneSlide" data-i18n-title="skipOneSlideHint" title="Slaat een extra slide over bij de volgende klik op Volgende">Sla over</button>
+        <button id="btn-presenter-herstel" class="btn btn--quiet btn--nav" type="button" data-i18n="undoSkip" data-i18n-title="undoSkipHint" title="Zet de opgebouwde overslag terug, zonder de echte presentatie te wijzigen">Herstel</button>
       </div>
     </nav>
 

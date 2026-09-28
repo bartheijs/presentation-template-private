@@ -11,7 +11,9 @@ const PRESENTER_I18N = {
     slidePreviews: 'Slidevoorbeelden',
     currentPreviewTitle: 'Voorbeeld van de huidige slide',
     nextPreviewTitle: 'Voorbeeld van de volgende slide',
-    skipOneSlide: 'Sla over', skipOneSlideHint: 'Eerst klikken om te activeren, dan nogmaals om één slide over te slaan',
+    skipOneSlide: 'Sla over', skipOneSlideHint: 'Slaat een extra slide over bij de volgende klik op Volgende',
+    undoSkip: 'Herstel', undoSkipHint: 'Zet de opgebouwde overslag terug, zonder de echte presentatie te wijzigen',
+    pendingNextSlideLabel: 'Volgende:',
     speakerNotes: 'Sprekersnotities', timerLabel: 'Resterende tijd', currentTime: 'Huidige tijd',
     start: 'Start', pause: 'Pauze', reset: 'Reset',
     display: 'Weergave',
@@ -30,7 +32,9 @@ const PRESENTER_I18N = {
     slidePreviews: 'Slide previews',
     currentPreviewTitle: 'Preview of the current slide',
     nextPreviewTitle: 'Preview of the next slide',
-    skipOneSlide: 'Skip', skipOneSlideHint: 'Click once to arm, click again to skip one slide',
+    skipOneSlide: 'Skip', skipOneSlideHint: 'Skips one extra slide on the next Volgende click',
+    undoSkip: 'Undo', undoSkipHint: 'Resets the pending skip, without touching the real presentation',
+    pendingNextSlideLabel: 'Next:',
     speakerNotes: 'Speaker notes', timerLabel: 'Time remaining', currentTime: 'Current time',
     start: 'Start', pause: 'Pause', reset: 'Reset',
     display: 'Display',
@@ -244,13 +248,15 @@ function sendCommand(command, extra) {
 // next ordinary Volgende click — the undo window is exactly one click.
 let lastJumpOriginIndex = null;
 
-// While the skip button is armed (see btn-presenter-skip below), the
-// next-preview card should show what a confirmed skip would actually land
-// on (currentSlide + 2), not the ordinary next slide — so the presenter can
-// see the target before committing to it with the second click.
+// The slide Volgende will jump to (0-based). Reset to currentSlide + 1 on
+// every confirmed state (renderState) — including the confirmation of a
+// skip-jump itself — so it only ever drifts ahead of "ordinary next" in the
+// window between renders, via Sla over clicks (see btn-presenter-skip
+// below), which are purely local and never trigger a render on their own.
+let pendingNextSlide = 0;
+
 function pendingNextIndex() {
-  const step = skipBtn.classList.contains('is-armed') ? 2 : 1;
-  return Math.min(latestState.currentSlide + step, latestState.totalSlides - 1);
+  return Math.min(pendingNextSlide, latestState.totalSlides - 1);
 }
 
 function renderToggleState(buttonId, statusSelector, active) {
@@ -369,6 +375,9 @@ function renderState(newState) {
   renderToggleState('btn-toggle-pause-overlay', '[data-pause-overlay]', newState.pauseOverlayVisible);
   renderToggleState('btn-toggle-context-overlay', '[data-context-overlay]', newState.contextOverlayVisible);
   renderDiscoStill(newState.discoTitleLines);
+
+  pendingNextSlide = newState.currentSlide + 1;
+  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextIndex() + 1);
 
   syncPreview(currentPreviewEl, newState.currentSlide, currentFlags());
   syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
@@ -546,51 +555,44 @@ window.addEventListener('message', (e) => {
   renderState(e.data);
 });
 
-// Arm-then-confirm: this jumps straight over a slide with no undo-by-typo
-// safety net, so a single ordinary click must not fire it. The button
-// starts looking like plain text; a first click only turns it into a real
-// button (.is-armed, styled like Volgende so it reads as a genuine action)
-// without navigating, and a second click (while armed) performs the skip.
-// Arming auto-expires so it can't stay live and get triggered by an
-// unrelated later click.
-let skipArmTimer = null;
-
-function disarmSkip() {
-  skipBtn.classList.remove('is-armed');
-  clearTimeout(skipArmTimer);
-  skipArmTimer = null;
-  if (latestState) syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
+// Each click builds the pending jump one slide further ahead — no arm step,
+// since the effect stays purely local (see pendingNextSlide above) until
+// Volgende commits it; Herstel undoes the whole buildup in one click.
+function renderPendingNextSlide() {
+  document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextIndex() + 1);
+  syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
 }
 
 skipBtn.addEventListener('click', () => {
   if (!latestState) return;
-  if (!skipBtn.classList.contains('is-armed')) {
-    skipBtn.classList.add('is-armed');
-    // Show the actual skip target in the next-preview card now, before
-    // it's committed, so the presenter can see what they're about to jump
-    // to (see pendingNextIndex()).
-    syncPreview(nextPreviewEl, pendingNextIndex(), nextPreviewFlags());
-    skipArmTimer = setTimeout(disarmSkip, 4000);
-    return;
-  }
-  const target = pendingNextIndex();
-  disarmSkip();
-  lastJumpOriginIndex = latestState.currentSlide;
-  sendCommand('GO_TO_SLIDE', { slide: target });
+  pendingNextSlide += 1;
+  renderPendingNextSlide();
+});
+
+document.getElementById('btn-presenter-herstel').addEventListener('click', () => {
+  if (!latestState) return;
+  pendingNextSlide = latestState.currentSlide + 1;
+  renderPendingNextSlide();
 });
 
 document.getElementById('btn-presenter-next').addEventListener('click', () => {
   if (!latestState) return;
-  disarmSkip(); // an armed-but-uncommitted skip no longer applies once you navigate some other way
-  lastJumpOriginIndex = null;
-  // Use NEXT_SLIDE (not GO_TO_SLIDE) so the real goNext() plays the normal
-  // transition/disco effect and can reach the finish overlay on the last
-  // slide, exactly like the physical Next button.
-  sendCommand('NEXT_SLIDE');
+  const target = pendingNextIndex();
+  if (target !== latestState.currentSlide + 1) {
+    // A skip is pending: jump straight there via GO_TO_SLIDE, and remember
+    // where we came from so one Vorige click can return to it directly.
+    lastJumpOriginIndex = latestState.currentSlide;
+    sendCommand('GO_TO_SLIDE', { slide: target });
+  } else {
+    lastJumpOriginIndex = null;
+    // Use NEXT_SLIDE (not GO_TO_SLIDE) so the real goNext() plays the normal
+    // transition/disco effect and can reach the finish overlay on the last
+    // slide, exactly like the physical Next button.
+    sendCommand('NEXT_SLIDE');
+  }
 });
 
 document.getElementById('btn-presenter-prev').addEventListener('click', () => {
-  disarmSkip();
   if (lastJumpOriginIndex !== null) {
     sendCommand('GO_TO_SLIDE', { slide: lastJumpOriginIndex });
     lastJumpOriginIndex = null;
