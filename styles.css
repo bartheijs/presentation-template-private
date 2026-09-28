@@ -581,6 +581,17 @@ button {
   justify-content: flex-start;
 }
 
+/* ---------- Per-slide accent color (optional `accent: 0-3` slide field) ----------
+   Exposes the chosen accent as --slide-accent so any layout/theme can read
+   it generically, each with its own fallback via var(--slide-accent, ...)
+   for the (usual) case where a slide doesn't set `accent` at all — e.g.
+   the 'step' layout's heading, or Conclusion's left rail (see
+   themes/conclusion/theme.css). */
+.slide-content--accent-0 { --slide-accent: var(--accent); }
+.slide-content--accent-1 { --slide-accent: var(--accent-2); }
+.slide-content--accent-2 { --slide-accent: var(--accent-3); }
+.slide-content--accent-3 { --slide-accent: var(--accent-4); }
+
 .slide-heading {
   display: flex;
   align-items: center;
@@ -691,7 +702,11 @@ button {
   line-height: 1.45;
 }
 .slide-bullets .icon {
-  color: var(--accent-2);
+  /* With the slide's own `accent` field set (see the generic --slide-accent
+     block above), bullet markers follow it too — same idea as the 'step'
+     layout's heading — falling back to the ordinary fixed accent-2 when
+     `accent` isn't set. */
+  color: var(--slide-accent, var(--accent-2));
   margin-top: 0.35em;
   width: 1.05rem;
   height: 1.05rem;
@@ -826,6 +841,95 @@ button {
   font-family: var(--font-body);
   font-size: 0.95rem;
   color: var(--text-muted);
+}
+
+/* ---------- Step layout (layout: 'step', see app.js renderStepLayout) ----------
+   A compact stepper bar showing the whole sequence, the current step
+   visually distinct from the muted rest — a wizard-style progress
+   indicator applied to a full slide instead of a form. */
+/* Left-aligned regardless of CONFIG.layout.align/per-slide `align` — a
+   step sequence reads naturally as a left-to-right wizard page, not a
+   centered statement, so this layout forces the same treatment
+   .slide-content--align-left opts individual slides into elsewhere. */
+.slide-content--layout-step .slide-inner {
+  align-items: flex-start;
+  text-align: left;
+}
+.slide-content--layout-step .slide-heading {
+  justify-content: flex-start;
+}
+.slide-inner--step {
+  width: 100%;
+}
+.step-bar {
+  list-style: none;
+  margin: 0 0 2.5rem;
+  padding: 0;
+  display: flex;
+  width: 100%;
+}
+.step-bar-item {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* Connects this item's dot back to the previous one's, so the row reads as
+   one continuous track rather than N separate badges. */
+.step-bar-item:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 0.55rem;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+}
+.step-bar-dot {
+  position: relative;
+  z-index: 1;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+/* Every dot (active or not) gets its own color by position — the same
+   4-color cycle the bullet markers already use elsewhere in this file —
+   rather than one shared color, so the sequence reads as distinct steps
+   even before the active one is picked out by size. */
+.step-bar-item:nth-child(4n+2) .step-bar-dot { background: var(--accent-2); }
+.step-bar-item:nth-child(4n+3) .step-bar-dot { background: var(--accent-3); }
+.step-bar-item:nth-child(4n) .step-bar-dot { background: var(--accent-4); }
+/* transform (not width/height) so the dot enlarges around its own center
+   rather than growing its layout box downward — its box stays 1.2rem for
+   layout purposes, keeping it exactly where the connecting line (whose
+   `top` is calibrated to that box) expects it, instead of drifting off
+   the line as it gets bigger. */
+.step-bar-item.is-active .step-bar-dot {
+  transform: scale(1.875); /* 2.25rem / 1.2rem */
+}
+/* Optional: with the slide's own `accent` field set (see the generic
+   --slide-accent block above), the heading matches the active dot's own
+   color instead of the ordinary heading color — falls back to `inherit`
+   (i.e. no change) when `accent` isn't set. */
+.slide-content--layout-step .slide-heading h1 {
+  color: var(--slide-accent, inherit);
+}
+.step-bar-label {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+/* The active step's own label is redundant with the big heading below it
+   ("2 · Ontwerp") — hidden rather than removed from markup, so toggling
+   which step is active never needs a markup change, only the is-active
+   class moving. */
+.step-bar-item.is-active .step-bar-label {
+  display: none;
 }
 
 /* Quiz roster (layout: 'quiz', see app.js renderQuizLayout) — fixed
@@ -1304,6 +1408,18 @@ button {
   display: block;
   width: 100%;
   height: auto;
+}
+/* Holds CONFIG.brand.businessUnit/tagline (see applyConfigStrings() in
+   app.js) — visually hidden since the wordmark/tagline are already baked
+   into the logo/bottombar images above; kept in the DOM so a business unit
+   without custom assets can still set these two strings in config.js. */
+.brand-chrome-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 /* ---------- Responsive fallback ---------- */

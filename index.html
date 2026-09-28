@@ -5,9 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Presentation Template Demo</title>
 <script src="config.js"></script>
-<script>document.documentElement.setAttribute('data-theme', (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default');</script>
+<script>
+(function () {
+  var stored = null;
+  try { stored = sessionStorage.getItem('presentation.theme'); } catch (e) { /* private browsing / blocked storage */ }
+  var theme = stored || (typeof CONFIG !== 'undefined' && CONFIG.theme) || 'default';
+  document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="themes/conclusion/theme.css">
+<!-- bouwstenen theme fonts — needs internet once per session; every
+     font-family below falls back to system-ui so presenting stays usable
+     offline if this request fails. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="themes/bouwstenen/theme.css">
 </head>
 <body>
 
@@ -82,10 +94,14 @@
       <div class="brand-chrome" id="brand-chrome" aria-hidden="true">
         <!-- Real brand assets (see themes/conclusion/assets/) rather than a
              reconstructed text lockup — swap these two files to rebrand for
-             a different business unit; CONFIG.brand is no longer read here
-             since the wordmark/tagline are baked into the images. -->
+             a different business unit. CONFIG.brand.businessUnit/tagline are
+             still applied below, visually hidden (the parent is already
+             aria-hidden) — they exist so a branch without custom assets can
+             still declare its business unit/tagline in config.js alone. -->
         <img class="brand-chrome-logo" src="themes/conclusion/assets/logo.png" alt="Conclusion Low Code Company">
         <img class="brand-chrome-bottombar" src="themes/conclusion/assets/bottombar.png" alt="Business done differently">
+        <span class="brand-chrome-text" id="brand-chrome-business-unit"></span>
+        <span class="brand-chrome-text" id="brand-chrome-tagline"></span>
       </div>
     </div>
   </main>
@@ -109,6 +125,11 @@
       <button id="btn-presenter-view" class="btn-floating btn-presenter-view btn-compact-collapsible" type="button">
         <svg class="icon"><use href="#icon-layers"></use></svg>
         <span id="btn-presenter-view-label" class="btn-label-text"></span>
+      </button>
+
+      <button id="btn-theme-toggle" class="btn-floating btn-theme-toggle btn-compact-collapsible" type="button">
+        <svg class="icon"><use href="#icon-swap"></use></svg>
+        <span id="btn-theme-toggle-label" class="btn-label-text"></span>
       </button>
 
       <div class="timer-widget" id="timer-widget">

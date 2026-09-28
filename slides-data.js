@@ -11,8 +11,9 @@
  *   slide style)
  * - 'bullets': heading + bullet list — the default, general-purpose layout
  * - 'list-image': bullets in one column, `image` stacked beside them
- * - 'quote': a colored quote box (`quote` + optional `attribution`),
- *   optionally with `image` alongside it
+ * - 'quote': a colored quote box (`quote` + optional `attribution` +
+ *   optional `bullets` — with bullets, a heading + bullet list render above
+ *   the quote box, which then shrinks to a smaller illustrative footnote),
  * - 'image-only': heading + one dominant image, no bullets
  * - 'template-reference': shows the Presentatiebrief content inline on the
  *   slide itself (legacy internal use)
@@ -20,6 +21,13 @@
  *   `items` below), revealed one by one from Presenter View's cockpit —
  *   never via Volgende/Vorige. See
  *   docs/superpowers/specs/2026-09-18-quiz-slide-design.md.
+ * - 'step': a compact stepper bar (see `steps`/`currentStep` below) plus a
+ *   heading auto-composed from the current step's number/label, then
+ *   ordinary bullets — for a multi-slide sequence like "3 · Bouwen",
+ *   "4 · Testen", each slide highlighting a different step in the same bar.
+ *   Still set `title` to the same composed text ("3 · Bouwen") — the
+ *   on-slide heading ignores it, but the left-hand TOC reads it directly
+ *   and has no other way to know what this slide is about.
  *
  * Other optional fields:
  * - icon: name from the SVG sprite in index.html. Use icons only on
@@ -29,6 +37,10 @@
  *   'quote' and 'image-only'
  * - quote / attribution: used by the 'quote' layout
  * - align: 'center' or 'left' (overrides CONFIG.layout.align)
+ * - accent: 0-3 — picks one of the 4 standard accent colors as this
+ *   slide's own "theme color" for anything generic that reads it (the
+ *   'step' layout's heading; under the conclusion theme, the left rail).
+ *   Optional; omit for the ordinary look. Not tied to any one layout.
  * - disco: enables/disables the flashy transition for this slide
  * - discoMode: 'auto' or 'pause'
  * - discoTitleLines: per-slide transition copy
@@ -45,6 +57,11 @@
  *   regular slide's body: layout/title/bullets/image/align), shown via the
  *   quizmaster's per-item "Uitleg" button without ever becoming its own
  *   addressable slide.
+ * - steps: [{ label }] — 'step' layout only. The *whole* sequence, carried
+ *   verbatim by every slide in the group (each slide is self-contained,
+ *   same as a quiz slide's own `items`) — not a global list.
+ * - currentStep: 'step' layout only. 0-based index into `steps` for which
+ *   one this slide highlights; also used to compose the heading.
  */
 
 // Reference content shown by the "Presentatiebrief" overlay for this
