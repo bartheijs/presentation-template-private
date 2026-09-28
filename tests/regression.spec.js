@@ -125,3 +125,57 @@ test('opening and closing both overlays produces no errors', async ({ page }) =>
 
   expect(errors).toEqual([]);
 });
+
+test.describe('quote layout with optional bullets', () => {
+  test('a quote slide with bullets shows a title, the bullets before the quote, and the --footnote modifier', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      const quoteIndex = SLIDES.findIndex((s) => s.layout === 'quote');
+      SLIDES[quoteIndex] = {
+        ...SLIDES[quoteIndex],
+        title: 'Test-titel',
+        bullets: ['Eerste punt', 'Tweede punt'],
+      };
+      state.currentIndex = quoteIndex;
+      renderSlide();
+    });
+    await expect(page.locator('.slide-heading h1')).toHaveText('Test-titel');
+    const bulletsBox = page.locator('.slide-bullets');
+    const quoteBox = page.locator('.slide-quote-box--footnote');
+    await expect(bulletsBox).toHaveCount(1);
+    await expect(quoteBox).toHaveCount(1);
+    // bullets must precede the quote box in DOM order
+    const order = await page.evaluate(() => {
+      const inner = document.querySelector('.slide-inner--quote');
+      const children = [...inner.children];
+      return children.findIndex((c) => c.classList.contains('slide-bullets')) <
+        children.findIndex((c) => c.classList.contains('slide-quote-box--footnote'));
+    });
+    expect(order).toBe(true);
+  });
+
+  test('a quote slide without bullets has no title and no --footnote modifier', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      const quoteIndex = SLIDES.findIndex((s) => s.layout === 'quote');
+      SLIDES[quoteIndex] = { ...SLIDES[quoteIndex], title: undefined, bullets: undefined };
+      state.currentIndex = quoteIndex;
+      renderSlide();
+    });
+    await expect(page.locator('.slide-inner--quote .slide-heading')).toHaveCount(0);
+    await expect(page.locator('.slide-quote-box--footnote')).toHaveCount(0);
+    await expect(page.locator('.slide-quote-box')).toHaveCount(1);
+  });
+
+  test('an empty bullets array on a quote slide behaves like no bullets at all', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => {
+      const quoteIndex = SLIDES.findIndex((s) => s.layout === 'quote');
+      SLIDES[quoteIndex] = { ...SLIDES[quoteIndex], bullets: [] };
+      state.currentIndex = quoteIndex;
+      renderSlide();
+    });
+    await expect(page.locator('.slide-quote-box--footnote')).toHaveCount(0);
+    await expect(page.locator('.slide-inner--quote .slide-heading')).toHaveCount(0);
+  });
+});

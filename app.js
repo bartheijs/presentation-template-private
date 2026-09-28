@@ -69,6 +69,8 @@ const APP_I18N = {
     overlayTitle: 'Presentatiebrief',
     backToDeckLabel: 'Terug naar de presentatie',
     presenterViewButton: 'Presenter View',
+    themeToggleLabelPrefix: 'Ontwerp:',
+    themeNames: { default: 'Standaard', conclusion: 'Conclusion', bouwstenen: 'Bouwstenen' },
     finishTitle: 'Klaar om te presenteren!',
     finishBodyHtml: 'Gebruik deze demo als startpunt voor je eigen verhaal.',
     pauseOverlayText: '...',
@@ -91,6 +93,8 @@ const APP_I18N = {
     overlayTitle: 'Presentation brief',
     backToDeckLabel: 'Back to presentation',
     presenterViewButton: 'Presenter View',
+    themeToggleLabelPrefix: 'Design:',
+    themeNames: { default: 'Default', conclusion: 'Conclusion', bouwstenen: 'Bouwstenen' },
     finishTitle: 'Ready to present!',
     finishBodyHtml: 'Use this demo as the starting point for your own story.',
     pauseOverlayText: '...',
@@ -132,6 +136,12 @@ applyAppLanguage();
 // §7): it must not navigate/launch on its own, only render commands it
 // receives.
 const isEmbedPreview = new URLSearchParams(location.search).get('embed') === 'preview';
+
+// Fixed cycle order for the design-toggle button/Shift+T/CYCLE_THEME — see
+// README.md's "Een nieuw thema toevoegen" for what adding a 4th theme needs
+// (a themes/<name>/theme.css, two <link> tags, one entry here, one entry in
+// APP_I18N.themeNames below).
+const THEMES = ['default', 'conclusion', 'bouwstenen'];
 
 /* ---------- Small helpers ---------- */
 
@@ -308,19 +318,28 @@ function renderListImageLayout(slide) {
     ${buildMetaBlock(slide)}`;
 }
 
-// Requires `quote` (string); `attribution` (string) and `image` are both
-// optional — setting `image` reproduces the deck's "quote + photo" variant,
-// otherwise the quote box sits alone on the theme's background.
+// Requires `quote` (string); `attribution` (string), `image` and `bullets`
+// are all optional. `image` reproduces the deck's "quote + photo" variant.
+// `bullets` adds a heading + supporting bullet list, with the quote box then
+// demoted below them as a smaller illustrative footnote (`--footnote`
+// modifier) rather than the slide's main content — omitted, the quote box
+// sits alone at full size on the theme's background exactly as before (a
+// purely decorative "sfeer" slide, no heading rendered).
 function renderQuoteLayout(slide) {
   const imageBlock = slide.image
     ? `<div class="slide-quote-image-stack">${buildImagesBlock(slide)}</div>`
     : '';
+  const hasBullets = Array.isArray(slide.bullets) && slide.bullets.length > 0;
+  const quoteBlock = `
+    <div class="slide-quote-box${hasBullets ? ' slide-quote-box--footnote' : ''}">
+      <blockquote class="slide-quote-text">${inlineMarkdown(slide.quote || '')}</blockquote>
+      ${slide.attribution ? `<p class="slide-quote-attribution">${escapeHtml(slide.attribution)}</p>` : ''}
+    </div>`;
   return `
     <div class="slide-inner slide-inner--quote">
-      <div class="slide-quote-box">
-        <blockquote class="slide-quote-text">${inlineMarkdown(slide.quote || '')}</blockquote>
-        ${slide.attribution ? `<p class="slide-quote-attribution">${escapeHtml(slide.attribution)}</p>` : ''}
-      </div>
+      ${hasBullets ? buildHeadingBlock(slide) : ''}
+      ${hasBullets ? buildBulletsBlock(slide) : ''}
+      ${quoteBlock}
       ${imageBlock}
     </div>
     ${buildMetaBlock(slide)}`;
@@ -356,6 +375,39 @@ function renderIconGridLayout(slide) {
     <div class="slide-inner">
       ${buildHeadingBlock(slide)}
       ${buildIconGridBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
+// Requires `steps: [{ label }]` (the whole sequence, carried verbatim by
+// every slide in the group — self-contained the same way a quiz slide
+// carries its own `items` rather than reading a global list) and
+// `currentStep` (0-based index into it). Malformed/missing data degrades
+// to an empty bar rather than throwing, matching every other layout's
+// tolerance for a generation slip.
+function buildStepBarBlock(steps, currentStep) {
+  return `<ol class="step-bar">${steps.map((step, i) => `
+      <li class="step-bar-item${i === currentStep ? ' is-active' : ''}">
+        <span class="step-bar-dot" aria-hidden="true"></span>
+        <span class="step-bar-label">${escapeHtml((step && step.label) || '')}</span>
+      </li>`).join('')}</ol>`;
+}
+
+// The big heading ("2 · Ontwerp") is composed from currentStep + the
+// matching step's label, not authored directly — reordering/renumbering
+// steps never needs a hand-edited title. Reuses buildHeadingBlock (via a
+// shallow-cloned slide with that composed title) so it gets the same
+// heading treatment as every other layout, with no icon/eyebrow/subtitle.
+function renderStepLayout(slide) {
+  const steps = Array.isArray(slide.steps) ? slide.steps : [];
+  const currentStep = Number.isInteger(slide.currentStep) ? slide.currentStep : -1;
+  const currentLabel = (steps[currentStep] && steps[currentStep].label) || '';
+  const headingSlide = { ...slide, title: currentStep >= 0 ? `${currentStep + 1} · ${currentLabel}` : (slide.title || '') };
+  return `
+    <div class="slide-inner slide-inner--step">
+      ${steps.length ? buildStepBarBlock(steps, currentStep) : ''}
+      ${buildHeadingBlock(headingSlide)}
+      ${buildBulletsBlock(slide)}
     </div>
     ${buildMetaBlock(slide)}`;
 }
@@ -427,6 +479,7 @@ const LAYOUT_RENDERERS = {
   'icon-grid': renderIconGridLayout,
   'template-reference': renderTemplateReferenceLayout,
   quiz: renderQuizLayout,
+  step: renderStepLayout,
 };
 
 function buildSlideContentHTML(slide) {
@@ -468,7 +521,8 @@ function renderSlide() {
     ` slide-content--layout-${layout}` +
     (layout === 'template-reference' ? ' slide-content--compact' : '') +
     (align === 'left' ? ' slide-content--align-left' : '') +
-    (hasBackground ? ' slide-content--has-bg' : '');
+    (hasBackground ? ' slide-content--has-bg' : '') +
+    (Number.isInteger(slide.accent) ? ` slide-content--accent-${slide.accent}` : '');
   // Set unconditionally (not just when present) so a slide without a
   // `background` never inherits the previous slide's image via this custom
   // property — only the .slide-content--has-bg class above gates whether it
@@ -1429,6 +1483,34 @@ document.addEventListener('keydown', (e) => {
   else if (isPauseOverlayVisible()) hidePauseOverlay();
 });
 
+// index.html's and presenter.html's inline <head> theme scripts read this
+// same 'presentation.theme' literal (they run before app.js loads) — keep
+// all three in sync if it ever changes.
+const THEME_STORAGE_KEY = 'presentation.theme';
+
+function storeTheme(theme) {
+  try {
+    sessionStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    /* private browsing / blocked site data — the theme still applies for
+       this page load, it just won't survive a reload */
+  }
+}
+
+function updateThemeToggleLabel() {
+  const theme = document.documentElement.dataset.theme;
+  const name = CONFIG.ui.themeNames[theme] || theme;
+  const label = `${CONFIG.ui.themeToggleLabelPrefix} ${name}`;
+  document.getElementById('btn-theme-toggle-label').textContent = label;
+  document.getElementById('btn-theme-toggle').setAttribute('aria-label', label);
+}
+
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  storeTheme(theme);
+  if (!isEmbedPreview) updateThemeToggleLabel();
+}
+
 /* ---------- Apply config-driven strings/toggles ---------- */
 
 function applyConfigStrings() {
@@ -1449,6 +1531,12 @@ function applyConfigStrings() {
   document.getElementById('btn-template').hidden = !CONFIG.templateOverlay.enabled;
   document.getElementById('btn-presenter-view-label').textContent = CONFIG.ui.presenterViewButton;
   document.getElementById('btn-presenter-view').setAttribute('aria-label', CONFIG.ui.presenterViewButton);
+  // A CONFIG.theme or stored value that isn't in THEMES (e.g. a typo) would
+  // leave the deck unstyled while the label names a theme that isn't active.
+  if (!THEMES.includes(document.documentElement.dataset.theme)) {
+    document.documentElement.dataset.theme = 'default';
+  }
+  updateThemeToggleLabel();
   updateNotesToggleLabel();
   document.getElementById('btn-toc-collapse').setAttribute('aria-label', CONFIG.ui.tocCollapseHide);
   document.getElementById('btn-next-collapse').setAttribute('aria-label', CONFIG.ui.controlsCollapseHide);
@@ -1510,6 +1598,19 @@ if (!isEmbedPreview) {
   document.addEventListener('keydown', (e) => {
     if (e.shiftKey && e.key === 'P') openPresenterView();
   });
+  document.getElementById('btn-theme-toggle').addEventListener('click', cycleTheme);
+  document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.key === 'T') cycleTheme();
+  });
+} else {
+  document.getElementById('btn-theme-toggle').hidden = true;
+}
+
+function cycleTheme() {
+  const current = document.documentElement.dataset.theme;
+  const next = THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
+  setTheme(next);
+  sendStateToPresenter(); // no-op if no Presenter View is connected; the broadcast carries `theme`
 }
 
 // Whitelisted commands a connected Presenter View may send. Each handler
@@ -1562,12 +1663,13 @@ const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   TOGGLE_PAUSE_OVERLAY: () => (isPauseOverlayVisible() ? hidePauseOverlay() : showPauseOverlay()),
   SHOW_PAUSE_OVERLAY: () => showPauseOverlay(),
   HIDE_PAUSE_OVERLAY: () => hidePauseOverlay(),
+  CYCLE_THEME: () => cycleTheme(),
   REQUEST_STATE: () => {}, // no-op handler: the broadcast below every dispatch is what answers it
 });
 
 // Message listener is registered unconditionally (not gated on
-// isEmbedPreview): a Task 6 preview iframe (isEmbedPreview === true) still
-// needs to receive and act on messages — it just never opens its own
+// isEmbedPreview): a Presenter View preview iframe (isEmbedPreview === true)
+// still needs to receive and act on messages — it just never opens its own
 // Presenter View or navigates on its own (that's what the guard above is
 // for).
 window.addEventListener('message', (e) => {
@@ -1580,6 +1682,7 @@ window.addEventListener('message', (e) => {
     if (e.source !== window.parent) return;
     if (!e.data) return;
     if (e.data.type === 'preview-state') {
+      if (e.data.theme) document.documentElement.dataset.theme = e.data.theme;
       if (!overlayEl.hidden !== e.data.contextOverlayVisible) {
         e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
       }
@@ -1678,6 +1781,7 @@ function sendStateToPresenter() {
       // (the title text on a disco-colored card), not a live mirror.
       discoTitleLines: activeDiscoTitleLines,
       quiz: getQuizBroadcastPayload(),
+      theme: document.documentElement.dataset.theme,
     },
     '*'
   );

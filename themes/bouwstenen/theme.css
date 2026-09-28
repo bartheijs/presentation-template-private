@@ -1,0 +1,290 @@
+/* Bouwstenen theme — chunky, rectilinear color-block design: a nod to
+ * low-code (building with visual blocks) and to a step-by-step-built career.
+ * Flat and square-edged everywhere: no skewed/rotated elements, thin accent
+ * bars instead of heavy shadows. See docs/superpowers/plans/
+ * 2026-09-28-bouwstenen-theme-en-toggle.md for the source design doc.
+ *
+ * :root[data-theme="bouwstenen"] (specificity 0,2,0) beats styles.css's bare
+ * :root block and its prefers-color-scheme:dark override (both 0,1,0)
+ * regardless of source order or the viewer's OS preference — same pattern
+ * as themes/conclusion/theme.css.
+ *
+ * Fonts loaded via a Google Fonts <link> in index.html/presenter.html's
+ * <head> — requires internet once per session to fetch; the font-family
+ * fallback stacks below keep presenting usable offline (system-ui sans).
+ */
+
+:root[data-theme="bouwstenen"] {
+  --bg: #F1EFE6;
+  --surface: #F1EFE6;
+  --surface-alt: color-mix(in srgb, #F1EFE6 90%, #171A1C);
+  --text: #171A1C;
+  --text-muted: color-mix(in srgb, #171A1C 65%, #F1EFE6);
+  --border: color-mix(in srgb, #171A1C 15%, #F1EFE6);
+
+  --font-heading: "Space Grotesk", system-ui, sans-serif;
+  --font-bullet: "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  /* The quote layout wants Space Grotesk 500 (not italic) — see the quote
+     override below, which sets font-style/font-weight explicitly rather
+     than relying on this token alone. */
+  --font-italic: "Space Grotesk", system-ui, sans-serif;
+
+  --accent: #3A5BFF;      /* kobaltblauw — primary */
+  --accent-2: #FF5D5D;    /* koraalrood */
+  --accent-3: #FFC93C;    /* citroengeel */
+  --accent-4: #35C4A1;    /* mintgroen */
+  /* Only 4 accent colors in the design doc — reuse kobalt for the 5th slot
+     rather than inventing an unspecified 5th color. */
+  --accent-5: var(--accent);
+  --accent-gradient-end: var(--accent); /* no gradients in this theme */
+
+  --radius-lg: 14px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+
+  /* Flat everywhere, but chrome buttons still get a soft kobalt-tinted lift
+     on hover, same technique as themes/conclusion/theme.css. */
+  --shadow-accent: 0 12px 28px color-mix(in srgb, var(--accent) 35%, transparent);
+
+  --disco-backdrop: #171A1C;
+  --disco-ray-1: var(--accent);
+  --disco-ray-2: var(--accent-2);
+  --disco-ray-3: var(--accent-3);
+  --disco-ray-4: var(--accent-4);
+  --disco-ray-5: var(--accent);
+  --disco-title-fill: #F1EFE6;
+  --disco-title-stroke: #171A1C;
+  --disco-title-shadow-1: var(--accent);
+  --disco-title-shadow-2: var(--accent-2);
+  --disco-sparkle-color: #F1EFE6;
+
+  color-scheme: light;
+}
+
+/* No .brand-chrome override — the base :root rule in styles.css already
+   sets display: none; conclusion is the only theme that opts back in. */
+
+/* ---------- Headings & bullets ---------- */
+:root[data-theme="bouwstenen"] .slide-heading h1 {
+  font-weight: 700;
+  font-size: clamp(2.75rem, 3.2vw, 3rem);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+:root[data-theme="bouwstenen"] .slide-bullets {
+  gap: 64px;
+}
+:root[data-theme="bouwstenen"] .slide-bullets li {
+  gap: 20px;
+}
+:root[data-theme="bouwstenen"] .slide-bullets .icon {
+  display: none;
+}
+:root[data-theme="bouwstenen"] .slide-bullets li::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 0.35em;
+  border-radius: var(--radius-sm);
+  /* With the slide's own --slide-accent set (see styles.css), every
+     bullet converges on that one color — all nth-child variants below
+     share the same var(--slide-accent, ...) first, so they resolve
+     identically instead of keeping their own per-position color; unset,
+     each still falls back to its ordinary distinct color. */
+  background: var(--slide-accent, var(--accent));
+}
+:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n+2)::before { background: var(--slide-accent, var(--accent-2)); }
+:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n+3)::before { background: var(--slide-accent, var(--accent-3)); }
+:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n)::before { background: var(--slide-accent, var(--accent-4)); }
+
+/* ---------- Step layout: blocky squares instead of circles (chunky
+   rectilinear color blocks, same language as the bullet markers above).
+   Color cycling itself is generic (styles.css), shared with every theme. ---------- */
+:root[data-theme="bouwstenen"] .step-bar-dot {
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Title slide: left-aligned dark wordmark block ---------- */
+:root[data-theme="bouwstenen"] .slide-content--layout-title .slide-inner {
+  align-items: flex-start;
+  text-align: left;
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-title .slide-heading {
+  justify-content: flex-start;
+}
+/* Overrides the default theme's gradient-clipped-text treatment (color:
+   transparent + background-clip: text) with a solid dark block behind
+   paper-colored text — background-clip/color must both be reset, not just
+   background, or the text stays invisible. */
+:root[data-theme="bouwstenen"] .slide-content--layout-title .slide-heading h1.slide-title-accent {
+  display: inline-block;
+  background: var(--text);
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: var(--bg);
+  padding: 32px 48px;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-size: 64px;
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-title .slide-subtitle--accent {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: none;
+  color: var(--text);
+  font-family: var(--font-bullet);
+  font-weight: 600;
+  font-size: 26px;
+  text-align: left;
+}
+/* The rule above's dark ink would beat styles.css's white
+   `.slide-content--has-bg .slide-subtitle` on specificity, leaving the
+   subtitle dark-on-photo — restore white when the title slide has a
+   background photo (one extra class, so this wins regardless of order). */
+:root[data-theme="bouwstenen"] .slide-content--has-bg.slide-content--layout-title .slide-subtitle--accent {
+  color: #fff;
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-title .slide-subtitle--accent::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 8px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+}
+/* Corner decoration: a kobalt block and a smaller yellow block, top-right. */
+:root[data-theme="bouwstenen"] .slide-content--layout-title::before {
+  content: '';
+  position: absolute;
+  top: 64px;
+  right: 64px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-title::after {
+  content: '';
+  position: absolute;
+  top: 112px;
+  right: 112px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-3);
+}
+
+/* ---------- Quote layout ---------- */
+/* Plain quote (no bullets, see renderQuoteLayout()'s hasBullets) on the
+   ordinary surface: the whole slide goes dark with a paper-colored
+   trapezoid wedge on each side (mirrored), the quote box loses its own
+   background and sits centered over the dark middle. Requires :has()
+   (Chromium — this project's only tested/target presenting browser) to
+   tell the plain and footnote cases apart from the container.
+
+   Sizing: both the wedges and the quote column are percentages of the
+   slide's own width, so the dark middle strip is always wider than the
+   quote column at every viewport. A wedge covers 16% of the slide at its
+   widest (the top edge; the bottom edge tapers to ~10%), and the quote
+   column is capped at 60% (centered, so 20%-80%) — leaving a >=4% dark
+   margin between the text and the nearest wedge edge. A fixed pixel wedge
+   width can't do this: the slide ranges from ~650px to ~1300px wide across
+   ordinary laptop/beamer viewports.
+
+   Background photo (.slide-content--has-bg): the photo is an explicit,
+   per-slide author choice, so this theme keeps it — no dark fill, no
+   wedges (every rule below is scoped :not(.slide-content--has-bg)). The
+   quote instead becomes a solid ink card in styles.css's left text column
+   over the photo, the same look this theme already gives the footnote
+   variant, so contrast never depends on the photo. */
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote)) {
+  background: var(--text);
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::before,
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16%;
+  background: var(--bg);
+  z-index: 0;
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::before {
+  left: 0;
+  clip-path: polygon(0 0, 100% 0, 62% 100%, 0 100%);
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote))::after {
+  right: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 38% 100%);
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-quote:not(.slide-content--has-bg):not(:has(.slide-quote-box--footnote)) .slide-inner--quote {
+  width: min(60%, 72rem);
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-quote .slide-quote-box:not(.slide-quote-box--footnote) {
+  position: relative;
+  z-index: 1;
+  background: none;
+  box-shadow: none;
+  color: var(--bg);
+  text-align: center;
+}
+:root[data-theme="bouwstenen"] .slide-content--layout-quote .slide-quote-box:not(.slide-quote-box--footnote)::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 36px;
+  margin: 0 auto 1.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent-3);
+}
+/* Plain quote over a background photo: solid ink card, left-aligned with
+   styles.css's has-bg text column (instead of centered text floating over
+   an arbitrary part of the photo). */
+:root[data-theme="bouwstenen"] .slide-content--has-bg.slide-content--layout-quote .slide-quote-box:not(.slide-quote-box--footnote) {
+  background: var(--text);
+  border-radius: var(--radius-md);
+  text-align: left;
+}
+:root[data-theme="bouwstenen"] .slide-content--has-bg.slide-content--layout-quote .slide-quote-box:not(.slide-quote-box--footnote)::before {
+  margin: 0 0 1.25rem;
+}
+:root[data-theme="bouwstenen"] .slide-quote-text {
+  font-family: var(--font-italic);
+  font-style: normal;
+  font-weight: 500;
+}
+/* Footnote variant (has bullets, see renderQuoteLayout()): small dark card, not a
+   full-bleed trapezoid — the bullets above it must stay on the ordinary
+   paper surface. */
+:root[data-theme="bouwstenen"] .slide-quote-box--footnote {
+  background: var(--text);
+  color: var(--bg);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+:root[data-theme="bouwstenen"] .slide-quote-box--footnote::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 20px;
+  margin-right: 0.6rem;
+  vertical-align: middle;
+  border-radius: var(--radius-sm);
+  background: var(--accent-3);
+}
+
+/* ---------- Buttons & chrome: flat kobalt, no gradients ---------- */
+:root[data-theme="bouwstenen"] .btn-floating,
+:root[data-theme="bouwstenen"] .btn-finish,
+:root[data-theme="bouwstenen"] .btn-next,
+:root[data-theme="bouwstenen"] .btn--primary {
+  background: var(--accent);
+}
+:root[data-theme="bouwstenen"] .btn-floating:hover {
+  box-shadow: 0 14px 26px color-mix(in srgb, var(--accent) 35%, transparent);
+}

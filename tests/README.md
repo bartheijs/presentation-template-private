@@ -42,7 +42,14 @@ npx playwright test
   toggle (button visibility + `ArrowDown` shortcut), and the theme system:
   `CONFIG.theme` driving `<html data-theme>`, the `[data-theme="conclusion"]`
   CSS override winning regardless of `prefers-color-scheme`, brand-chrome
-  visibility/strings, and Presenter View inheriting the same colors.
+  visibility/strings, and Presenter View inheriting the same colors. Also
+  the `bouwstenen` theme (every slide renders error-free; title wordmark,
+  bullet accent colors, subtitle/quote legibility with and without a
+  background photo) and the live theme toggle (button/`Shift+T` cycling
+  through `THEMES`, `sessionStorage` persistence and a throwing
+  `sessionStorage`, unknown-theme fallback, state kept across a switch,
+  switching mid-disco-transition and during a frozen pause-mode hold, and
+  every slide under every theme after a live toggle).
 - `disco-and-pause.spec.js` — global/per-slide `disco` enable, per-slide
   auto-mode hold timing, `auto` vs
   `pause` transition mode, and the pause state machine: freeze, resume on a
@@ -63,7 +70,9 @@ npx playwright test
   ignores the toggle during an in-flight transition.
 - `presenter-view.spec.js` — the Presenter View launch mechanism, connection
   handshake, full command whitelist with state broadcast, reconnect
-  resilience, skip-ahead/back-to-jump-origin, and the two preview iframes.
+  resilience, skip-ahead/back-to-jump-origin, the two preview iframes, and
+  theme sync (before/after Presenter View opens) plus its own Ontwerp
+  button (`CYCLE_THEME`).
 - `presenter-view-scenarios.spec.js` — the six reconnect/lifecycle scenarios
   from `docs/superpowers/specs/2026-08-22-presenter-view-design.md` §3,
   one test per scenario, for direct traceability against the spec.
@@ -73,7 +82,8 @@ npx playwright test
 - `regression.spec.js` — a full click-through of every slide (forward and
   back), PageDown/PageUp presentation-clicker navigation, and both overlays
   opening/closing, asserting zero console/page errors, plus malformed-slide-
-  data resilience checks.
+  data resilience checks, and the quote layout's optional bullets
+  (`--footnote` variant).
 - `timer-warning.spec.js` — the one-shot five-minute warning, its exact
   duration and rearming via `+5 min`, silent expiry at `00:00`, and persistent
   manual finish celebrations via both supported finish paths.
