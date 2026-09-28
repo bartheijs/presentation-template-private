@@ -158,6 +158,18 @@
   color: var(--accent);
 }
 
+/* Same reason as the title-slide exception just above: the blanket
+   .slide-heading h1 rule's `color: var(--accent)` has higher specificity
+   than styles.css's generic `.slide-content--layout-step .slide-heading h1
+   { color: var(--slide-accent, inherit) }`, so it silently wins here too
+   unless given an equally theme-specific, higher-specificity override —
+   this one re-reads --slide-accent (see styles.css's per-slide `accent`
+   field) so a step slide's heading still follows its own accent instead
+   of always the plain brand-blue. */
+:root[data-theme="conclusion"] .slide-content--layout-step .slide-heading h1 {
+  color: var(--slide-accent, var(--accent));
+}
+
 /* The reference deck's icons (see the facts-and-figures template slide)
  * are plain brand-blue glyphs sized to compete with the bold title next to
  * them — no badge container, no white-on-blue swap. The default theme's
@@ -212,14 +224,19 @@
   width: 0.5em;
   height: 0.5em;
   margin-top: 0.55em;
-  background: var(--accent);
+  /* Follows the slide's own --slide-accent when set (see styles.css),
+     same reasoning as this theme's step-layout heading override below. */
+  background: var(--slide-accent, var(--accent));
 }
 
 /* The reference deck's recurring left-edge rail. Applied to every layout
    (including image-bled ones, where the reference deck also runs it across
    the photo) for a consistent brand mark rather than a layout-by-layout
    opt-in. Short and wide rather than nearly full-height — full-height read
-   as a stray scrollbar rather than a deliberate brand mark. */
+   as a stray scrollbar rather than a deliberate brand mark.
+   Reads the slide's own --slide-accent (see styles.css's generic
+   `accent` field) when set, e.g. so a 'step' slide's rail matches its own
+   step's color — falls back to the plain brand-blue otherwise. */
 :root[data-theme="conclusion"] .slide-content::before {
   content: '';
   position: absolute;
@@ -227,7 +244,7 @@
   top: 22%;
   bottom: 26%;
   width: 8px;
-  background: var(--accent);
+  background: var(--slide-accent, var(--accent));
 }
 
 /* ---------- Square corners everywhere (see --radius-* above for the
@@ -249,7 +266,8 @@
 :root[data-theme="conclusion"] .finish-content p code,
 :root[data-theme="conclusion"] .tpl-block.is-highlighted,
 :root[data-theme="conclusion"] .slide-chip,
-:root[data-theme="conclusion"] .preview-viewport {
+:root[data-theme="conclusion"] .preview-viewport,
+:root[data-theme="conclusion"] .step-bar-dot {
   border-radius: 0;
 }
 

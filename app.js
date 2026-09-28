@@ -379,6 +379,39 @@ function renderIconGridLayout(slide) {
     ${buildMetaBlock(slide)}`;
 }
 
+// Requires `steps: [{ label }]` (the whole sequence, carried verbatim by
+// every slide in the group — self-contained the same way a quiz slide
+// carries its own `items` rather than reading a global list) and
+// `currentStep` (0-based index into it). Malformed/missing data degrades
+// to an empty bar rather than throwing, matching every other layout's
+// tolerance for a generation slip.
+function buildStepBarBlock(steps, currentStep) {
+  return `<ol class="step-bar">${steps.map((step, i) => `
+      <li class="step-bar-item${i === currentStep ? ' is-active' : ''}">
+        <span class="step-bar-dot" aria-hidden="true"></span>
+        <span class="step-bar-label">${escapeHtml((step && step.label) || '')}</span>
+      </li>`).join('')}</ol>`;
+}
+
+// The big heading ("2 · Ontwerp") is composed from currentStep + the
+// matching step's label, not authored directly — reordering/renumbering
+// steps never needs a hand-edited title. Reuses buildHeadingBlock (via a
+// shallow-cloned slide with that composed title) so it gets the same
+// heading treatment as every other layout, with no icon/eyebrow/subtitle.
+function renderStepLayout(slide) {
+  const steps = Array.isArray(slide.steps) ? slide.steps : [];
+  const currentStep = Number.isInteger(slide.currentStep) ? slide.currentStep : -1;
+  const currentLabel = (steps[currentStep] && steps[currentStep].label) || '';
+  const headingSlide = { ...slide, title: currentStep >= 0 ? `${currentStep + 1} · ${currentLabel}` : (slide.title || '') };
+  return `
+    <div class="slide-inner slide-inner--step">
+      ${steps.length ? buildStepBarBlock(steps, currentStep) : ''}
+      ${buildHeadingBlock(headingSlide)}
+      ${buildBulletsBlock(slide)}
+    </div>
+    ${buildMetaBlock(slide)}`;
+}
+
 function renderTemplateReferenceLayout(slide) {
   return `
     <div class="slide-inner slide-inner--fill">
@@ -446,6 +479,7 @@ const LAYOUT_RENDERERS = {
   'icon-grid': renderIconGridLayout,
   'template-reference': renderTemplateReferenceLayout,
   quiz: renderQuizLayout,
+  step: renderStepLayout,
 };
 
 function buildSlideContentHTML(slide) {
@@ -487,7 +521,8 @@ function renderSlide() {
     ` slide-content--layout-${layout}` +
     (layout === 'template-reference' ? ' slide-content--compact' : '') +
     (align === 'left' ? ' slide-content--align-left' : '') +
-    (hasBackground ? ' slide-content--has-bg' : '');
+    (hasBackground ? ' slide-content--has-bg' : '') +
+    (Number.isInteger(slide.accent) ? ` slide-content--accent-${slide.accent}` : '');
   // Set unconditionally (not just when present) so a slide without a
   // `background` never inherits the previous slide's image via this custom
   // property — only the .slide-content--has-bg class above gates whether it

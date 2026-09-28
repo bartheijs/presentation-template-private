@@ -89,11 +89,23 @@
   height: 16px;
   margin-top: 0.35em;
   border-radius: var(--radius-sm);
-  background: var(--accent);
+  /* With the slide's own --slide-accent set (see styles.css), every
+     bullet converges on that one color — all nth-child variants below
+     share the same var(--slide-accent, ...) first, so they resolve
+     identically instead of keeping their own per-position color; unset,
+     each still falls back to its ordinary distinct color. */
+  background: var(--slide-accent, var(--accent));
 }
-:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n+2)::before { background: var(--accent-2); }
-:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n+3)::before { background: var(--accent-3); }
-:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n)::before { background: var(--accent-4); }
+:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n+2)::before { background: var(--slide-accent, var(--accent-2)); }
+:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n+3)::before { background: var(--slide-accent, var(--accent-3)); }
+:root[data-theme="bouwstenen"] .slide-bullets li:nth-child(4n)::before { background: var(--slide-accent, var(--accent-4)); }
+
+/* ---------- Step layout: blocky squares instead of circles (chunky
+   rectilinear color blocks, same language as the bullet markers above).
+   Color cycling itself is generic (styles.css), shared with every theme. ---------- */
+:root[data-theme="bouwstenen"] .step-bar-dot {
+  border-radius: var(--radius-sm);
+}
 
 /* ---------- Title slide: left-aligned dark wordmark block ---------- */
 :root[data-theme="bouwstenen"] .slide-content--layout-title .slide-inner {
