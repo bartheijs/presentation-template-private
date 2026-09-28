@@ -521,3 +521,39 @@ test.describe('finish overlay interaction', () => {
     expect(await page.evaluate(() => state.currentIndex)).toBe(indexBefore - 1);
   });
 });
+
+test.describe('theme sync (Presenter View)', () => {
+  test('Presenter View and both preview iframes pick up a theme switched before it opens', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.click('#btn-theme-toggle');
+    const chosen = await page.evaluate(() => document.documentElement.dataset.theme);
+    const presenter = await openPresenterView(page);
+    await expect.poll(() => presenter.evaluate(() => document.documentElement.dataset.theme)).toBe(chosen);
+    const currentPreviewFrame = presenter.frameLocator('#current-preview');
+    const nextPreviewFrame = presenter.frameLocator('#next-preview');
+    await expect.poll(() =>
+      currentPreviewFrame.locator('html').evaluate((el) => el.dataset.theme)
+    ).toBe(chosen);
+    await expect.poll(() =>
+      nextPreviewFrame.locator('html').evaluate((el) => el.dataset.theme)
+    ).toBe(chosen);
+  });
+
+  test('switching after Presenter View is already open still syncs it and both previews', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    // Not page.click('#btn-theme-toggle'): that button lives in .next-column,
+    // which app.js already hides (display: none) the moment Presenter View
+    // connects (presenterHidesControls -> .presenter-controls-hidden
+    // .next-column), so it isn't clickable here — pre-existing behavior,
+    // unrelated to this task. Shift+T (Task 5) drives the same cycleTheme()
+    // regardless of button visibility, so it exercises the same behavior.
+    await page.keyboard.press('Shift+T');
+    const chosen = await page.evaluate(() => document.documentElement.dataset.theme);
+    await expect.poll(() => presenter.evaluate(() => document.documentElement.dataset.theme)).toBe(chosen);
+    const currentPreviewFrame = presenter.frameLocator('#current-preview');
+    await expect.poll(() =>
+      currentPreviewFrame.locator('html').evaluate((el) => el.dataset.theme)
+    ).toBe(chosen);
+  });
+});

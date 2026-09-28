@@ -194,6 +194,7 @@ function currentFlags() {
     // independent quiz reveal state — mirrored here so it's an exact replica
     // of what the audience sees, same rationale as the other flags above.
     quiz: latestState.quiz,
+    theme: latestState.theme,
   };
 }
 
@@ -367,6 +368,7 @@ quizCockpitListEl.addEventListener('click', (e) => {
 
 function renderState(newState) {
   latestState = newState;
+  document.documentElement.dataset.theme = newState.theme;
   presenterMainEl.hidden = false;
   document.querySelector('[data-current-slide]').textContent = String(newState.currentSlide + 1);
   document.querySelector('[data-total-slides]').textContent = String(newState.totalSlides);

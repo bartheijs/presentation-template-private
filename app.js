@@ -1652,6 +1652,7 @@ window.addEventListener('message', (e) => {
     if (e.source !== window.parent) return;
     if (!e.data) return;
     if (e.data.type === 'preview-state') {
+      if (e.data.theme) document.documentElement.dataset.theme = e.data.theme;
       if (!overlayEl.hidden !== e.data.contextOverlayVisible) {
         e.data.contextOverlayVisible ? openTemplateOverlay() : closeTemplateOverlay();
       }
@@ -1750,6 +1751,7 @@ function sendStateToPresenter() {
       // (the title text on a disco-colored card), not a live mirror.
       discoTitleLines: activeDiscoTitleLines,
       quiz: getQuizBroadcastPayload(),
+      theme: document.documentElement.dataset.theme,
     },
     '*'
   );
