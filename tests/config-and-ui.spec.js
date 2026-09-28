@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { gotoPresentation, openPresenterView } = require('./helpers');
+const { gotoPresentation, openPresenterView, waitIdle } = require('./helpers');
 
 // Covers: config.js-driven strings/toggles applied at startup by
 // applyConfigStrings() in app.js, and the templateOverlay.enabled toggle.
@@ -305,5 +305,29 @@ test.describe('theme toggle (Presentation View)', () => {
       return getQuizState(slide).revealed[slide.items[0].id];
     });
     expect(revealed).toBe(true);
+  });
+
+  test('switching theme mid-disco-transition does not break the following transition', async ({ page }) => {
+    await gotoPresentation(page);
+    // eslint-disable-next-line no-undef
+    await page.evaluate(() => { goTo(1, { animate: true }); });
+    await page.click('#btn-theme-toggle'); // fired while isAnimatingSlide is (likely) still true
+    await waitIdle(page);
+    // A normal subsequent transition must still complete cleanly.
+    await page.evaluate(() => { goTo(2, { animate: true }); });
+    await waitIdle(page);
+    expect(await page.evaluate(() => state.currentIndex)).toBe(2);
+  });
+
+  test('switching theme while the pause overlay is frozen leaves it visible and unchanged', async ({ page }) => {
+    await gotoPresentation(page);
+    await page.evaluate(() => showPauseOverlay());
+    // The pause overlay is a deliberate full-viewport cutaway that visually covers
+    // #btn-theme-toggle, so a real click can't reach it. Shift+T is the realistic
+    // path here: a document-level keydown listener (app.js) that fires regardless
+    // of what's covering the button, and the only way a presenter could actually
+    // cycle the theme while the overlay is up.
+    await page.keyboard.press('Shift+T');
+    expect(await page.evaluate(() => isPauseOverlayVisible())).toBe(true);
   });
 });
