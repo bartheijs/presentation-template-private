@@ -19,6 +19,7 @@ const PRESENTER_I18N = {
     display: 'Weergave',
     displayOptions: 'Weergaveopties', leftSidebar: 'Linker zijbalk', rightSidebar: 'Rechter zijbalk',
     pauseScreen: 'Pauzescherm', contextOverlay: 'Context-overlay', presentationControls: 'Presentatiebediening',
+    themeToggleButton: 'Ontwerp',
     presentationTiming: 'Presentatietijd', timerControls: 'Timerbediening',
     setTimerDuration: 'Tijdsduur instellen (MM:SS of minuten), alleen als de timer niet loopt',
     previous: 'Vorige', next: 'Volgende', noNotes: 'Geen notities voor deze slide.',
@@ -40,6 +41,7 @@ const PRESENTER_I18N = {
     display: 'Display',
     displayOptions: 'Display options', leftSidebar: 'Left sidebar', rightSidebar: 'Right sidebar',
     pauseScreen: 'Pause screen', contextOverlay: 'Context overlay', presentationControls: 'Presentation controls',
+    themeToggleButton: 'Design',
     presentationTiming: 'Presentation timing', timerControls: 'Timer controls',
     setTimerDuration: 'Set the duration (MM:SS or minutes) — only while the timer is not running',
     previous: 'Previous', next: 'Next', noNotes: 'No notes for this slide.',
@@ -607,6 +609,7 @@ document.getElementById('btn-toggle-context-overlay').addEventListener('click', 
 document.getElementById('btn-toggle-left-aside').addEventListener('click', () => sendCommand('TOGGLE_LEFT_ASIDE'));
 document.getElementById('btn-toggle-right-aside').addEventListener('click', () => sendCommand('TOGGLE_RIGHT_ASIDE'));
 document.getElementById('btn-toggle-pause-overlay').addEventListener('click', () => sendCommand('TOGGLE_PAUSE_OVERLAY'));
+document.getElementById('btn-presenter-theme-toggle').addEventListener('click', () => sendCommand('CYCLE_THEME'));
 
 // Mirror the Presentation View's arrow-key model in this window too:
 // horizontal arrows navigate slides, ArrowDown opens the Presentatiebrief,

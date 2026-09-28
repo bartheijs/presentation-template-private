@@ -1634,6 +1634,7 @@ const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   TOGGLE_PAUSE_OVERLAY: () => (isPauseOverlayVisible() ? hidePauseOverlay() : showPauseOverlay()),
   SHOW_PAUSE_OVERLAY: () => showPauseOverlay(),
   HIDE_PAUSE_OVERLAY: () => hidePauseOverlay(),
+  CYCLE_THEME: () => cycleTheme(),
   REQUEST_STATE: () => {}, // no-op handler: the broadcast below every dispatch is what answers it
 });
 

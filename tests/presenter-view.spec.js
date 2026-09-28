@@ -557,3 +557,13 @@ test.describe('theme sync (Presenter View)', () => {
     ).toBe(chosen);
   });
 });
+
+test.describe('theme toggle (Presenter View)', () => {
+  test('clicking the Presenter View design button cycles the real presentation\'s theme too', async ({ page }) => {
+    await gotoPresentation(page);
+    const presenter = await openPresenterView(page);
+    const before = await page.evaluate(() => document.documentElement.dataset.theme);
+    await presenter.click('#btn-presenter-theme-toggle');
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).not.toBe(before);
+  });
+});
