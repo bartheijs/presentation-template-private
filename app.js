@@ -311,7 +311,8 @@ function renderBulletsLayout(slide) {
 // (taller) image.
 function renderListImageLayout(slide) {
   const sizeClass = slide.imageSize === 'large' ? ' slide-inner--image-large'
-    : slide.imageSize === 'side' ? ' slide-inner--image-side' : '';
+    : slide.imageSize === 'side' ? ' slide-inner--image-side'
+    : slide.imageSize === 'row' ? ' slide-inner--image-row' : '';
   return `
     <div class="slide-inner${sizeClass}">
       ${buildHeadingBlock(slide)}
@@ -1478,7 +1479,10 @@ function isPauseOverlayVisible() {
 function currentSlideImage() {
   const slide = SLIDES[state.currentIndex];
   const images = Array.isArray(slide.image) ? slide.image : [slide.image];
-  return images.find((img) => img && img.src) || null;
+  const usable = images.filter((img) => img && img.src);
+  // On a 'row' slide the last image is the dominant one (e.g. the QR code
+  // next to a logo), so that is the one worth showing fullscreen.
+  return (slide.imageSize === 'row' ? usable[usable.length - 1] : usable[0]) || null;
 }
 
 function isImageModalVisible() {

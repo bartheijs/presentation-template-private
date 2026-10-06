@@ -35,9 +35,10 @@
  * - subtitle / meta: title-slide supporting copy
  * - image: { src, alt } (or an array of those) — used by 'list-image',
  *   'quote' and 'image-only'
- * - imageSize: 'large' | 'side' — 'list-image' only, for screenshots shown
+ * - imageSize: 'large' | 'side' | 'row' — 'list-image' only, for images shown
  *   uncropped: 'large' = bullets above, image full width below; 'side' =
- *   bullets left, large image right
+ *   bullets left, large image right; 'row' = images side by side, centered
+ *   (the last one is the largest; no bullets needed)
  * - quote / attribution: used by the 'quote' layout
  * - align: 'center' or 'left' (overrides CONFIG.layout.align)
  * - accent: 0-3 — picks one of the 4 standard accent colors as this
@@ -440,10 +441,12 @@ Verhaal: dit weerlegt impliciet de aanname dat "zelf doen" alleen voor anderen i
     title: 'Blijf in contact',
     icon: 'chat',
     align: 'left',
-    image: { src: 'assets/linkedin-qr.svg', alt: 'QR-code naar LinkedIn-profiel' },
-    bullets: [
-      'Verbind met mij op LinkedIn',
+    imageSize: 'row',
+    image: [
+      { src: 'assets/LinkedIn_logo_initials.png', alt: 'LinkedIn-logo' },
+      { src: 'assets/qr.jpeg', alt: 'QR-code naar LinkedIn-profiel' },
     ],
+    bullets: [],
     notes: `Korte, losse uitnodiging — geen druk, gewoon een open deur.
 
 Verhaal: dit is de praktische afsluiting na de kernboodschap — een laagdrempelige manier om het contact te laten doorlopen na de les, mocht er nog een vraag opkomen of iemand willen doorpraten.`,
