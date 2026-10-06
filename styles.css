@@ -755,6 +755,58 @@ button {
   box-shadow: 0 10px 24px color-mix(in srgb, var(--text) 18%, transparent);
 }
 
+/* Opt-in `imageSize: 'large'` on a list-image slide: for wide screenshots.
+   The bullets move above the image and the image takes the full slide
+   width, shown whole (contain) instead of cropped to the small square. */
+.slide-inner--image-large {
+  width: 100%;
+}
+.slide-inner--image-large .slide-row-with-image {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+.slide-inner--image-large .slide-image-stack {
+  margin-right: 0;
+  align-items: center;
+}
+.slide-inner--image-large .slide-image-stack {
+  margin-top: 2rem;
+}
+/* Opt-in `imageSize: 'side'`: bullets left, a large uncropped image right. */
+.slide-inner--image-side {
+  width: 100%;
+}
+.slide-inner--image-side .slide-row-with-image {
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 0;
+}
+.slide-inner--image-side .slide-row-with-image .slide-bullets {
+  flex: 1 1 38%;
+}
+.slide-inner--image-side .slide-image-stack {
+  flex: 0 0 58%;
+  margin-right: 0;
+  align-items: stretch;
+}
+.slide-inner--image-side .slide-image {
+  width: 100%;
+  height: max(16rem, calc(100vh - 24rem));
+  object-fit: contain;
+  object-position: right center;
+  box-shadow: none; /* the box is larger than the drawn image, so a shadow would float */
+}
+
+.slide-inner--image-large .slide-image {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: max(14rem, calc(100vh - 33rem)); /* stays inside the slide below heading + bullets */
+  object-fit: contain;
+}
+
 /* ---------- Quote layout ---------- */
 .slide-inner--quote {
   width: min(80%, 72rem);
@@ -787,6 +839,17 @@ button {
   max-width: 42rem;
   padding: 1.1rem 1.5rem;
   box-shadow: none;
+}
+/* With bullets, the footnote quote sits at the bottom of the slide instead
+   of directly under the list. margin-top:auto absorbs the free height; when
+   the slide is too short (small screens) it collapses to the normal gap and
+   the content scrolls as usual. */
+.slide-inner--quote-footnote {
+  flex: 1 1 auto;
+  min-height: min-content;
+}
+.slide-inner--quote-footnote .slide-quote-box--footnote {
+  margin-top: auto;
 }
 .slide-quote-box--footnote .slide-quote-text {
   font-size: clamp(0.95rem, 1.3vw, 1.15rem);
@@ -1452,6 +1515,9 @@ button {
   .slide-content--has-bg .slide-inner { width: 100%; }
   .slide-row-with-image { flex-direction: column; align-items: center; }
   .slide-image { height: 6.5rem; width: 6.5rem; }
+  .slide-inner--image-large .slide-image { height: auto; width: auto; max-height: 40vh; }
+  .slide-inner--image-side .slide-image-stack { flex-basis: auto; align-items: center; }
+  .slide-inner--image-side .slide-image { height: auto; width: auto; max-width: 100%; max-height: 40vh; object-position: center; }
   .slide-quote-box { padding: 1.5rem 1.75rem; }
   .slide-quote-box--footnote { padding: 1rem 1.25rem; }
   .slide-quote-image-stack .slide-image { height: 6.5rem; width: 6.5rem; }

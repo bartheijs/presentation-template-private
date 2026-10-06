@@ -307,8 +307,10 @@ function renderBulletsLayout(slide) {
 // instead of a lead bullet being pushed into its own row sized by the
 // (taller) image.
 function renderListImageLayout(slide) {
+  const sizeClass = slide.imageSize === 'large' ? ' slide-inner--image-large'
+    : slide.imageSize === 'side' ? ' slide-inner--image-side' : '';
   return `
-    <div class="slide-inner">
+    <div class="slide-inner${sizeClass}">
       ${buildHeadingBlock(slide)}
       <div class="slide-row-with-image">
         ${buildBulletsBlock(slide)}
@@ -336,7 +338,7 @@ function renderQuoteLayout(slide) {
       ${slide.attribution ? `<p class="slide-quote-attribution">${escapeHtml(slide.attribution)}</p>` : ''}
     </div>`;
   return `
-    <div class="slide-inner slide-inner--quote">
+    <div class="slide-inner slide-inner--quote${hasBullets ? ' slide-inner--quote-footnote' : ''}">
       ${hasBullets ? buildHeadingBlock(slide) : ''}
       ${hasBullets ? buildBulletsBlock(slide) : ''}
       ${quoteBlock}

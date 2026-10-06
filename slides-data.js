@@ -35,6 +35,9 @@
  * - subtitle / meta: title-slide supporting copy
  * - image: { src, alt } (or an array of those) — used by 'list-image',
  *   'quote' and 'image-only'
+ * - imageSize: 'large' | 'side' — 'list-image' only, for screenshots shown
+ *   uncropped: 'large' = bullets above, image full width below; 'side' =
+ *   bullets left, large image right
  * - quote / attribution: used by the 'quote' layout
  * - align: 'center' or 'left' (overrides CONFIG.layout.align)
  * - accent: 0-3 — picks one of the 4 standard accent colors as this
@@ -160,7 +163,7 @@ Verhaal: dit is puur even face tonen. Het echte verhaal komt in de volgende slid
     align: 'left',
     bullets: [
       'Eerst Facility Manager',
-      'Omscholing via Make IT Work',
+      'Omscholing via Make IT Work (2019)',
       'Naar Conclusion — keuze voor de combinatie low code én consultancy: sneller ontwikkelen, meer klantcontact',
       'Frontend-voorkeur ontwikkeld',
       'HR Coach geworden',
@@ -179,20 +182,22 @@ Verhaal: dit is het hart van je persoonlijke verhaal. Je carrière is niet linea
     icon: 'flag',
     align: 'left',
     bullets: [
-      'Veel ruimte voor studie',
+      'Veel ruimte voor persoonlijke ontwikkeling',
       'Ambitie: de beste Mendix-partner willen zijn',
       'Veel kennisdeling',
       'Oog voor personeel',
     ],
-    notes: `Niet als reclame brengen, maar als verklaring waarom je carrière kón groeien.
+    notes: `Niet als reclame brengen, maar als verklaring waarom je carrière kón groeien: Conclusion was de omgeving waarin ik kon groeien.
 
-Verhaal: mijn carrière was niet vooraf uitgestippeld. Ik kreeg kansen, maar moest zelf stappen zetten. Dat lukt makkelijker in een omgeving waar je mag leren, proberen, vragen stellen en fouten maken.`,
+Verhaal: mijn carrière was niet vooraf uitgestippeld. Ik kreeg kansen, maar moest zelf stappen zetten. Dat lukt makkelijker in een omgeving waar je mag leren, proberen, vragen stellen en fouten maken.
+
+En naast een omgeving waarin ik kon groeien, had ik natuurlijk ook een vak nodig waarin ik kon groeien. Voor mij werd dat Mendix.`,
     duration: 45,
   },
   {
     id: 5,
     layout: 'bullets',
-    title: 'Wat is Low Code?',
+    title: 'Het vak waar ik in terechtkwam: Mendix',
     icon: 'spark',
     align: 'left',
     bullets: [
@@ -229,7 +234,8 @@ Verhaal: korte koppeling met Business Intelligence — als je informatie gestruc
     title: 'Page Builder: het formulier',
     icon: 'layers',
     align: 'left',
-    image: { src: 'assets/mendix-page-builder.svg', alt: 'Screenshot van de Mendix page builder met het incident-formulier' },
+    imageSize: 'side',
+    image: { src: 'assets/HVA-page.png', alt: 'Screenshot van de Mendix page builder met een check-in formulier' },
     bullets: [
       'Hier bouw je de schermen',
       'Bijvoorbeeld: incident melden',
@@ -246,7 +252,8 @@ Verhaal: niet technisch uitleggen, vooral laten zien dat het visueel en herkenba
     title: 'Workflow: het proces',
     icon: 'steps',
     align: 'left',
-    image: { src: 'assets/mendix-workflow.svg', alt: 'Diagram van een workflow voor het incident-proces' },
+    imageSize: 'side',
+    image: { src: 'assets/HVA-workflow.png', alt: 'Screenshot van een Mendix workflow voor het verwerken van feedback' },
     bullets: [
       'Wie moet iets doen?',
       'Welke stap komt daarna?',
@@ -263,7 +270,8 @@ Verhaal: hier kun je letterlijk aanwijzen — hier doet een mens iets, hier doet
     title: 'Microflow: de logica achter een stap',
     icon: 'target',
     align: 'left',
-    image: { src: 'assets/mendix-microflow.svg', alt: 'Screenshot van een eenvoudige microflow' },
+    imageSize: 'large',
+    image: { src: 'assets/HVA-microflow.png', alt: 'Screenshot van een Mendix microflow voor een check-in/check-out' },
     bullets: [
       'Data ophalen',
       'Beslissingen nemen',
@@ -289,7 +297,9 @@ Verhaal: dit is de logica achter de workflowstap — de motor die op de achtergr
     ],
     notes: `Dit is de samenvatting van het Mendix-blok.
 
-Verhaal: Mendix is niet alleen een formulierbouwer — het is een compleet platform om bedrijfsprocessen te bouwen, te automatiseren en te koppelen aan andere systemen.`,
+Verhaal: Mendix is niet alleen een formulierbouwer — het is een compleet platform om bedrijfsprocessen te bouwen, te automatiseren en te koppelen aan andere systemen.
+
+Dit is het vak waarin ik een aantal jaar geleden begon. Maar dat vak ziet er nu alweer anders uit, vooral door AI.`,
     duration: 35,
   },
   {
@@ -305,9 +315,9 @@ Verhaal: Mendix is niet alleen een formulierbouwer — het is een compleet platf
       'Meer ruimte voor ontwerp, creativiteit en probleembegrip',
       'Technische kennis blijft nodig om kwaliteit te bewaken',
     ],
-    notes: `AI betekent niet dat je minder hoeft na te denken — het verandert vooral waar je over nadenkt.
+    notes: `Dit is geen los AI-onderwerp, maar een verandering in mijn eigen werk als Mendix-developer. AI betekent niet dat ik minder hoef na te denken — het verandert vooral waar ik over nadenk.
 
-Verhaal: je kunt sneller van idee naar eerste versie, maar je blijft verantwoordelijk voor wat je oplevert. Juist daarom worden goede vragen stellen, kritisch beoordelen, testen en begrijpen wat je bouwt steeds belangrijker.`,
+Verhaal: als Mendix-developer kom ik sneller van idee naar eerste versie, maar ik blijf verantwoordelijk voor wat ik oplever. Juist daarom worden goede vragen stellen, kritisch beoordelen, testen en begrijpen wat je bouwt steeds belangrijker.`,
     duration: 60,
   },
   {
@@ -323,7 +333,7 @@ Verhaal: je kunt sneller van idee naar eerste versie, maar je blijft verantwoord
     ],
     notes: `Heel kort noemen, niet demonstreren tenzij er vragen over komen.
 
-De boodschap: AI zit niet alleen in code schrijven, maar ook in voorbereiden, structureren en verbeteren van werk. Verhaal: als studenten willen weten hoe dit werkt, kan dat in het vraaggedeelte.`,
+Laat zien dat dit onderdeel van mijn dagelijkse werk is geworden: ook als Mendix-developer gebruik ik AI om te voorbereiden, structureren en verbeteren van mijn werk, niet alleen om code te schrijven. Verhaal: als studenten willen weten hoe dit werkt, kan dat in het vraaggedeelte.`,
     duration: 40,
   },
   {
@@ -336,9 +346,9 @@ De boodschap: AI zit niet alleen in code schrijven, maar ook in voorbereiden, st
       'Niet alleen het coderen',
       'Ook alles eromheen (requirements, testen, documentatie, etc.)',
     ],
-    notes: `Kort, geen opsomming van alle fases — dat komt terug in de quiz.
+    notes: `Kort, geen opsomming van alle fases.
 
-Verhaal: dit weerlegt het beeld dat AI = "code schrijven". Het is breder, en dat is precies waarom het relevant is voor alle drie de beroepsrollen die zij bestuderen.`,
+Verhaal: in mijn werk als Mendix-developer raakt AI de hele lifecycle, niet alleen het bouwen. Dat weerlegt het beeld dat AI = "code schrijven". Het is breder, en dat is precies waarom het relevant is voor alle drie de beroepsrollen die zij bestuderen.`,
     duration: 35,
   },
   {
@@ -354,7 +364,7 @@ Verhaal: dit weerlegt het beeld dat AI = "code schrijven". Het is breder, en dat
     ],
     notes: `Dit is een dieper punt — leg uit dat je soms een simpel scriptje nodig hebt, en soms echt AI-redenering.
 
-Verhaal: dit toont dat het werken met AI een vak op zich is — je zet niet zomaar AI ergens op los, je stuurt het bij en optimaliseert het net zoals je met code zou doen.`,
+Verhaal: ook dit hoort bij het vak van een Mendix-developer dat aan het veranderen is. Werken met AI is een onderdeel van het vak geworden — je zet niet zomaar AI ergens op los, je stuurt het bij en optimaliseert het net zoals je met code zou doen.`,
     duration: 45,
   },
   {
@@ -397,87 +407,14 @@ Verhaal: de derde bullet legt de brug naar de praktijk — durven vragen stopt n
     duration: 45,
   },
   {
-    id: 17,
-    layout: 'quiz',
-    title: 'Waar gebruiken we AI in de SDLC?',
-    items: [
-      {
-        id: 'sdlc1',
-        label: '1',
-        answer: 'Requirements ophalen',
-        explanation: {
-          layout: 'bullets',
-          title: 'Requirements ophalen',
-          bullets: ['AI vat gesprekken en documenten samen tot user stories', 'Helpt vage wensen scherper te formuleren'],
-        },
-      },
-      {
-        id: 'sdlc2',
-        label: '2',
-        answer: 'Ontwerp',
-        explanation: {
-          layout: 'bullets',
-          title: 'Ontwerp',
-          bullets: ['AI stelt architectuur- of UI-opties voor', 'Versnelt het verkennen van meerdere richtingen'],
-        },
-      },
-      {
-        id: 'sdlc3',
-        label: '3',
-        answer: 'Bouwen',
-        explanation: {
-          layout: 'bullets',
-          title: 'Bouwen',
-          bullets: ['AI genereert of ondersteunt code, microflows en configuratie', 'De ontwikkelaar blijft sturen en reviewen'],
-        },
-      },
-      {
-        id: 'sdlc4',
-        label: '4',
-        answer: 'Testen',
-        explanation: {
-          layout: 'bullets',
-          title: 'Testen',
-          bullets: ['AI genereert testscenario’s en testdata', 'Helpt edge cases te vinden die je zelf mist'],
-        },
-      },
-      {
-        id: 'sdlc5',
-        label: '5',
-        answer: 'Opleveren',
-        explanation: {
-          layout: 'bullets',
-          title: 'Opleveren',
-          bullets: ['AI stelt release notes en documentatie op', 'Versnelt overdracht naar beheer of de klant'],
-        },
-      },
-      {
-        id: 'sdlc6',
-        label: '6',
-        answer: 'Onderhoud',
-        explanation: {
-          layout: 'bullets',
-          title: 'Onderhoud',
-          bullets: ['AI analyseert logs en signaleert afwijkingen', 'Helpt bij het lokaliseren van de oorzaak van een bug'],
-        },
-      },
-    ],
-    notes: `Alleen gebruiken bij tijd over/weinig vragen.
-
-Vorm: "slimste mens"-stijl, laat ze gokken/roepen per fase van de SDLC. Relativeren: ook wij zijn dit nog aan het uitvinden.
-
-Verhaal: dit voorkomt dat het overkomt als "wij weten het antwoord al" — het is een gezamenlijke zoektocht, niet een quiz met een goed antwoord dat jij al kent. Items hierboven zijn een eerste opzet — verder aan te scherpen.`,
-    duration: 90,
-  },
-  {
     id: 18,
     layout: 'bullets',
     title: 'Kernboodschap',
     align: 'center',
     bullets: [
-      'Je moet het zelf doen',
-      '...maar dat lukt beter in een veilige omgeving',
-      'Zorg dat je die hebt, of ga ernaar op zoek',
+      'Je moet zelf stappen zetten',
+      'De juiste omgeving helpt enorm',
+      'Zoek een plek waar je kunt leren, proberen en vragen stellen',
     ],
     notes: `Rustig brengen, geen pep-talk. Mijn loopbaan was niet strak gepland. Ik kreeg kansen, maar moest ze zelf pakken.
 
