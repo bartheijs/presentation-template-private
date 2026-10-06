@@ -404,6 +404,12 @@ button {
   opacity: 0.85;
   animation: discoSpin 14s linear infinite;
 }
+/* A frozen 'pause' disco stops spinning after DISCO_PAUSE_SPIN_MS (app.js):
+   the rays and sparkles hold their current position instead of looping. */
+.slide-stage.disco-spin-stopped .disco-rays,
+.slide-stage.disco-spin-stopped .disco-sparkle {
+  animation-play-state: paused;
+}
 @keyframes discoSpin { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
 .disco-title {

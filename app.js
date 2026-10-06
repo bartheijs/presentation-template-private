@@ -912,6 +912,16 @@ function animateTransition(dir, applyFn, holdMs = 0, discoOn = false) {
 // the "in" half. Mirrors animateTransition()'s out-phase exactly; kept as a
 // separate function (rather than merged into animateTransition) so the
 // existing 'auto' path stays byte-for-byte unchanged.
+// How long a frozen 'pause' disco keeps spinning before the rays stand still.
+const DISCO_PAUSE_SPIN_MS = 10000;
+let pauseSpinTimer = null;
+
+function stopPauseSpinTimer() {
+  clearTimeout(pauseSpinTimer);
+  pauseSpinTimer = null;
+  slideStageEl.classList.remove('disco-spin-stopped');
+}
+
 function beginPausedTransition(dir, toIndex) {
   isAnimatingSlide = true;
   slideContentEl.classList.add('content-anim-out');
@@ -931,6 +941,8 @@ function beginPausedTransition(dir, toIndex) {
     isAnimatingSlide = false;
     pendingPause = { toIndex, dir };
     renderPausedProgress();
+    stopPauseSpinTimer();
+    pauseSpinTimer = setTimeout(() => slideStageEl.classList.add('disco-spin-stopped'), DISCO_PAUSE_SPIN_MS);
   }
   pendingOutListener = onOut;
   slideContentEl.addEventListener('animationend', onOut, { once: true });
@@ -953,6 +965,7 @@ function resumePausedTransition() {
   const { toIndex } = pendingPause;
   pendingPause = null;
   isAnimatingSlide = true;
+  stopPauseSpinTimer();
 
   state.currentIndex = toIndex;
   renderSlide();
@@ -987,6 +1000,7 @@ function resumePausedTransition() {
 // instant class removal above never paints a visible flash.
 function cancelPendingPause() {
   pendingPause = null;
+  stopPauseSpinTimer();
   slideContentEl.classList.remove('content-anim-out');
   slideNotesEl.classList.remove('notes-anim-out');
   // Force a reflow before returning. The caller immediately starts a fresh
@@ -1015,6 +1029,7 @@ function cancelPendingPause() {
 // transition.
 function resetAnimationState() {
   pendingPause = null;
+  stopPauseSpinTimer();
   isAnimatingSlide = false;
   activeDiscoTitleLines = null;
   if (pendingRevealTimer) {
