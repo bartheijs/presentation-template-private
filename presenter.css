@@ -254,6 +254,18 @@ input:focus-visible {
   background: var(--bg);
 }
 
+.btn--image-modal {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 3; /* above the preview iframe and the disco still */
+  background: var(--accent);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.btn--image-modal[hidden] { display: none; }
+
 .disco-still {
   position: absolute;
   inset: 0;

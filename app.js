@@ -200,6 +200,9 @@ const overlayEl = document.getElementById('template-overlay');
 const overlayBodyEl = document.getElementById('overlay-body');
 const finishOverlayEl = document.getElementById('finish-overlay');
 const pauseOverlayEl = document.getElementById('pause-overlay');
+const imageModalEl = document.getElementById('image-modal');
+const imageModalImgEl = document.getElementById('image-modal-img');
+let imageModalSlideIndex = null; // slide the modal was opened for; it closes when the slide changes
 const quizExplanationOverlayEl = document.getElementById('quiz-explanation-overlay');
 const quizExplanationBodyEl = document.getElementById('quiz-explanation-body');
 
@@ -515,6 +518,8 @@ function shouldShowNotes(slide) {
 
 function renderSlide() {
   const slide = SLIDES[state.currentIndex];
+  // The fullscreen image belongs to the slide it was opened on.
+  if (isImageModalVisible() && imageModalSlideIndex !== state.currentIndex) hideImageModal();
   const align = resolveAlignFor(slide);
   const layout = slide.layout || 'bullets';
   const hasBackground = Boolean(slide.background && slide.background.src);
@@ -1467,6 +1472,38 @@ function isPauseOverlayVisible() {
   return !pauseOverlayEl.hidden;
 }
 
+/* ---------- Image modal (presenter-triggered fullscreen image) ---------- */
+
+// First image of the current slide (list-image / quote / image-only), or null.
+function currentSlideImage() {
+  const slide = SLIDES[state.currentIndex];
+  const images = Array.isArray(slide.image) ? slide.image : [slide.image];
+  return images.find((img) => img && img.src) || null;
+}
+
+function isImageModalVisible() {
+  return !imageModalEl.hidden;
+}
+
+function showImageModal() {
+  const image = currentSlideImage();
+  if (!image) return;
+  imageModalImgEl.src = image.src;
+  imageModalImgEl.alt = image.alt || '';
+  imageModalSlideIndex = state.currentIndex;
+  imageModalEl.hidden = false;
+}
+
+function hideImageModal() {
+  imageModalEl.hidden = true;
+  imageModalSlideIndex = null;
+}
+
+imageModalEl.addEventListener('click', () => {
+  hideImageModal();
+  sendStateToPresenter();
+});
+
 document.getElementById('btn-timer-finish').addEventListener('click', () => {
   launchConfetti();
   openFinishOverlay();
@@ -1483,6 +1520,10 @@ document.addEventListener('keydown', (e) => {
   else if (!overlayEl.hidden) closeTemplateOverlay();
   else if (!quizExplanationOverlayEl.hidden) closeQuizExplanation();
   else if (isPauseOverlayVisible()) hidePauseOverlay();
+  else if (isImageModalVisible()) {
+    hideImageModal();
+    sendStateToPresenter();
+  }
 });
 
 // index.html's and presenter.html's inline <head> theme scripts read this
@@ -1666,6 +1707,7 @@ const COMMAND_HANDLERS = Object.assign(Object.create(null), {
   SHOW_PAUSE_OVERLAY: () => showPauseOverlay(),
   HIDE_PAUSE_OVERLAY: () => hidePauseOverlay(),
   CYCLE_THEME: () => cycleTheme(),
+  TOGGLE_IMAGE_MODAL: () => (isImageModalVisible() ? hideImageModal() : showImageModal()),
   REQUEST_STATE: () => {}, // no-op handler: the broadcast below every dispatch is what answers it
 });
 
@@ -1777,6 +1819,8 @@ function sendStateToPresenter() {
       leftAsideVisible: !tocCollapsed,
       rightAsideVisible: !nextCollapsed && !presenterHidesControls,
       pauseOverlayVisible: isPauseOverlayVisible(),
+      imageModalVisible: isImageModalVisible(),
+      currentSlideHasImage: Boolean(currentSlideImage()),
       // Non-null for the whole time the audience sees a disco transition
       // (animating, or frozen mid-'pause'-mode hold) — never set for an
       // ordinary non-disco transition. Presenter View shows this as a still

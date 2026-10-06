@@ -1415,6 +1415,27 @@ button {
 }
 
 /* ---------- Pause overlay (presenter-triggered cutaway) ---------- */
+/* ---------- Image modal (presenter-triggered fullscreen image) ---------- */
+.image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2400; /* above #confetti-canvas (2000), below the pause overlay (2500) */
+  background: color-mix(in srgb, #000 88%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2vmin;
+  cursor: zoom-out;
+}
+.image-modal[hidden] { display: none; }
+.image-modal-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
 .pause-overlay {
   position: fixed;
   inset: 0;

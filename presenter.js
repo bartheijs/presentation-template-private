@@ -18,6 +18,7 @@ const PRESENTER_I18N = {
     start: 'Start', pause: 'Pauze', reset: 'Reset',
     display: 'Weergave',
     displayOptions: 'Weergaveopties', leftSidebar: 'Linker zijbalk', rightSidebar: 'Rechter zijbalk',
+    showImage: 'Toon afbeelding', hideImage: 'Verberg afbeelding',
     pauseScreen: 'Pauzescherm', contextOverlay: 'Context-overlay', presentationControls: 'Presentatiebediening',
     themeToggleButton: 'Ontwerp',
     presentationTiming: 'Presentatietijd', timerControls: 'Timerbediening',
@@ -40,6 +41,7 @@ const PRESENTER_I18N = {
     start: 'Start', pause: 'Pause', reset: 'Reset',
     display: 'Display',
     displayOptions: 'Display options', leftSidebar: 'Left sidebar', rightSidebar: 'Right sidebar',
+    showImage: 'Show image', hideImage: 'Hide image',
     pauseScreen: 'Pause screen', contextOverlay: 'Context overlay', presentationControls: 'Presentation controls',
     themeToggleButton: 'Design',
     presentationTiming: 'Presentation timing', timerControls: 'Timer controls',
@@ -379,6 +381,9 @@ function renderState(newState) {
   renderToggleState('btn-toggle-pause-overlay', '[data-pause-overlay]', newState.pauseOverlayVisible);
   renderToggleState('btn-toggle-context-overlay', '[data-context-overlay]', newState.contextOverlayVisible);
   renderDiscoStill(newState.discoTitleLines);
+  const imageButtonEl = document.getElementById('btn-toggle-image-modal');
+  imageButtonEl.hidden = !newState.currentSlideHasImage;
+  imageButtonEl.textContent = newState.imageModalVisible ? presenterText.hideImage : presenterText.showImage;
 
   pendingNextSlide = newState.currentSlide + 1;
   document.querySelector('[data-pending-next-slide]').textContent = String(pendingNextIndex() + 1);
@@ -609,6 +614,7 @@ document.getElementById('btn-toggle-context-overlay').addEventListener('click', 
 document.getElementById('btn-toggle-left-aside').addEventListener('click', () => sendCommand('TOGGLE_LEFT_ASIDE'));
 document.getElementById('btn-toggle-right-aside').addEventListener('click', () => sendCommand('TOGGLE_RIGHT_ASIDE'));
 document.getElementById('btn-toggle-pause-overlay').addEventListener('click', () => sendCommand('TOGGLE_PAUSE_OVERLAY'));
+document.getElementById('btn-toggle-image-modal').addEventListener('click', () => sendCommand('TOGGLE_IMAGE_MODAL'));
 document.getElementById('btn-presenter-theme-toggle').addEventListener('click', () => sendCommand('CYCLE_THEME'));
 
 // Mirror the Presentation View's arrow-key model in this window too:
