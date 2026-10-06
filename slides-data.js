@@ -408,7 +408,7 @@ Verhaal: de derde bullet legt de brug naar de praktijk — durven vragen stopt n
     duration: 45,
   },
   {
-    id: 18,
+    id: 17,
     layout: 'bullets',
     title: 'Kernboodschap',
     align: 'center',
@@ -423,7 +423,7 @@ Verhaal: een veilige omgeving betekent ruimte om te leren, vragen te stellen, fo
     duration: 45,
   },
   {
-    id: 19,
+    id: 18,
     layout: 'bullets',
     title: 'Jullie hebben de eerste stap al gezet',
     align: 'center',
@@ -436,7 +436,7 @@ Verhaal: dit weerlegt impliciet de aanname dat "zelf doen" alleen voor anderen i
     duration: 20,
   },
   {
-    id: 20,
+    id: 19,
     layout: 'list-image',
     title: 'Blijf in contact',
     icon: 'chat',
