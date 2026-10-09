@@ -40,6 +40,10 @@
  *   bullets left, large image right; 'row' = images side by side, centered
  *   (the last one is the largest; no bullets needed)
  * - quote / attribution: used by the 'quote' layout
+ * - a \n in `title` forces a line break in the heading (the TOC shows a space)
+ * - wide: true — the heading may run wider than the content column (and is
+ *   10% smaller), for a long title that should keep its first words on one
+ *   line; bullets keep their normal position
  * - align: 'center' or 'left' (overrides CONFIG.layout.align)
  * - accent: 0-3 — picks one of the 4 standard accent colors as this
  *   slide's own "theme color" for anything generic that reads it (the
@@ -143,15 +147,39 @@ const SLIDES = [
   {
     id: 2,
     layout: 'bullets',
-    title: 'Wie zijn jullie?',
+    title: 'Jullie stage',
     icon: 'chat',
     align: 'left',
     bullets: [
-      'Wie werkt er naast de opleiding?',
-      'Wie werkt er al in IT naast de opleiding?',
+      'Wat is het gaafste of meest verrassende dat je tot nu toe op je stage hebt gedaan of meegemaakt?',
+      'Waar loop je tegenaan waarvan je wilt weten of anderen dat ook hebben?',
     ],
-    notes: ``,
-    duration: 60,
+    notes: `Doel: de eerste vijf minuten in hún wereld blijven (scope-model) en vertrouwen winnen vóór ik iets over mezelf vertel. Ze zijn benieuwd naar wat hun medestudenten op stage doen, dus ik geef die nieuwsgierigheid een plek.
+
+Opbouw (richtlijn, ~5 min):
+- Welkom, kort. Zeg waarom ik eerst iets vraag.
+- Vraag 1 eerst 1 minuut met de buurman bespreken, daarna 2 vrijwilligers hardop.
+- Vraag 2 op dezelfde manier. Sluit af met een samenvatting in mijn eigen woorden.
+- Pas daarna mijn eigen verhaal.
+
+Vraag 1 (kampioensvraag, overtreffende trap): positief en veilig, levert een specifiek antwoord op. Geef zelf geen voorbeeld vooraf, dat stuurt hun antwoord.
+Doorvragen:
+- Wat vond je daar zo gaaf / verrassend aan?
+- Hoe kwam je daar terecht?
+- Hoe moet ik me dat voorstellen?
+Support tussendoor: kort en gemeend (ja, interessant, klopt). Geen overdreven complimenten, dat wekt wantrouwen.
+
+Vraag 2 (scope: wat willen ze voorkomen): persoonlijker, dus pas ná vraag 1 en eerst met de buurman. Maakt duidelijk dat ze niet de enige zijn, en sluit aan op mijn kernboodschap (zelf doen, maar in een veilige omgeving).
+Doorvragen:
+- Wat maakt dat lastig voor je?
+- Wat heb je al geprobeerd?
+- Hoe belangrijk is dat voor je?
+Onthoud 2-3 antwoorden en pak ze terug in het vraaggedeelte.
+
+Afsluiten met checkvraag/samenvatting: "Dus als ik het goed begrijp, ...". Eventuele derde vraag als er tijd is: "Wat zou je willen dat je op dag 1 had geweten?"
+
+Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" vervangen door "werk of stage". Technieken: Kampioensvraag, Trechtertechniek, Scope-model, Support geven (Frontrunner).`,
+    duration: 300,
   },
   {
     id: 3,
@@ -171,7 +199,8 @@ const SLIDES = [
   {
     id: 4,
     layout: 'bullets',
-    title: 'Carrièrepad bij Conclusion',
+    title: 'Nog steeds stagiair\nbij Conclusion',
+    wide: true,
     icon: 'steps',
     align: 'left',
     bullets: [

@@ -569,6 +569,15 @@ button {
   align-items: center;
   text-align: center;
 }
+/* Opt-in `wide: true` on a slide: the heading may run wider than the
+   content column (and is 10% smaller), so a long title keeps its
+   first words on one line while the bullets stay aligned with other slides. */
+.slide-content--wide .slide-heading {
+  width: 135%;
+}
+.slide-content--wide .slide-heading h1 {
+  font-size: calc(clamp(1.9rem, 3.6vw, 2.9rem) * 0.9);
+}
 
 /* Applied for the isTemplateAnchor slide (see buildSlideContentHTML) so its
    `.slide-template-code` block can grow to fill the slide instead of being
@@ -621,6 +630,7 @@ button {
 }
 .slide-heading h1 {
   margin: 0;
+  white-space: pre-line; /* a \n in slide.title becomes a line break */
   font-family: var(--font-heading);
   font-size: clamp(1.9rem, 3.6vw, 2.9rem);
   line-height: 1.15;
@@ -759,6 +769,7 @@ button {
   object-fit: cover;
   border-radius: var(--radius-lg);
   box-shadow: 0 10px 24px color-mix(in srgb, var(--text) 18%, transparent);
+  cursor: zoom-in; /* click opens the image modal, see app.js */
 }
 
 /* Opt-in `imageSize: 'large'` on a list-image slide: for wide screenshots.
