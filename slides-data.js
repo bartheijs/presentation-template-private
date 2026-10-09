@@ -132,6 +132,16 @@ const SKILL_TEMPLATE_SECTIONS = [
 const SLIDES = [
   {
     id: 1,
+    layout: 'image-only',
+    title: 'IT-carrière & AI',
+    align: 'center',
+    image: { src: 'assets/titelpagina.png', alt: 'IT, Mendix en AI als drie verbonden blokken' },
+    bullets: [],
+    notes: ``,
+    duration: 20,
+  },
+  {
+    id: 2,
     layout: 'bullets',
     title: 'Wie zijn jullie?',
     icon: 'chat',
@@ -144,7 +154,7 @@ const SLIDES = [
     duration: 60,
   },
   {
-    id: 2,
+    id: 3,
     layout: 'title',
     title: 'Bart Heijs',
     subtitle: 'Senior Mendix Consultant',
@@ -159,7 +169,7 @@ const SLIDES = [
     duration: 20,
   },
   {
-    id: 3,
+    id: 4,
     layout: 'bullets',
     title: 'Carrièrepad bij Conclusion',
     icon: 'steps',
@@ -178,14 +188,14 @@ const SLIDES = [
     duration: 120,
   },
   {
-    id: 4,
+    id: 5,
     layout: 'bullets',
     title: 'Werken bij Conclusion',
     icon: 'flag',
     align: 'left',
     bullets: [
-      'Veel ruimte voor persoonlijke ontwikkeling',
       'Ambitie: de beste Mendix-partner willen zijn',
+      'Veel ruimte voor persoonlijke ontwikkeling',
       'Veel kennisdeling',
       'Oog voor personeel',
     ],
@@ -193,21 +203,22 @@ const SLIDES = [
     duration: 45,
   },
   {
-    id: 5,
+    id: 6,
     layout: 'bullets',
-    title: 'Het vak waar ik in terechtkwam: Mendix',
+    title: 'Low code software ontwikkeling in Mendix',
     icon: 'spark',
     align: 'left',
     bullets: [
       'Applicaties bouwen met visuele bouwstenen',
       'Niet alles regel voor regel coderen',
       'Maar wél echte bedrijfsapplicaties maken',
+      'En snel resultaat opleveren',
     ],
     notes: `Low code is visueel coderen`,
     duration: 30,
   },
   {
-    id: 6,
+    id: 7,
     layout: 'list-image',
     title: 'Page Builder: het formulier',
     icon: 'layers',
@@ -222,7 +233,7 @@ const SLIDES = [
     duration: 40,
   },
   {
-    id: 7,
+    id: 8,
     layout: 'list-image',
     title: 'Workflow: het proces',
     icon: 'steps',
@@ -238,7 +249,7 @@ const SLIDES = [
     duration: 40,
   },
   {
-    id: 8,
+    id: 9,
     layout: 'list-image',
     title: 'Microflow: de logica achter een stap',
     icon: 'target',
@@ -254,7 +265,7 @@ const SLIDES = [
     duration: 40,
   },
   {
-    id: 9,
+    id: 10,
     layout: 'bullets',
     title: 'Eén compleet platform',
     icon: 'layers',
@@ -270,7 +281,7 @@ const SLIDES = [
     duration: 35,
   },
   {
-    id: 10,
+    id: 11,
     layout: 'bullets',
     title: 'De veranderende developer',
     icon: 'spark',
@@ -286,7 +297,7 @@ const SLIDES = [
     duration: 60,
   },
   {
-    id: 11,
+    id: 12,
     layout: 'bullets',
     title: 'AI in het werk',
     icon: 'book',
@@ -294,13 +305,12 @@ const SLIDES = [
     bullets: [
       'Deze presentatie is gemaakt met een eigen AI-skill',
       'Niet één losse prompt, maar een herbruikbare werkwijze',
-      'Meer uitleg alleen als jullie daar nieuwsgierig naar zijn',
     ],
     notes: ``,
     duration: 40,
   },
   {
-    id: 12,
+    id: 13,
     layout: 'bullets',
     title: 'AI door de hele lifecycle',
     icon: 'steps',
@@ -313,7 +323,7 @@ const SLIDES = [
     duration: 35,
   },
   {
-    id: 13,
+    id: 14,
     layout: 'bullets',
     title: 'Niet alleen gebruiken, ook optimaliseren',
     icon: 'ruler',
@@ -327,19 +337,20 @@ const SLIDES = [
     duration: 45,
   },
   {
-    id: 14,
+    id: 15,
     layout: 'bullets',
     title: 'Vraag mij alles',
     align: 'center',
     bullets: [
-      'Geen onderwerp is off-limits',
+      'Nou, bijna alles...',
+      'In principe kan ik alles hebben...',
       'Dit is jullie moment',
     ],
     notes: ``,
     duration: 5,
   },
   {
-    id: 15,
+    id: 16,
     layout: 'quote',
     title: 'Durf je het te vragen?',
     bullets: [
@@ -358,7 +369,7 @@ const SLIDES = [
     duration: 45,
   },
   {
-    id: 16,
+    id: 17,
     layout: 'bullets',
     title: 'Kernboodschap',
     align: 'center',
@@ -373,7 +384,7 @@ const SLIDES = [
     duration: 45,
   },
   {
-    id: 17,
+    id: 18,
     layout: 'title',
     title: 'Jullie hebben de eerste stap al gezet door voor deze opleiding te kiezen',
     align: 'center',
@@ -382,7 +393,7 @@ const SLIDES = [
     duration: 20,
   },
   {
-    id: 18,
+    id: 19,
     layout: 'list-image',
     title: 'Blijf in contact',
     icon: 'chat',

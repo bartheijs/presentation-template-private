@@ -915,6 +915,7 @@ button {
   height: min(52vh, 32rem);
   width: auto;
   max-width: 100%;
+  box-shadow: none;
 }
 
 /* ---------- Icon-grid layout (specimen slide, see `items` in README) ---------- */
