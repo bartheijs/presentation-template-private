@@ -219,6 +219,42 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
   {
     id: 5,
     layout: 'bullets',
+    title: 'Mijn eigen omscholing',
+    icon: 'seed',
+    align: 'left',
+    bullets: [
+      'Ik kwam uit facility management',
+      'Het lastigst: de abstractie van objectgeoriënteerd programmeren',
+      'Het waardevolst: er kwam motivatie in mij los',
+      'En de verbinding met mijn medestudenten',
+    ],
+    notes: `Het traject zelf kennen ze al, dus niet uitleggen hoe Make IT Work werkt. Het gaat om hoe het voor mij was.
+
+- Herkenning zoeken: wie vindt OOP ook (nog) abstract? Handen omhoog.
+- De medestudenten: zij zijn straks ook jullie netwerk.`,
+    duration: 60,
+  },
+  {
+    id: 6,
+    layout: 'bullets',
+    title: 'Van opleiding naar praktijk',
+    icon: 'swap',
+    align: 'left',
+    bullets: [
+      'De opleiding sloot goed aan, maar wel op beginnersniveau',
+      'De praktijk viel tegen, en durven vragen ook',
+      'Inschatten vond ik het moeilijkst',
+      'Klantcontact kende ik al, alleen was ik toen zelf de klant',
+    ],
+    notes: `Eerlijk zijn over wat tegenviel: dat maakt het voor hen veiliger om dat later ook te zeggen.
+
+- Inschatten: hoe lang gaat iets duren? Dat leer je pas door het vaak te doen.
+- Van klant naar leverancier: je ziet nu de andere kant van hetzelfde gesprek.`,
+    duration: 90,
+  },
+  {
+    id: 7,
+    layout: 'bullets',
     title: 'Werken bij Conclusion',
     icon: 'flag',
     align: 'left',
@@ -232,7 +268,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 45,
   },
   {
-    id: 6,
+    id: 8,
     layout: 'bullets',
     title: 'Low code software ontwikkeling in Mendix',
     icon: 'spark',
@@ -247,7 +283,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 30,
   },
   {
-    id: 7,
+    id: 9,
     layout: 'list-image',
     title: 'Page Builder: het formulier',
     icon: 'layers',
@@ -262,7 +298,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 40,
   },
   {
-    id: 8,
+    id: 10,
     layout: 'list-image',
     title: 'Workflow: het proces',
     icon: 'steps',
@@ -278,7 +314,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 40,
   },
   {
-    id: 9,
+    id: 11,
     layout: 'list-image',
     title: 'Microflow: de logica achter een stap',
     icon: 'target',
@@ -294,7 +330,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 40,
   },
   {
-    id: 10,
+    id: 12,
     layout: 'bullets',
     title: 'Eén compleet platform',
     icon: 'layers',
@@ -310,7 +346,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 35,
   },
   {
-    id: 11,
+    id: 13,
     layout: 'bullets',
     title: 'De veranderende developer',
     icon: 'spark',
@@ -326,7 +362,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 60,
   },
   {
-    id: 12,
+    id: 14,
     layout: 'bullets',
     title: 'AI in het werk',
     icon: 'book',
@@ -339,7 +375,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 40,
   },
   {
-    id: 13,
+    id: 15,
     layout: 'bullets',
     title: 'AI door de hele lifecycle',
     icon: 'steps',
@@ -352,7 +388,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 35,
   },
   {
-    id: 14,
+    id: 16,
     layout: 'bullets',
     title: 'Niet alleen gebruiken, ook optimaliseren',
     icon: 'ruler',
@@ -366,7 +402,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 45,
   },
   {
-    id: 15,
+    id: 17,
     layout: 'bullets',
     title: 'Vraag mij alles',
     align: 'center',
@@ -379,7 +415,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 5,
   },
   {
-    id: 16,
+    id: 18,
     layout: 'quote',
     title: 'Durf je het te vragen?',
     bullets: [
@@ -398,7 +434,25 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 45,
   },
   {
-    id: 17,
+    id: 19,
+    layout: 'bullets',
+    title: 'Tips voor jullie',
+    icon: 'bulb',
+    align: 'left',
+    bullets: [
+      'Durf kwetsbaarheid te tonen',
+      'Je communiceert nooit genoeg over je voortgang',
+      'Vraag jezelf steeds af: ben ik bezig met wat de klant het meest helpt?',
+    ],
+    notes: `Hier ben ik even hun mentor: dit zou ik mezelf in 2019 meegeven.
+
+- Kwetsbaarheid: sluit aan op "durven vragen" van de vorige praktijkslide.
+- Voortgang: liever te vaak dan te weinig laten weten waar je staat.
+- Juiste ding: niet alleen of het goed gebouwd is, maar of het het goede is.`,
+    duration: 60,
+  },
+  {
+    id: 20,
     layout: 'bullets',
     title: 'Kernboodschap',
     align: 'center',
@@ -413,7 +467,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 45,
   },
   {
-    id: 18,
+    id: 21,
     layout: 'title',
     title: 'Jullie hebben de eerste stap al gezet door voor deze opleiding te kiezen',
     align: 'center',
@@ -422,7 +476,7 @@ Aannames: de meesten lopen stage en kunnen daar iets over delen; anders "stage" 
     duration: 20,
   },
   {
-    id: 19,
+    id: 22,
     layout: 'list-image',
     title: 'Blijf in contact',
     icon: 'chat',
