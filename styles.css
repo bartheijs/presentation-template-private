@@ -759,6 +759,7 @@ button {
   object-fit: cover;
   border-radius: var(--radius-lg);
   box-shadow: 0 10px 24px color-mix(in srgb, var(--text) 18%, transparent);
+  cursor: zoom-in; /* click opens the image modal, see app.js */
 }
 
 /* Opt-in `imageSize: 'large'` on a list-image slide: for wide screenshots.

@@ -1504,8 +1504,9 @@ function isImageModalVisible() {
   return !imageModalEl.hidden;
 }
 
-function showImageModal() {
-  const image = currentSlideImage();
+// `image` is optional: a click on a slide image passes that exact image,
+// the presenter's toggle falls back to the slide's dominant one.
+function showImageModal(image = currentSlideImage()) {
   if (!image) return;
   imageModalImgEl.src = image.src;
   imageModalImgEl.alt = image.alt || '';
@@ -1520,6 +1521,15 @@ function hideImageModal() {
 
 imageModalEl.addEventListener('click', () => {
   hideImageModal();
+  sendStateToPresenter();
+});
+
+// Clicking an image on the slide itself opens it in the modal. Delegated on
+// the stage because renderSlide() replaces the slide's markup on every change.
+slideStageEl.addEventListener('click', (e) => {
+  const img = e.target.closest && e.target.closest('.slide-image');
+  if (!img || isImageModalVisible()) return;
+  showImageModal({ src: img.getAttribute('src'), alt: img.alt });
   sendStateToPresenter();
 });
 
